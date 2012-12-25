@@ -2,21 +2,29 @@ unit shared; {$MODE OBJFPC} {$COPERATORS ON} {$WRITEABLECONST OFF} {$TYPEDADDRES
 
 interface
 
-uses SDL, Sour, GL, Objects, BASS;
+uses SDL, Sour, GL, Objects, BASS, SysUtils;
 
 // A shitload of constants - but hey, this is the 'shared' unit, isn't it?
 
 const GAMENAME = 'Colorful'; GAMEAUTH = 'suve';
-      GAMEVERS = '1.0';      GAMEDATE = {$INCLUDE %DATE%}+', '+{$INCLUDE %TIME%};
+      MAJORNUM = '1'; MINORNUM = '1'; GAMEVERS = MAJORNUM+'.'+MINORNUM;
+      GAMEDATE = {$INCLUDE %DATE%}+', '+{$INCLUDE %TIME%};
 
       FPS_LIMIT = 120; TICKS_MINIMUM = 1000 div FPS_LIMIT;
 
-      WINDOW_W = 640; WINDOW_H = 640;
-      RESOL_W = 320; RESOL_H = 320;
+      WINDOW_W = 640; WINDOW_H = 640; // Default window size
+      RESOL_W = 320; RESOL_H = 320;   // Game resolution (set in OpenGL)
 
       TILE_W = 16; TILE_H = 16; TILE_S = ((TILE_W + TILE_H) div 2);
       ROOM_W = 20; ROOM_H = 20;
-      MAP_W = 7; MAP_H = 7;
+
+Type TGameMode = (GM_TUTORIAL, GM_ORIGINAL);
+
+Const ORG_MAP_W = 7; ORG_MAP_H = 7; ORG_ROOMNUM = ORG_MAP_W*ORG_MAP_H;
+      TUT_MAP_W = 3; TUT_MAP_H = 3; TUT_ROOMNUM = TUT_MAP_W*TUT_MAP_H;
+
+      RespRoom:Array[TGameMode] of Sour.TCrd = ((X:0; Y:0), (X:3; Y:3));
+      RespPos:Array[TGameMode] of Sour.TCrd = ((X:1; Y:3), (X:10; Y:6));
 
       HERO_SPEED = TILE_S * 5; HERO_HEALTH = 50; HERO_FIREPOWER = 5; HERO_INVUL = 500;
 
@@ -29,23 +37,31 @@ const GAMENAME = 'Colorful'; GAMEAUTH = 'suve';
       SFX_SHOT = SFX_DIE+DIE_SFX; SFX_HIT = SFX_SHOT + SHOT_SFX; SFX_EXTRA = SFX_HIT+HIT_SFX;
       SOUNDS = SFX_EXTRA + EXTRA_SFX;
 
-      FILES_TO_LOAD = CHARAS + BULLETS + SOUNDS + OTHERS + SLIDES_IN + SLIDES_OUT;
+      FILES_TO_LOAD = CHARAS + BULLETS + SOUNDS + OTHERS + SLIDES_IN + SLIDES_OUT +
+                      ORG_ROOMNUM + TUT_ROOMNUM;
 
       AnimFPS = 16; AnimTime = 1000 div AnimFPS;
+
       GibSpeed = TILE_S*8; GIB_X = 4; GIB_Y = 4;
       DeathLength = 2500; WOMAN = 8;
 
 Const UIcolour : Array[0..7] of LongWord =
-      ($505050FF,$0000FFFF,$00FF00FF,$00FFFFFF,$FF0000FF,$FF00FFFF,$FFFF00FF,$FFFFFFFF);
+      ($585858FF,$0000FFFF,$00FF00FF,$00FFFFFF,$FF0000FF,$FF00FFFF,$FFFF00FF,$FFFFFFFF);
       MapColour : Array[0..7] of LongWord =
       ($323232, $10186A, $299C00, $009A9A, $7A0818, $94188B, $FFDE5A, $DADADA);
       WhiteColour : Sour.TColour = (R: 255; G: 255; B: 255; A: 255);
       GreyColour : Sour.TColour = (R: 128; G: 128; B: 128; A: 255);
+      BlackColour : Sour.TColour = (R: 0; G: 0; B: 0; A: 255);
+      
+      ColourName : Array[0..7] of AnsiString = 
+      ('black','navy','green','blue','red','purple','yellow','white');
 
-Type TPlayerKey = (KEY_UP, KEY_RIGHT, KEY_DOWN, KEY_LEFT, KEY_Z, KEY_X, KEY_C);
+Type TPlayerKey = (KEY_UP, KEY_RIGHT, KEY_DOWN, KEY_LEFT, KEY_SHOOTLEFT, KEY_SHOOTRIGHT,
+                   KEY_PAUSE, KEY_VOLDOWN, KEY_VOLUP);
      TEnemyType = (ENEM_DRONE,ENEM_BASHER,ENEM_BALL,ENEM_SPITTER,ENEM_SPAMMER,
                    ENEM_GENERATOR, ENEM_TURRET);
      TColState = (STATE_NONE,STATE_PICKED,STATE_GIVEN);
+     TVolLevel = 0..6;
      TCrystal = record
      IsSet : Boolean;
      mX, mY: LongInt;
@@ -55,32 +71,55 @@ Type TPlayerKey = (KEY_UP, KEY_RIGHT, KEY_DOWN, KEY_LEFT, KEY_Z, KEY_X, KEY_C);
 // Progstate and gamestate variables. This isn't a project big enough to actually
 // require having a separate game controller class. I'll just keep everything global...
 
-var Screen : PSDL_Surface;
+var Screen : PSDL_Surface;  // SDL Video surface
+    Ev     : TSDL_Event;    // For retrieving SDL events
+
+    Wnd_W, Wnd_H : LongWord; // Window width, height and fullscreen flag.
+    Wnd_F : Boolean;         // These can be read from Screen, but we save the .ini after closing SDL.
+
     TitleGfx, TileGfx, UIgfx, ColGfx : Sour.PImage;
-    Font, NumFont : Sour.PFont;
     CharaGfx : Array[0..CHARAS-1] of Sour.PImage;
     ShotGfx  : Array[0..BULLETS-1] of Sour.PImage;
+    SlideIn  : Array[0..SLIDES_IN-1] of Sour.PImage;
+    SlideOut : Array[0..SLIDES_OUT-1] of Sour.PImage;  //Images, duh
+
+    Font, NumFont : Sour.PFont; //Fonts
+
+    Sfx  : Array[0..SOUNDS-1] of HSAMPLE; //Sfx array
+
     Hero : PPlayer;
     PBul, EBul : Array of PBullet;
     Mob  : Array of PEntity;
-    Gib  : Array of PGib;
-    Ev   : TSDL_Event;
-    Key  : Array[TPlayerKey] of Boolean;
-    Sfx  : Array[0..SOUNDS-1] of HSAMPLE;
+    Gib  : Array of PGib; //Entity arrays
+
+    Key     : Array[TPlayerKey] of Boolean;
+    KeyBind :Array[TPlayerKey] of TSDLKey; //Playa controls
+
+    GameOn : Boolean; // Is a game in progress?
+    GameMode : TGameMode; // Current game mode
     Switch : Array[0..99] of Boolean;
     ColState : Array[0..7] of TColState;
     Crystal : TCrystal;
     PaletteColour : Array[0..7] of Sour.TColour;
     CentralPalette : Array[0..7] of Sour.TColour;
     RoomPalette, DeadTime, Carried, Given : LongInt;
-    SlideIn  : Array[0..SLIDES_IN-1] of Sour.PImage;
-    SlideOut : Array[0..SLIDES_OUT-1] of Sour.PImage;
+    // Gamestate variables
+
+    SaveExists : Array[TGameMode] of Boolean;
+    Shutdown : Boolean;
 
 Type UpdateProc = Procedure(Name:AnsiString;Perc:Double);
 
 // The name is obvious, duh
 Procedure GetDeltaTime(Out Time:LongWord);
 Procedure GetDeltaTime(Out Time,Ticks:LongWord);
+
+// Mainly used in initialization, as we later switch to SDL ticks
+Function GetMSecs:Comp;
+
+// Resize window, doh
+Procedure ResizeWindow(W,H:LongWord;Full:Boolean=FALSE);
+Procedure SetResolution();
 
 // Some functions for calculating distances
 Function  Hypotenuse(X,Y:Double):Double;
@@ -98,8 +137,13 @@ Function Overlap(AX,AY:Double;AW,AH:LongWord;BX,BY:Double;BW,BH:LongWord):Boolea
 Function Overlap(A,B:PEntity):Boolean;
 
 // Some simple converstions from and to strings
-Function IntToStr(Num:LongWord;Digits:LongWord=0;Chr:Char='0'):AnsiString;
+Function IntToStr(Num:LongWord;Digits:LongWord=0;Chr:Char='0'):AnsiString; Overload;
 Function StrToInt(S:AnsiString):Int64;
+
+// Volume functions
+Procedure ChgVol(Change:LongInt);
+Procedure SetVol(NewVol:TVolLevel);
+Function  GetVol:TVolLevel;
 
 // Play a sound
 Procedure PlaySfx(ID:LongWord);
@@ -113,6 +157,13 @@ Procedure SpawnEnemy(Tp:TEnemyType;mapX,mapY:LongInt;SwitchNum:LongInt=-1);
 // Someone got killed - place gibs!
 Procedure PlaceGibs(E:PEntity);
 
+// Change current room
+Function ChangeRoom(NX,NY:LongInt):Boolean;
+
+// Used in new game, load game and change room.
+Procedure DestroyEntities(KillHero:Boolean=FALSE);
+Procedure ResetGamestate();
+
 // Load gfx and sfx, melady
 Function LoadBasics(Out Status:AnsiString):Boolean;
 Function LoadRes(Out Status:AnsiString; Update : UpdateProc = NIL):Boolean;
@@ -121,8 +172,11 @@ Function LoadRes(Out Status:AnsiString; Update : UpdateProc = NIL):Boolean;
 Procedure Free();
 
 implementation
+   uses Rooms, FloatingText;
 
 var Tikku : LongWord;
+    VolLevel : TVolLevel;
+    Volume : Double;
 
 Procedure GetDeltaTime(Out Time:LongWord);
    begin
@@ -134,6 +188,39 @@ Procedure GetDeltaTime(Out Time,Ticks:LongWord);
    begin
    While ((SDL_GetTicks - Tikku) < TICKS_MINIMUM) do SDL_Delay(1);
    Time:=(SDL_GetTicks - Tikku); Tikku+=Time; Ticks:=Tikku
+   end;
+
+Function GetMSecs():Comp;
+   begin Exit(TimeStampToMSecs(DateTimeToTimeStamp(Now()))) end;
+
+Procedure ResizeWindow(W,H:LongWord;Full:Boolean=FALSE);
+   Var Flag : LongWord;
+   begin
+   If (Full) then begin Flag:=SDL_FullScreen; W:=0; H:=0 end
+             else Flag:=SDL_Resizable;
+   (* If the fullscreen flag is set, we set W and H to 0. This will make SDL
+      create a window with the user's desktop size, thus saving the video
+      drivers the crazy work of changing the display resolution. *)
+   Screen:=Sour.ResizeWindow(W,H,Flag);
+   SetResolution()
+   end;
+
+Procedure SetResolution();
+
+   Function FlagSet(Const Flag,Val:LongWord):Boolean;
+      begin Exit((Val and Flag) = Flag) end;
+   (* Fuck yeah, Pascal allows creating sub-routines. Beat that, C! *)
+
+   Var X, Y : LongInt;
+   begin
+   Wnd_W:=Screen^.W; Wnd_H:=Screen^.H; Wnd_F:=FlagSet(SDL_FullScreen, Screen^.Flags);
+   If (Wnd_H < Wnd_W)
+      then begin X:=Trunc((Wnd_W - Wnd_H)/(Wnd_H*2)*RESOL_W); Y:=0 end
+      else begin X:=0; Y:=Trunc((Wnd_H - Wnd_W)/(Wnd_W*2)*RESOL_H) end;
+   (* Since we want to keep the aspect ratio of the game screen, we have to
+      calculate the resolution accordingly. The game area should be centered
+      on the screen, with unused bars left at the sides. *)
+   Sour.SetVisibleArea(-X,-Y,RESOL_W+(X*2),RESOL_H+(Y*2))
    end;
 
 Function Hypotenuse(X,Y:Double):Double;
@@ -189,12 +276,27 @@ Function StrToInt(S:AnsiString):Int64;
    If (S[1]<>'-') then Exit(R) else Exit(-R)
    end;
 
+Procedure ChgVol(Change:LongInt);
+   begin
+   Change+=VolLevel;
+   If (Change<Low(VolLevel)) then SetVol(Low(VolLevel)) else
+   If (Change>High(VolLevel)) then SetVol(High(VolLevel)) {else}
+                               else SetVol(Change)
+   end;
+
+Procedure SetVol(NewVol:TVolLevel);
+   begin VolLevel:=NewVol; Volume:=VolLevel / High(TVolLevel) end;
+
+Function GetVol:TVolLevel;
+   begin Exit(VolLevel) end;
+
 Procedure PlaySfx(ID:LongWord);
    Var Chan:HCHANNEL;
    begin
    If (ID>=SOUNDS) then Exit;
    Chan:=BASS_SampleGetChannel(Sfx[ID],False);
    If (Chan = 0) then Exit;
+   BASS_ChannelSetAttribute(Chan,BASS_Attrib_Vol,Volume);
    BASS_ChannelPlay(Chan,True)
    end;
 
@@ -250,12 +352,67 @@ Procedure PlaceGibs(E:PEntity);
        end
    end;
 
+Function ChangeRoom(NX,NY:LongInt):Boolean;
+   Var NoRoom:Boolean;
+   begin
+   // First, check if room exists
+   Case GameMode of
+      GM_TUTORIAL: NoRoom:=(NX<0) or (NY<0) or (NX>=TUT_MAP_W) or (NY>=TUT_MAP_H) or (TutRoom[NX][NY]=NIL);
+      GM_ORIGINAL: NoRoom:=(NX<0) or (NY<0) or (NX>=ORG_MAP_W) or (NY>=ORG_MAP_H) or (OrgRoom[NX][NY]=NIL);
+      end;
+   If (NoRoom) then begin
+      Writeln('Error: Room ',GameMode,':',NX,':',NY,' not found!'); Exit(False) end;
+   DestroyEntities();
+   // Change room and run its script
+   Case GameMode of
+      GM_TUTORIAL: Room:=TutRoom[NX][NY];
+      GM_ORIGINAL: Room:=OrgRoom[NX][NY];
+      end;
+   Room^.RunScript();
+   If (GameMode=GM_TUTORIAL) then Hero^.HP:=Hero^.MaxHP;
+   Exit(True)
+   end;
+
+Procedure DestroyEntities(KillHero:Boolean=FALSE);
+   Var C:LongWord;
+   begin
+   If (Length(Mob)>0) then
+      For C:=Low(Mob) to High(Mob) do
+          If (Mob[C]<>NIL) then Dispose(Mob[C],Destroy());
+   If (Length(PBul)>0) then
+      For C:=Low(PBul) to High(PBul) do
+          If (PBul[C]<>NIL) then Dispose(PBul[C],Destroy());
+   If (Length(EBul)>0) then
+      For C:=Low(EBul) to High(EBul) do
+          If (EBul[C]<>NIL) then Dispose(EBul[C],Destroy());
+   If (Length(Gib)>0) then
+      For C:=Low(Gib) to High(Gib) do
+          If (Gib[C]<>NIL) then Dispose(Gib[C],Destroy());
+   SetLength(Mob,0); SetLength(EBul,0); SetLength(PBul,0); SetLength(Gib,0);
+   FlushFloatTxt(); Crystal.IsSet:=False;
+   If (KillHero) then begin
+      If (Hero<>NIL) then Dispose(Hero,Destroy());
+      Hero:=NIL; end
+   end;
+
+Procedure ResetGamestate();
+   Var C:LongInt;
+   begin
+   For C:=0 to 7 do PaletteColour[C]:=Sour.MakeColour(MapColour[C]);
+   For C:=0 to 7 do CentralPalette[C]:=Sour.MakeColour(127,127,127);
+   For C:=Low(ColState) to High(ColState) do ColState[C]:=STATE_NONE;
+   For C:=Low(Switch) to High(Switch) do Switch[C]:=False;
+   // Set array variables
+   Carried:=0; Given:=0;
+   end;
+
 const GFX_TITLE = 'gfx/title.png'; FILE_FONT = 'gfx/font.png';
       GFX_FILE : Array[0..CHARAS-1] of String = (
       'gfx/hero.png','gfx/enem0.png','gfx/enem1.png','gfx/enem2.png','gfx/enem3.png',
       'gfx/enem4.png','gfx/enem5.png','gfx/enem6.png');
       FILE_TILES = 'gfx/tiles.png'; FILE_UI = 'gfx/ui.png'; FILE_COLOURS = 'gfx/colours.png';
       NUMFONTFILE = 'gfx/numbers.png';
+      PATH_ORG = 'map/org/'; PATH_TUT = 'map/tut/';
 
 Function LoadBasics(Out Status:AnsiString):Boolean;
    begin
@@ -268,7 +425,8 @@ Function LoadBasics(Out Status:AnsiString):Boolean;
    end;
 
 Function LoadRes(Out Status:AnsiString; Update : UpdateProc = NIL):Boolean;
-   Var FilesLoaded, C:LongWord; Img:Sour.PImage; S:AnsiString; Samp:HSAMPLE;
+   Var FilesLoaded, C,X,Y:LongWord; S:AnsiString;
+       Img:Sour.PImage; Samp:HSAMPLE; R:PRoom;
    begin
    FilesLoaded:=0;
    // SOME MINOR SETUP
@@ -278,6 +436,7 @@ Function LoadRes(Out Status:AnsiString; Update : UpdateProc = NIL):Boolean;
       Exit(False)
       end;
    Sour.SetFontSpacing(NumFont,1,1);
+   FilesLoaded+=1; Update(FILE_TILES,FilesLoaded / FILES_TO_LOAD);
    // Loaded numfont for fps
    TileGfx:=Sour.LoadImage(FILE_TILES,$000000);
    If (TileGfx = NIL) then begin
@@ -301,24 +460,24 @@ Function LoadRes(Out Status:AnsiString; Update : UpdateProc = NIL):Boolean;
    FilesLoaded+=1; Update(FILE_COLOURS,FilesLoaded / FILES_TO_LOAD);
    // Loaded colours (crystals). Load intro/outro slides
    For C:=0 to SLIDES_IN-1 do begin
-       S:='intro/slide'+IntToStr(C)+'.png';
+       WriteStr(S,'intro/slide',C,'.png');
        Img:=Sour.LoadImage(S,$000000);
        If (Img=NIL) then begin
           Status:=('Failed to load file: '+S);
           Exit(False)
           end;
-       SlideIn[C]:=Img; FilesLoaded+=1;
-       Update(S,FilesLoaded / FILES_TO_LOAD)
+       SlideIn[C]:=Img;
+       FilesLoaded+=1; Update(S,FilesLoaded / FILES_TO_LOAD)
        end;
    For C:=0 to SLIDES_OUT-1 do begin
-       S:='intro/out'+IntToStr(C)+'.png';
+       WriteStr(S,'intro/out',C,'.png');
        Img:=Sour.LoadImage(S,$000000);
        If (Img=NIL) then begin
           Status:=('Failed to load file: '+S);
           Exit(False)
           end;
-       SlideOut[C]:=Img; FilesLoaded+=1;
-       Update(S,FilesLoaded / FILES_TO_LOAD)
+       SlideOut[C]:=Img;
+       FilesLoaded+=1; Update(S,FilesLoaded / FILES_TO_LOAD)
        end;
    // Loaded slides. Load charas
    For C:=0 to CHARAS-1 do begin
@@ -327,8 +486,8 @@ Function LoadRes(Out Status:AnsiString; Update : UpdateProc = NIL):Boolean;
           Status:=('Failed to load file: '+GFX_FILE[C]);
           Exit(False)
           end;
-       CharaGfx[C]:=Img; FilesLoaded+=1;
-       Update(GFX_FILE[C],FilesLoaded / FILES_TO_LOAD)
+       CharaGfx[C]:=Img;
+       FilesLoaded+=1; Update(GFX_FILE[C],FilesLoaded / FILES_TO_LOAD)
        end;
    // Loaded characters, time for them bullets
    For C:=0 to BULLETS-1 do begin
@@ -338,51 +497,74 @@ Function LoadRes(Out Status:AnsiString; Update : UpdateProc = NIL):Boolean;
           Status:=('Failed to load file: '+S);
           Exit(False)
           end;
-       ShotGfx[C]:=Img; FilesLoaded+=1;
-       Update(S,FilesLoaded / FILES_TO_LOAD)
+       ShotGfx[C]:=Img;
+       FilesLoaded+=1; Update(S,FilesLoaded / FILES_TO_LOAD)
        end;
    // Loaded bullets, time for sfx
    For C:=0 to (WALL_SFX - 1) do begin
-       S:='sfx/wall'+IntToStr(C)+'.wav';
+       WriteStr(S,'sfx/wall',C,'.wav');
        Samp:=BASS_SampleLoad(FALSE,PChar(S),0,0,64,0);
        If (Samp = 0) then begin
           Status:='Failed to load file: '+S; Exit(False) end;
-       Sfx[SFX_WALL+C]:=Samp
+       Sfx[SFX_WALL+C]:=Samp;
+       FilesLoaded+=1; Update(S,FilesLoaded / FILES_TO_LOAD)
        end;
    For C:=0 to (METAL_SFX - 1) do begin
-       S:='sfx/metal'+IntToStr(C)+'.wav';
+       WriteStr(S,'sfx/metal',C,'.wav');
        Samp:=BASS_SampleLoad(FALSE,PChar(S),0,0,64,0);
        If (Samp = 0) then begin
           Status:='Failed to load file: '+S; Exit(False) end;
-       Sfx[SFX_METAL+C]:=Samp
+       Sfx[SFX_METAL+C]:=Samp;
+       FilesLoaded+=1; Update(S,FilesLoaded / FILES_TO_LOAD)
        end;
    For C:=0 to (DIE_SFX - 1) do begin
-       S:='sfx/die'+IntToStr(C)+'.wav';
+       WriteStr(S,'sfx/die',C,'.wav');
        Samp:=BASS_SampleLoad(FALSE,PChar(S),0,0,64,0);
        If (Samp = 0) then begin
           Status:='Failed to load file: '+S; Exit(False) end;
-       Sfx[SFX_DIE+C]:=Samp
+       Sfx[SFX_DIE+C]:=Samp;
+       FilesLoaded+=1; Update(S,FilesLoaded / FILES_TO_LOAD)
        end;
    For C:=0 to (SHOT_SFX - 1) do begin
-       S:='sfx/shot'+IntToStr(C)+'.wav';
+       WriteStr(S,'sfx/shot',C,'.wav');
        Samp:=BASS_SampleLoad(FALSE,PChar(S),0,0,64,0);
        If (Samp = 0) then begin
           Status:='Failed to load file: '+S; Exit(False) end;
-       Sfx[SFX_SHOT+C]:=Samp
+       Sfx[SFX_SHOT+C]:=Samp;
+       FilesLoaded+=1; Update(S,FilesLoaded / FILES_TO_LOAD)
        end;
    For C:=0 to (HIT_SFX - 1) do begin
-       S:='sfx/hit'+IntToStr(C)+'.wav';
+       WriteStr(S,'sfx/hit',C,'.wav');
        Samp:=BASS_SampleLoad(FALSE,PChar(S),0,0,64,0);
        If (Samp = 0) then begin
           Status:='Failed to load file: '+S; Exit(False) end;
-       Sfx[SFX_HIT+C]:=Samp
+       Sfx[SFX_HIT+C]:=Samp;
+       FilesLoaded+=1; Update(S,FilesLoaded / FILES_TO_LOAD)
        end;
    For C:=0 to (EXTRA_SFX - 1) do begin
-       S:='sfx/extra'+IntToStr(C)+'.wav';
+       WriteStr(S,'sfx/extra',C,'.wav');
        Samp:=BASS_SampleLoad(FALSE,PChar(S),0,0,64,0);
        If (Samp = 0) then begin
           Status:='Failed to load file: '+S; Exit(False) end;
-       Sfx[SFX_EXTRA+C]:=Samp
+       Sfx[SFX_EXTRA+C]:=Samp;
+       FilesLoaded+=1; Update(S,FilesLoaded / FILES_TO_LOAD)
+       end;
+   // Sounds loaded. Get them maps!
+   For Y:=0 to (ORG_MAP_H-1) do For X:=0 to (ORG_MAP_W-1) do begin
+       WriteStr(S,PATH_ORG,X,'-',Y,'.txt');
+       R:=LoadRoom(S);
+       If (R = NIL) then begin
+          Status:='Failed to load file: '+S; Exit(False) end;
+       R^.X:=X; R^.Y:=Y; OrgRoom[X][Y]:=R;
+       FilesLoaded+=1; Update(S,FilesLoaded / FILES_TO_LOAD)
+       end;
+   For Y:=0 to (TUT_MAP_H-1) do For X:=0 to (TUT_MAP_W-1) do begin
+       WriteStr(S,PATH_TUT,X,'-',Y,'.txt');
+       R:=LoadRoom(S);
+       If (R = NIL) then begin
+          Status:='Failed to load file: '+S; Exit(False) end;
+       R^.X:=X; R^.Y:=Y; TutRoom[X][Y]:=R;
+       FilesLoaded+=1; Update(S,FilesLoaded / FILES_TO_LOAD)
        end;
    Exit(True)
    end;
@@ -390,22 +572,29 @@ Function LoadRes(Out Status:AnsiString; Update : UpdateProc = NIL):Boolean;
 Procedure Free;
    Var C:LongWord;
    begin
-   // Don't have time to add everything, lol
+   (* Since this is called only on program exit, it doesn't
+      really matter if we forget anything. It will all be freed
+      by the OS when the program dies, afterall. *)
    If (TitleGfx<>NIL) then Sour.FreeImage(TitleGfx);
    If (Font<>NIL) then Sour.FreeFont(Font);
+   If (NumFont<>NIL) then Sour.FreeFont(NumFont);
+   If (UIgfx<>NIL) then Sour.FreeImage(UIgfx);
+   If (TileGfx<>NIL) then Sour.FreeImage(TileGfx);
+   If (ColGfx<>NIL) then Sour.FreeImage(ColGfx);
+   For C:=Low(SlideOut) to High(SlideOut) do
+       If (SlideOut[C]<>NIL) then Sour.FreeImage(SlideOut[C]);
+   For C:=Low(SlideIn) to High(SlideIn) do
+       If (SlideIn[C]<>NIL) then Sour.FreeImage(SlideIn[C]);
    For C:=0 to CHARAS-1 do
        If (CharaGfx[C]<>NIL) then Sour.FreeImage(CharaGfx[C]);
    For C:=0 to BULLETS-1 do
        If (ShotGfx[C]<>NIL) then Sour.FreeImage(ShotGfx[C]);
-   BASS_Free()
+   DestroyEntities(True);
+   FreeRooms();
    end;
 
 initialization
-   For Tikku:=0 to 7 do PaletteColour[Tikku]:=Sour.MakeColour(MapColour[Tikku]);
-   For Tikku:=0 to 7 do CentralPalette[Tikku]:=Sour.MakeColour(127,127,127);
-   For Tikku:=Low(ColState) to High(ColState) do ColState[Tikku]:=STATE_NONE;
-   For Tikku:=Low(Switch) to High(Switch) do Switch[Tikku]:=False;
-   Carried:=0; Given:=0; Tikku := 0;
+   Shutdown:=False; GameOn:=False; Tikku := 0;
 
 end.
 

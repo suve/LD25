@@ -4,8 +4,9 @@ interface
    uses Sour, Shared;
 
 Type  TTile = 0..16;
-Const TILE_WALL  = 00; TILE_VBAR  = 01; TILE_HBAR  = 02; TILE_CBAR  = 03;
-      TILE_VDOOR = 04; TILE_HDOOR = 05; TILE_GENUP = 06; TILE_GENDO = 07;
+Const TILE_WALL  = 00; TILE_VBAR = 01; TILE_VBUP = 02; TILE_VBDO = 03;
+      TILE_HBAR  = 04; TILE_HBLE = 05; TILE_HBRI = 06; TILE_CBAR = 07;
+      TILE_VDOOR = 08; TILE_HDOOR = 09; TILE_GENUP = 10; TILE_GENDO = 11;
       TILE_ZONE  = 14; TILE_ROOM  = 15; TILE_NONE  = 16;
       TILE_NoCollide = 14;
 
@@ -27,10 +28,15 @@ Type PRoom = ^TRoom;
        Destructor Destroy;
      end;
 
-Var GameRoom:Array[0..(MAP_W-1), 0..(MAP_H-1)] of PRoom;
+Var OrgRoom:Array[0..(ORG_MAP_W-1), 0..(ORG_MAP_H-1)] of PRoom;
+    TutRoom:Array[0..(TUT_MAP_W-1), 0..(TUT_MAP_H-1)] of PRoom;
+    Room : PRoom;
+
+Function LoadRoom(Name:AnsiString):PRoom;
+Procedure FreeRooms();
 
 implementation
-   uses SysUtils, StrUtils;
+   uses FloatingText, SysUtils, StrUtils;
 
 Procedure TRoom.RunScript();
    Var C,P,tX,tY,Col:LongWord; L:AnsiString; T:Array of AnsiString;
@@ -78,8 +84,8 @@ Procedure TRoom.RunScript();
                         ': "tile" command requires at least two arguments.');
                 Continue end;
              If (Length(T)>=4)
-                then SetTile(StrToInt(T[1]),StrToInt(T[2]),T[3][1])
-                else SetTile(StrToInt(T[1]),StrToInt(T[2]),#$20)
+                then SetTile(StrToInt(T[1])-1,StrToInt(T[2])-1,T[3][1])
+                else SetTile(StrToInt(T[1])-1,StrToInt(T[2])-1,#$20)
              end else
           If (T[0]='colour') then begin
              If (Length(T)<4) then begin
@@ -129,6 +135,28 @@ Procedure TRoom.RunScript();
                      TCol[tX][tY]:=@CentralPalette[Random(8)];
              RoomPalette:=Col
              end else
+          If (T[0]='text') then begin
+             If (Length(T)<5) then begin
+                Writeln('Error in room ',X,':',Y,' at line ',C+21,
+                        ': "text" command at least four arguments.');
+                Continue end;
+             If (T[1]='black'  ) then Col:=0 else
+             If (T[1]='navy'   ) then Col:=1 else
+             If (T[1]='green'  ) then Col:=2 else
+             If (T[1]='blue'   ) then Col:=3 else
+             If (T[1]='red'    ) then Col:=4 else
+             If (T[1]='purple' ) then Col:=5 else
+             If (T[1]='yellow' ) then Col:=6 else
+             If (T[1]='white'  ) then Col:=7 else
+             If (T[1]='grey'   ) then Col:=8 else
+                {else} begin
+                Writeln('Error in room ',X,':',Y,' at line ',C+21,
+                        ': unknown colour "',T[1],'".');
+                Continue end;
+             If (Length(T)>5) then
+                For tX:=5 to High(T) do T[4]+=#$20+T[tX];
+             AddFloatTxt(StrToInt(T[2]),StrToInt(T[3]),Col,T[4])
+             end else
           If (T[0]='if') then begin
              If (Length(T)<2) then begin
                 Writeln('Error in room ',X,':',Y,' at line ',C+21,
@@ -164,6 +192,11 @@ Procedure TRoom.SetTile(tX,tY:LongInt;tT:Char);
       '}': Tile[tX][tY]:=TILE_GENDO;
       '#': Tile[tX][tY]:=TILE_ZONE;
       ':': Tile[tX][tY]:=TILE_ROOM;
+      '^': Tile[tX][tY]:=TILE_VBUP;
+      'v': Tile[tX][tY]:=TILE_VBDO;
+      '<': Tile[tX][tY]:=TILE_HBLE;
+      '>': Tile[tX][tY]:=TILE_HBRI;
+      else Tile[tX][tY]:=TILE_NONE;
       end
    end;
 
@@ -196,49 +229,45 @@ Destructor TRoom.Destroy();
    end;
 
 Procedure FreeRooms();
-   Var X,Y:LongWord; R:PRoom;
+   Var X,Y:LongWord;
    begin
-   For Y:=0 to (Map_H-1) do For X:=0 to (MAP_W-1) do
-       If (GameRoom[X][Y]<>NIL) then Dispose(GameRoom[X][Y],Destroy());
+   For Y:=0 to (ORG_MAP_H-1) do For X:=0 to (ORG_MAP_W-1) do
+       If (OrgRoom[X][Y]<>NIL) then Dispose(OrgRoom[X][Y],Destroy());
+   For Y:=0 to (TUT_MAP_H-1) do For X:=0 to (TUT_MAP_W-1) do
+       If (TutRoom[X][Y]<>NIL) then Dispose(TutRoom[X][Y],Destroy());
    end;
 
-Procedure LoadRooms();
-   Var mX,mY,X,Y,C:LongWord; R:PRoom; F:Text; L:AnsiString; T:Char;
+Function LoadRoom(Name:AnsiString):PRoom;
+   Var X,Y,C:LongWord; R:PRoom; F:Text; L:AnsiString; T:Char;
    begin
-   For mY:=0 to (MAP_H-1) do For mX:=0 to (MAP_W-1) do begin
-       Assign(F,'map/'+IntToStr(mX)+'-'+IntToStr(mY)+'.txt');
-       {$I-} Reset(F); {$I+}
-       If (IOResult <> 0) then begin
-          {Writeln('Unable to load room: ',mX,':',mY);} Continue
-          end;
-       New(R,Create());
-       R^.X:=mX; R^.Y:=mY;
-       For Y:=0 to (ROOM_H-1) do begin
-           For X:=0 to (ROOM_W-1) do begin
-               Read(F,T); R^.SetTile(X,Y,T);
-               R^.TCol[X][Y]:=@WhiteColour;
-               end;
-           Readln(F)
+   Assign(F,Name); {$I-} Reset(F); {$I+} // Open file
+   If (IOResult <> 0) then Exit(NIL); // Check for errors during opening
+   New(R,Create()); // Create new TRoom
+   For Y:=0 to (ROOM_H-1) do begin
+       For X:=0 to (ROOM_W-1) do begin
+           Read(F,T); R^.SetTile(X,Y,T);
+           R^.TCol[X][Y]:=@WhiteColour;
            end;
-       C:=0; // set counter to 0
-       While Not Eof(F) do begin
-          Readln(F,L); L:=Trim(L);
-          If (Length(L)>0) then begin
-             SetLength(R^.Scri,C+1);
-             R^.Scri[C]:=DelSpace1(L);
-             C:=C+1
-             end
-          end;
-       Close(F);
-       GameRoom[mX][mY]:=R
+       Readln(F)
        end;
+   // Read map tiles
+   C:=0; // set counter to 0
+   While Not Eof(F) do begin
+      Readln(F,L); L:=Trim(L);
+      If (Length(L)>0) then begin
+         SetLength(R^.Scri,C+1);
+         R^.Scri[C]:=DelSpace1(L);
+         C:=C+1
+         end
+      end;
+   // Read map script
+   Close(F);  // Close file
+   Exit(R) // Return room
    end;
 
 initialization
-   LoadRooms();
 
 finalization
-   FreeRooms();
 
 end.
 

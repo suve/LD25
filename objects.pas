@@ -87,6 +87,7 @@ Type // Basic class for all in-game entities
      PDrone = ^TDrone;
      TDrone = Object(TEntity)
      Private
+       ChaseTime, IdleTime : LongWord;
        Chase : Boolean;
        Timer : LongInt;
      Public
@@ -100,6 +101,7 @@ Type // Basic class for all in-game entities
      PBasher = ^TBasher;
      TBasher = Object(TEntity)
      Private
+       BashTime, IdleTime, AccelTime : LongWord;
        Dir : LongWord;
        Bash : Boolean;
        Timer : LongInt;
@@ -124,6 +126,7 @@ Type // Basic class for all in-game entities
      PSpitter = ^TSpitter;
      TSpitter = Object(TEntity)
      Private
+       MoveTime, IdleTime, FireInterval : LongWord;
        FireTimer, MoveTimer : LongInt;
        Move : Boolean;
      Public
@@ -137,6 +140,7 @@ Type // Basic class for all in-game entities
      PSpammer = ^TSpammer;
      TSpammer = Object(TEntity)
      Private
+       FireInterval : LongWord;
        FireTimer, MoveTimer : LongInt;
        Angle : Double;
      Public
@@ -174,6 +178,12 @@ implementation
    uses Shared;
 
 Const TwoRoot = Sqrt(2);
+
+Function RndInt(Val:LongInt;Dif:Double):LongInt;
+   begin Exit(Trunc(Val*(1+Random(-1000,+1000)/1000*Dif))) end;
+
+Function RndDbl(Val,Dif:Double):Double;
+   begin Exit(Val*(1+Random(-1000,+1000)/1000*Dif)) end;
 
 Function TEntity.GetCrd:Sour.TCrd;
    begin Exit(Sour.MakeCrd(intX,intY)) end;
@@ -241,12 +251,12 @@ Procedure TPlayer.Calculate(dt:LongWord);
    If (XVel<>0) and (YVel<>0) then begin XVel/=TwoRoot; YVel/=TwoRoot end;
    If (FireTimer > 0) then FireTimer-=dt
       else begin
-      If (Key[KEY_Z]) then begin
+      If (Key[KEY_ShootLeft]) then begin
          Face:=FACE_LEFT; PlaySfx(SFX_SHOT+2);
          FireTimer:=FireInterval+FireTimer;
          PlaceBullet(@Self,(-2)*HERO_SPEED,0,FirePower,2)
          end else
-      If (Key[KEY_X]) then begin
+      If (Key[KEY_ShootRight]) then begin
          FACE:=FACE_RIGHT; PlaySfx(SFX_SHOT+2);
          FireTimer:=FireInterval+FireTimer;
          PlaceBullet(@Self,(+2)*HERO_SPEED,0,FirePower,2)
@@ -257,6 +267,7 @@ Procedure TPlayer.Calculate(dt:LongWord);
 
 Constructor TPlayer.Create();
    begin Inherited Create();
+   mX:=RespPos[GameMode].X; mY:=RespPos[GameMode].Y;
    Gfx:=CharaGfx[GFX_HERO];
    Col:=@GreyColour;
    MaxHP:=HERO_HEALTH; HP:=MaxHP;
@@ -269,8 +280,7 @@ Destructor TPlayer.Destroy();
    end;
 
 Procedure TDrone.Calculate(dt:LongWord);
-   Const ChaseTime = 800; IdleTime = 200;
-         Spd = TILE_S * 3;
+   Const Spd = TILE_S * 3;
    Var Dist : Double;
    begin
    If (Timer > 0) then begin
@@ -295,7 +305,8 @@ Procedure TDrone.Calculate(dt:LongWord);
 Constructor TDrone.Create();
    begin Inherited Create();
    Gfx:=CharaGfx[GFX_ENEM]; SfxID:=SFX_DIE+3;
-   Chase:=False; Timer:=100;
+   ChaseTime:=RndInt(800,0.2); IdleTime:=RndInt(200,0.2);
+   Chase:=False; Timer:=IdleTime div 2;
    HP:=5.75; Enemy:=True
    end;
 
@@ -304,17 +315,16 @@ Destructor TDrone.Destroy();
    end;
 
 Procedure TBasher.Calculate(dt:LongWord);
-   Const ChaseTime = 1500; IdleTime = 100;
-         Spd = TILE_S * 8; AccelTime = 150;
+   Const Spd = TILE_S * 8;
    Var XD,YD, Perc : Double;
    begin
    If (Timer > 0) then begin
       Timer-=dt;
       If (Bash) then begin
          If (XCol) or (YCol) then Case Dir of
-            2: Dir:=4; 4: Dir:=6; 6: Dir:=4; 8: Dir:=2 end;
+            2: Dir:=8; {} 4: Dir:=6; {} 6: Dir:=4; {} 8: Dir:=2 end;
          If (Timer<AccelTime) then Perc:=(Timer/AccelTime) else
-         If (Timer>ChaseTime-AccelTime) then Perc:=((ChaseTime-Timer)/AccelTime) else
+         If (Timer>BashTime-AccelTime) then Perc:=((BashTime-Timer)/AccelTime) else
             {else} Perc:=1;
          Case Dir of
             2: YVel:=(+Perc)*Spd; 8: YVel:=(-Perc)*Spd;
@@ -326,7 +336,7 @@ Procedure TBasher.Calculate(dt:LongWord);
          Bash:=False; Timer:=IdleTime+Timer;
          XVel:=0; YVel:=0
          end else begin
-         Bash:=True; Timer:=ChaseTime+Timer;
+         Bash:=True; Timer:=BashTime+Timer;
          XD:=(Hero^.X-Self.X); YD:=(Hero^.Y-Self.Y);
          If (Abs(XD)>Abs(YD)) or (Random(4)=0)
             then if (XD>0) then Dir:=6 else Dir:=4
@@ -338,7 +348,9 @@ Procedure TBasher.Calculate(dt:LongWord);
 Constructor TBasher.Create();
    begin Inherited Create();
    Gfx:=CharaGfx[GFX_ENEM+3]; SfxID:=SFX_DIE+3;
-   Bash:=False; Timer:=100;
+   BashTime:=RndInt(1500,0.2); IdleTime:=RndInt(100,0.2);
+   AccelTime:=(BashTime div 10);
+   Bash:=False; Timer:=IdleTime;
    HP:=16; Enemy:=True
    end;
 
@@ -368,8 +380,7 @@ Destructor TBall.Destroy();
    end;
 
 Procedure TSpitter.Calculate(dt:LongWord);
-   Const MoveTime = 444; IdleTime = 100; FireInterval = 1200;
-         Spd = TILE_S * 2.4;
+   Const Spd = TILE_S * 2.4;
    Var Dist : Double;
    begin
    If (FireTimer > 0) then FireTimer-=dt
@@ -400,7 +411,8 @@ Procedure TSpitter.Calculate(dt:LongWord);
 Constructor TSpitter.Create();
    begin Inherited Create();
    Gfx:=CharaGfx[GFX_ENEM+1]; SfxID:=SFX_DIE+4;
-   Move:=False; MoveTimer:=100; FireTimer:=1000;
+   MoveTime:=RndInt(444,0.2); IdleTime:=RndInt(100,0.2); FireInterval:=RndInt(1200,0.2);
+   Move:=False; MoveTimer:=IdleTime; FireTimer:=(FireInterval * 5) div 6;
    HP:=12; Enemy:=True
    end;
 
@@ -409,7 +421,7 @@ Destructor TSpitter.Destroy();
    end;
 
 Procedure TSpammer.Calculate(dt:LongWord);
-   Const MoveMin = 500; MoveMax = 700; FireInterval = 800;
+   Const MoveMin = 500; MoveMax = 700;
          Spd = TILE_S * 1.5;
    begin
    If (FireTimer > 0) then FireTimer-=dt
@@ -434,7 +446,8 @@ Procedure TSpammer.Calculate(dt:LongWord);
 Constructor TSpammer.Create();
    begin Inherited Create();
    Gfx:=CharaGfx[GFX_ENEM+4]; SfxID:=SFX_DIE+4;
-   MoveTimer:=100; FireTimer:=1000;
+   FireInterval:=RndInt(800,0.2);
+   MoveTimer:=Random(100,333); FireTimer:=(FireInterval*10) div 8;
    Angle:=Random(2000)*Pi/1000;
    HP:=18; Enemy:=True
    end;
@@ -460,7 +473,7 @@ Procedure TGenerator.Calculate(dt:LongWord);
    If (SmallTimer > 0) then SmallTimer-=dt else begin
       SmallTimer:=Random(SmaMin,SmaMax)+SmallTimer;
       For BulNum:=1 to 5 do begin
-         Dist:=Random(-600,600)*Pi/1800;
+         Dist:=Random(-450,450)*Pi/1800;
          If (Hero^.X<Self.X) then Dist+=Pi;
          PlaceBullet(@Self,Cos(Dist)*SmaSpd,Sin(Dist)*SmaSpd,4,3)
          end
@@ -479,9 +492,9 @@ Destructor TGenerator.Destroy();
    end;
 
 Procedure TTurret.Calculate(dt:LongWord);
-   Const NorMin = 400; NorMax = 480; SpamMin = 3000; SpamMax = 4000;
-         NorSpd = HERO_SPEED * 0.8; SpamSpd = HERO_SPEED * 1.2;
-   Var Dist,XV,YV:Double; BulNum:LongWord;
+   Const NorMin = 400; NorMax = 480; //SpamMin = 3000; SpamMax = 4000;
+         NorSpd = HERO_SPEED * 0.8; //SpamSpd = HERO_SPEED * 1.2;
+   Var Dist,XV,YV:Double; //BulNum:LongWord;
    begin
    If (NorTime > 0) then NorTime-=dt else begin
       NorTime:=Random(NorMin,NorMax)+NorTime;

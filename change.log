@@ -1,0 +1,58 @@
+Colorful changelog
+
+Legend:
+- Removed
++ Added
+* Altered
+> Comment
+
+> 2012.1226
+> v.1.1 realeased.
+
+> 2012.1225
++ Implemented the keybinding dialog.
++ Added a global shutdown variable.
+* All enemy behaviour times have been changed from consts to object fields,
+  with their values slightly randomized upon object creation.
++ Implemented the gameworld selection dialog.
+* Instead of separate main menu entries, the player is presented with
+  gameworld selection dialog when (s)he wishes to begin/load a game.
+> Finished the tutorial.
+
+> 2012.1224
++ Added automatic pause upon losing application focus.
++ Added automatic savegame upon death, progress (delivering a colour)
+  and program exit.
+* Moved ChangeRoom() and DestoryEntities() to shared.
+* Separate savegames for every gameworld.
+
+> 2012.1223
++ Added the configfiles unit.
++ Added some comments in case anyone would actually want to read the code.
+* Divided tutorial and game maps into subfolders.
+* "tile" roomscript command now takes (1,1)-(20,20) coords,
+  instead of (0,0)-(19,19).
+
+> 2012.1222
+* Fixed loading sounds not updating the progress bar.
+* Moved room loading from rooms/initialization to shared/interface/LoadRes().
++ Added the floatingtext unit.
+* Changed the main menu a bit and into/outro programming.
++ Added volume setting and volume UI display.
++ Added pause feature.
++ Added window resizing ability.
+* Fixed Basher's programming.
+  (When going down, used to bounce off left, instead of up.)
++ Woman is now randomly displayed in one of central palette's colours.
++ Hero has a 1/5 chance to be drawn with the colour
+  of the currently held artifact.
++ Added four new tile types.
+* Some changes in game maps.
+* Fixed a memory leak (not destroying enemy objects upon death).
++ Added verbose initialization info.
+
+= 2012.1218 =
++ Added some debug tools.
+
+= 2012.1216 =
+> Ludum Dare 25 concluded, Colorful released.

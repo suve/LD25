@@ -37,9 +37,10 @@ has quite a large userbase, so contrary to what many C-users might
 be thinking, it's far from being dead.
 
 Okay, enough ranting. The code, as you can expect from a game made
-for a 48h compo, is complete crap. Data organization defies all
-known project standards, there's a shitload of copypasta and the
-comments are scarce. Thankfully I used intendation.
+for a 48h compo, is quite crappy. Since this is a post-compo version,
+some cleanup has been made, functions have been moved, comments have
+added. But it's still far from being state-of-the-art, so don't
+expect me to cover the damage if you hurt your eyes looking at it.
 
 You can use this code anyway you please, with the following exceptions:
 - making an improved version of the game
