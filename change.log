@@ -6,6 +6,16 @@ Legend:
 * Altered
 > Comment
 
+> 2014.0316
+* Fixed a bug which made an SDL_Mixer call before the library was initialized.
+  Which, quite amusingly, led to division by zero and crash on some machines,
+  and worked perfectly fine on others.
+> v.1.2 released, after sitting on my HDD for over a year.
+
+> 2013.0108
+* Replaced BASS with SDL_Mixer for audio handling.
+* Moved finalization from main() to QuitProg().
+
 > 2012.1226
 > v.1.1 realeased.
 

@@ -2,12 +2,12 @@ unit shared; {$MODE OBJFPC} {$COPERATORS ON} {$WRITEABLECONST OFF} {$TYPEDADDRES
 
 interface
 
-uses SDL, Sour, GL, Objects, BASS, SysUtils;
+uses SDL, Sour, GL, Objects, SDL_Mixer, SysUtils;
 
 // A shitload of constants - but hey, this is the 'shared' unit, isn't it?
 
 const GAMENAME = 'Colorful'; GAMEAUTH = 'suve';
-      MAJORNUM = '1'; MINORNUM = '1'; GAMEVERS = MAJORNUM+'.'+MINORNUM;
+      MAJORNUM = '1'; MINORNUM = '2'; GAMEVERS = MAJORNUM+'.'+MINORNUM;
       GAMEDATE = {$INCLUDE %DATE%}+', '+{$INCLUDE %TIME%};
 
       FPS_LIMIT = 120; TICKS_MINIMUM = 1000 div FPS_LIMIT;
@@ -39,8 +39,12 @@ Const ORG_MAP_W = 7; ORG_MAP_H = 7; ORG_ROOMNUM = ORG_MAP_W*ORG_MAP_H;
 
       FILES_TO_LOAD = CHARAS + BULLETS + SOUNDS + OTHERS + SLIDES_IN + SLIDES_OUT +
                       ORG_ROOMNUM + TUT_ROOMNUM;
+      FILES_NOSOUND = FILES_TO_LOAD - SOUNDS;
 
       AnimFPS = 16; AnimTime = 1000 div AnimFPS;
+
+      AUDIO_FREQ = 22050; AUDIO_TYPE = AUDIO_S16; AUDIO_CHAN = 2; AUDIO_CSIZ = 2048;
+      SFXCHANNELS = 32;
 
       GibSpeed = TILE_S*8; GIB_X = 4; GIB_Y = 4;
       DeathLength = 2500; WOMAN = 8;
@@ -55,13 +59,15 @@ Const UIcolour : Array[0..7] of LongWord =
       
       ColourName : Array[0..7] of AnsiString = 
       ('black','navy','green','blue','red','purple','yellow','white');
+      
+      VolLevel_MAX = 6;
 
 Type TPlayerKey = (KEY_UP, KEY_RIGHT, KEY_DOWN, KEY_LEFT, KEY_SHOOTLEFT, KEY_SHOOTRIGHT,
                    KEY_PAUSE, KEY_VOLDOWN, KEY_VOLUP);
      TEnemyType = (ENEM_DRONE,ENEM_BASHER,ENEM_BALL,ENEM_SPITTER,ENEM_SPAMMER,
                    ENEM_GENERATOR, ENEM_TURRET);
      TColState = (STATE_NONE,STATE_PICKED,STATE_GIVEN);
-     TVolLevel = 0..6;
+     TVolLevel = 0..VolLevel_MAX;
      TCrystal = record
      IsSet : Boolean;
      mX, mY: LongInt;
@@ -85,7 +91,7 @@ var Screen : PSDL_Surface;  // SDL Video surface
 
     Font, NumFont : Sour.PFont; //Fonts
 
-    Sfx  : Array[0..SOUNDS-1] of HSAMPLE; //Sfx array
+    Sfx  : Array[0..SOUNDS-1] of PMix_Chunk; //Sfx array
 
     Hero : PPlayer;
     PBul, EBul : Array of PBullet;
@@ -106,7 +112,7 @@ var Screen : PSDL_Surface;  // SDL Video surface
     // Gamestate variables
 
     SaveExists : Array[TGameMode] of Boolean;
-    Shutdown : Boolean;
+    Shutdown, NoSound : Boolean;
 
 Type UpdateProc = Procedure(Name:AnsiString;Perc:Double);
 
@@ -141,8 +147,8 @@ Function IntToStr(Num:LongWord;Digits:LongWord=0;Chr:Char='0'):AnsiString; Overl
 Function StrToInt(S:AnsiString):Int64;
 
 // Volume functions
-Procedure ChgVol(Change:LongInt);
-Procedure SetVol(NewVol:TVolLevel);
+Procedure ChgVol(Change:LongInt;ChgChanVol:Boolean = TRUE);
+Procedure SetVol(NewVol:TVolLevel;ChgChanVol:Boolean = TRUE);
 Function  GetVol:TVolLevel;
 
 // Play a sound
@@ -172,11 +178,11 @@ Function LoadRes(Out Status:AnsiString; Update : UpdateProc = NIL):Boolean;
 Procedure Free();
 
 implementation
-   uses Rooms, FloatingText;
+   uses Rooms, FloatingText, ConfigFiles;
 
 var Tikku : LongWord;
     VolLevel : TVolLevel;
-    Volume : Double;
+    Volume : LongWord;
 
 Procedure GetDeltaTime(Out Time:LongWord);
    begin
@@ -276,28 +282,32 @@ Function StrToInt(S:AnsiString):Int64;
    If (S[1]<>'-') then Exit(R) else Exit(-R)
    end;
 
-Procedure ChgVol(Change:LongInt);
+Procedure ChgVol(Change:LongInt;ChgChanVol:Boolean = TRUE);
    begin
    Change+=VolLevel;
-   If (Change<Low(VolLevel)) then SetVol(Low(VolLevel)) else
-   If (Change>High(VolLevel)) then SetVol(High(VolLevel)) {else}
-                               else SetVol(Change)
+   If (Change<Low(VolLevel)) then SetVol(Low(VolLevel),ChgChanVol) else
+   If (Change>High(VolLevel)) then SetVol(High(VolLevel),ChgChanVol) {else}
+                               else SetVol(Change,ChgChanVol)
    end;
 
-Procedure SetVol(NewVol:TVolLevel);
-   begin VolLevel:=NewVol; Volume:=VolLevel / High(TVolLevel) end;
+Procedure SetVol(NewVol:TVolLevel;ChgChanVol:Boolean = TRUE);
+   begin
+   VolLevel:=NewVol;
+   Volume:=Trunc(VolLevel * MIX_MAX_VOLUME / VolLevel_MAX);
+   If (Not NoSound) and (ChgChanVol) then Mix_Volume( -1, Volume)
+      // When -1 is passes to Mix_Volume, it changes volume of all channels
+   end;
 
 Function GetVol:TVolLevel;
    begin Exit(VolLevel) end;
 
 Procedure PlaySfx(ID:LongWord);
-   Var Chan:HCHANNEL;
+   Var Chan:LongInt;
    begin
-   If (ID>=SOUNDS) then Exit;
-   Chan:=BASS_SampleGetChannel(Sfx[ID],False);
-   If (Chan = 0) then Exit;
-   BASS_ChannelSetAttribute(Chan,BASS_Attrib_Vol,Volume);
-   BASS_ChannelPlay(Chan,True)
+   If (NoSound) or (ID>=SOUNDS) then Exit;
+   Chan:=Mix_PlayChannel(-1, Sfx[ID], 0);
+   If (Chan < 0) then Exit;
+   Mix_Volume(Chan, Volume)
    end;
 
 Procedure PlaceBullet(Owner:PEntity;XV,YV,Pow:Double;Tp:LongWord);
@@ -416,155 +426,159 @@ const GFX_TITLE = 'gfx/title.png'; FILE_FONT = 'gfx/font.png';
 
 Function LoadBasics(Out Status:AnsiString):Boolean;
    begin
-   TitleGfx:=Sour.LoadImage(GFX_TITLE);
-   If (TitleGfx=NIL) then begin Status:=('Failed to load file: '+GFX_TITLE); Exit(False) end;
-   Font:=Sour.LoadFont(FILE_FONT,$000000,5,7,#32);
-   If (Font=NIL) then begin Status:=('Failed to load file: '+FILE_FONT); Exit(False) end;
+   TitleGfx:=Sour.LoadImage(DataPath+GFX_TITLE);
+   If (TitleGfx=NIL) then begin Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}GFX_TITLE); Exit(False) end;
+   Font:=Sour.LoadFont(DataPath+FILE_FONT,$000000,5,7,#32);
+   If (Font=NIL) then begin Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}FILE_FONT); Exit(False) end;
    Sour.SetFontSpacing(Font,1,1);
    Exit(True)
    end;
 
 Function LoadRes(Out Status:AnsiString; Update : UpdateProc = NIL):Boolean;
-   Var FilesLoaded, C,X,Y:LongWord; S:AnsiString;
-       Img:Sour.PImage; Samp:HSAMPLE; R:PRoom;
+   Var FilesLoaded, FilesTotal, C,X,Y:LongWord; S:AnsiString;
+       Img:Sour.PImage; Samp:PMix_Chunk; R:PRoom;
    begin
    FilesLoaded:=0;
+   If (Not NoSound) then FilesTotal:=FILES_TO_LOAD
+                    else FilesTotal:=FILES_NOSOUND;
    // SOME MINOR SETUP
-   NumFont:=Sour.LoadFont(NUMFONTFILE,$000000,3,5,'0');
+   NumFont:=Sour.LoadFont(DataPath+NUMFONTFILE,$000000,3,5,'0');
    If (NumFont = NIL) then begin
-      Status:=('Failed to load file: '+NUMFONTFILE);
+      Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}NUMFONTFILE);
       Exit(False)
       end;
    Sour.SetFontSpacing(NumFont,1,1);
-   FilesLoaded+=1; Update(FILE_TILES,FilesLoaded / FILES_TO_LOAD);
+   FilesLoaded+=1; Update(NUMFONTFILE,FilesLoaded / FilesTotal);
    // Loaded numfont for fps
-   TileGfx:=Sour.LoadImage(FILE_TILES,$000000);
+   TileGfx:=Sour.LoadImage(DataPath+FILE_TILES,$000000);
    If (TileGfx = NIL) then begin
-      Status:=('Failed to load file: '+FILE_TILES);
+      Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}FILE_TILES);
       Exit(False)
       end;
-   FilesLoaded+=1; Update(FILE_TILES,FilesLoaded / FILES_TO_LOAD);
+   FilesLoaded+=1; Update(FILE_TILES,FilesLoaded / FilesTotal);
    // Loaded tiles
-   UIgfx:=Sour.LoadImage(FILE_UI,$00FF00);
+   UIgfx:=Sour.LoadImage(DataPath+FILE_UI,$00FF00);
    If (UIgfx = NIL) then begin
-      Status:=('Failed to load file: '+FILE_UI);
+      Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}FILE_UI);
       Exit(False)
       end;
-   FilesLoaded+=1; Update(FILE_UI,FilesLoaded / FILES_TO_LOAD);
+   FilesLoaded+=1; Update(FILE_UI,FilesLoaded / FilesTotal);
    // UI loaded
-   ColGfx:=Sour.LoadImage(FILE_COLOURS,$808080);
+   ColGfx:=Sour.LoadImage(DataPath+FILE_COLOURS,$808080);
    If (ColGfx = NIL) then begin
-      Status:=('Failed to load file: '+FILE_UI);
+      Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}FILE_UI);
       Exit(False)
       end;
-   FilesLoaded+=1; Update(FILE_COLOURS,FilesLoaded / FILES_TO_LOAD);
+   FilesLoaded+=1; Update(FILE_COLOURS,FilesLoaded / FilesTotal);
    // Loaded colours (crystals). Load intro/outro slides
    For C:=0 to SLIDES_IN-1 do begin
        WriteStr(S,'intro/slide',C,'.png');
-       Img:=Sour.LoadImage(S,$000000);
+       Img:=Sour.LoadImage(DataPath+S,$000000);
        If (Img=NIL) then begin
-          Status:=('Failed to load file: '+S);
+          Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S);
           Exit(False)
           end;
        SlideIn[C]:=Img;
-       FilesLoaded+=1; Update(S,FilesLoaded / FILES_TO_LOAD)
+       FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
        end;
    For C:=0 to SLIDES_OUT-1 do begin
        WriteStr(S,'intro/out',C,'.png');
-       Img:=Sour.LoadImage(S,$000000);
+       Img:=Sour.LoadImage(DataPath+S,$000000);
        If (Img=NIL) then begin
-          Status:=('Failed to load file: '+S);
+          Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S);
           Exit(False)
           end;
        SlideOut[C]:=Img;
-       FilesLoaded+=1; Update(S,FilesLoaded / FILES_TO_LOAD)
+       FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
        end;
    // Loaded slides. Load charas
    For C:=0 to CHARAS-1 do begin
-       Img:=Sour.LoadImage(GFX_FILE[C],$000000);
+       Img:=Sour.LoadImage(DataPath+GFX_FILE[C],$000000);
        If (Img=NIL) then begin
-          Status:=('Failed to load file: '+GFX_FILE[C]);
+          Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}GFX_FILE[C]);
           Exit(False)
           end;
        CharaGfx[C]:=Img;
-       FilesLoaded+=1; Update(GFX_FILE[C],FilesLoaded / FILES_TO_LOAD)
+       FilesLoaded+=1; Update(GFX_FILE[C],FilesLoaded / FilesTotal)
        end;
    // Loaded characters, time for them bullets
    For C:=0 to BULLETS-1 do begin
        WriteStr(S,'gfx/shot',C,'.png');
-       Img:=Sour.LoadImage(S,$000000);
+       Img:=Sour.LoadImage(DataPath+S,$000000);
        If (Img=NIL) then begin
-          Status:=('Failed to load file: '+S);
+          Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S);
           Exit(False)
           end;
        ShotGfx[C]:=Img;
-       FilesLoaded+=1; Update(S,FilesLoaded / FILES_TO_LOAD)
+       FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
        end;
    // Loaded bullets, time for sfx
-   For C:=0 to (WALL_SFX - 1) do begin
-       WriteStr(S,'sfx/wall',C,'.wav');
-       Samp:=BASS_SampleLoad(FALSE,PChar(S),0,0,64,0);
-       If (Samp = 0) then begin
-          Status:='Failed to load file: '+S; Exit(False) end;
-       Sfx[SFX_WALL+C]:=Samp;
-       FilesLoaded+=1; Update(S,FilesLoaded / FILES_TO_LOAD)
-       end;
-   For C:=0 to (METAL_SFX - 1) do begin
-       WriteStr(S,'sfx/metal',C,'.wav');
-       Samp:=BASS_SampleLoad(FALSE,PChar(S),0,0,64,0);
-       If (Samp = 0) then begin
-          Status:='Failed to load file: '+S; Exit(False) end;
-       Sfx[SFX_METAL+C]:=Samp;
-       FilesLoaded+=1; Update(S,FilesLoaded / FILES_TO_LOAD)
-       end;
-   For C:=0 to (DIE_SFX - 1) do begin
-       WriteStr(S,'sfx/die',C,'.wav');
-       Samp:=BASS_SampleLoad(FALSE,PChar(S),0,0,64,0);
-       If (Samp = 0) then begin
-          Status:='Failed to load file: '+S; Exit(False) end;
-       Sfx[SFX_DIE+C]:=Samp;
-       FilesLoaded+=1; Update(S,FilesLoaded / FILES_TO_LOAD)
-       end;
-   For C:=0 to (SHOT_SFX - 1) do begin
-       WriteStr(S,'sfx/shot',C,'.wav');
-       Samp:=BASS_SampleLoad(FALSE,PChar(S),0,0,64,0);
-       If (Samp = 0) then begin
-          Status:='Failed to load file: '+S; Exit(False) end;
-       Sfx[SFX_SHOT+C]:=Samp;
-       FilesLoaded+=1; Update(S,FilesLoaded / FILES_TO_LOAD)
-       end;
-   For C:=0 to (HIT_SFX - 1) do begin
-       WriteStr(S,'sfx/hit',C,'.wav');
-       Samp:=BASS_SampleLoad(FALSE,PChar(S),0,0,64,0);
-       If (Samp = 0) then begin
-          Status:='Failed to load file: '+S; Exit(False) end;
-       Sfx[SFX_HIT+C]:=Samp;
-       FilesLoaded+=1; Update(S,FilesLoaded / FILES_TO_LOAD)
-       end;
-   For C:=0 to (EXTRA_SFX - 1) do begin
-       WriteStr(S,'sfx/extra',C,'.wav');
-       Samp:=BASS_SampleLoad(FALSE,PChar(S),0,0,64,0);
-       If (Samp = 0) then begin
-          Status:='Failed to load file: '+S; Exit(False) end;
-       Sfx[SFX_EXTRA+C]:=Samp;
-       FilesLoaded+=1; Update(S,FilesLoaded / FILES_TO_LOAD)
-       end;
-   // Sounds loaded. Get them maps!
+   If (Not NoSound) then begin
+      For C:=0 to (WALL_SFX - 1) do begin
+          WriteStr(S,'sfx/wall',C,'.wav');
+          Samp:=Mix_LoadWAV(PChar(DataPath+S));
+          If (Samp = NIL) then begin
+             Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S; Exit(False) end;
+          Sfx[SFX_WALL+C]:=Samp;
+          FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
+          end;
+      For C:=0 to (METAL_SFX - 1) do begin
+          WriteStr(S,'sfx/metal',C,'.wav');
+          Samp:=Mix_LoadWAV(PChar(DataPath+S));
+          If (Samp = NIL) then begin
+             Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S; Exit(False) end;
+          Sfx[SFX_METAL+C]:=Samp;
+          FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
+          end;
+      For C:=0 to (DIE_SFX - 1) do begin
+          WriteStr(S,'sfx/die',C,'.wav');
+          Samp:=Mix_LoadWAV(PChar(DataPath+S));
+          If (Samp = NIL) then begin
+             Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S; Exit(False) end;
+          Sfx[SFX_DIE+C]:=Samp;
+          FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
+          end;
+      For C:=0 to (SHOT_SFX - 1) do begin
+          WriteStr(S,'sfx/shot',C,'.wav');
+          Samp:=Mix_LoadWAV(PChar(DataPath+S));
+          If (Samp = NIL) then begin
+             Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S; Exit(False) end;
+          Sfx[SFX_SHOT+C]:=Samp;
+          FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
+          end;
+      For C:=0 to (HIT_SFX - 1) do begin
+          WriteStr(S,'sfx/hit',C,'.wav');
+          Samp:=Mix_LoadWAV(PChar(DataPath+S));
+          If (Samp = NIL) then begin
+             Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S; Exit(False) end;
+          Sfx[SFX_HIT+C]:=Samp;
+          FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
+          end;
+      For C:=0 to (EXTRA_SFX - 1) do begin
+          WriteStr(S,'sfx/extra',C,'.wav');
+          Samp:=Mix_LoadWAV(PChar(DataPath+S));
+          If (Samp = NIL) then begin
+             Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S; Exit(False) end;
+          Sfx[SFX_EXTRA+C]:=Samp;
+          FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
+          end
+      end;
+   // Sounds loaded (or skipped). Get them maps!
    For Y:=0 to (ORG_MAP_H-1) do For X:=0 to (ORG_MAP_W-1) do begin
        WriteStr(S,PATH_ORG,X,'-',Y,'.txt');
-       R:=LoadRoom(S);
+       R:=LoadRoom(DataPath+S);
        If (R = NIL) then begin
-          Status:='Failed to load file: '+S; Exit(False) end;
+          Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S; Exit(False) end;
        R^.X:=X; R^.Y:=Y; OrgRoom[X][Y]:=R;
-       FilesLoaded+=1; Update(S,FilesLoaded / FILES_TO_LOAD)
+       FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
        end;
    For Y:=0 to (TUT_MAP_H-1) do For X:=0 to (TUT_MAP_W-1) do begin
        WriteStr(S,PATH_TUT,X,'-',Y,'.txt');
-       R:=LoadRoom(S);
+       R:=LoadRoom(DataPath+S);
        If (R = NIL) then begin
-          Status:='Failed to load file: '+S; Exit(False) end;
+          Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S; Exit(False) end;
        R^.X:=X; R^.Y:=Y; TutRoom[X][Y]:=R;
-       FilesLoaded+=1; Update(S,FilesLoaded / FILES_TO_LOAD)
+       FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
        end;
    Exit(True)
    end;
@@ -589,12 +603,21 @@ Procedure Free;
        If (CharaGfx[C]<>NIL) then Sour.FreeImage(CharaGfx[C]);
    For C:=0 to BULLETS-1 do
        If (ShotGfx[C]<>NIL) then Sour.FreeImage(ShotGfx[C]);
+   If (Not NoSound) then begin
+      Mix_HaltChannel(-1);     //Halt all playing sounds
+      Mix_AllocateChannels(0); //Free all sfx channels
+      (* We do the two above to make sure no sound is being played.
+         Freeing a sample (Chunk) that is being played is a bad idea. *)
+      For C:=0 to (SOUNDS-1) do
+          If (Sfx[C] <> NIL) then Mix_FreeChunk(Sfx[C])
+      end;
    DestroyEntities(True);
    FreeRooms();
    end;
 
 initialization
-   Shutdown:=False; GameOn:=False; Tikku := 0;
+   Shutdown:=False; GameOn:=False; NoSound:=False;
+   Tikku := 0;
 
 end.
 

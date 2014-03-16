@@ -56,12 +56,12 @@ Function SaveGame(GM:TGameMode):Boolean;
    { $I compiler switch controls generation of IO checking code. In "on" state
      (+), any error during IO operarions will result in a runtime error. In its
      "off" (-) state, no runtime errors are raised; instead, errorcode of the
-     latest operation is put into the IOResult variable. 0 means everything
-     went fine. So, we turn off generating runtime errors during the rewrite
-     operation and check the errorcode right after. If it's different than
-     zero, something went wrong. We could check the IOResult errorcode table to
-     provide the user with precise information what screwed up, but I don't
-     really think anyone cares that much. }
+     latest operation can be read by calling the IOResult() function. 0 means
+     everything went fine. So, we turn off generating runtime errors during the
+     rewrite operation and check the errorcode right after. If it's different
+     than zero, something went wrong. We could check the IOResult errorcode
+     table to provide the user with precise information what screwed up, but
+     I don't really think anyone cares that much. }
 
    Writeln(F,'[Meta]');
    Writeln(F,'Version=',GAMEVERS);
@@ -155,7 +155,7 @@ Function LoadIni():Boolean;
       Wnd_H:=StrToIntDef(Str.Values['Height'],WINDOW_H);
       Wnd_F:=StrToBoolDef(Str.Values['Fullscreen'],False);
    Ini.ReadSectionValues('Audio',Str);
-      SetVol(StrToIntDef(Str.Values['Volume'],High(TVolLevel)));
+      SetVol(StrToIntDef(Str.Values['Volume'],High(TVolLevel)),FALSE);
    Ini.ReadSectionValues('Keybind',Str);
    For K:=Low(K) to High(K) do begin
        WriteStr(Name,K);
@@ -178,7 +178,7 @@ Procedure DefaultSettings();
    // Key bindings
    Wnd_W:=WINDOW_W; Wnd_H:=WINDOW_H; Wnd_F:=False;
    // Window size
-   SetVol(High(TVolLevel)) // Audio volume
+   SetVol(VolLevel_MAX,False) // Audio volume
    end;
 
 Procedure SetPaths();
@@ -186,7 +186,8 @@ Procedure SetPaths();
    ConfPath:=GetEnvironmentVariable(HomeVar)+ConfDir;
    (* Retrieve the appropriate place for storing the config files and
       add our folder tree to create the configuration path. *)
-
+   
+   {$IFNDEF PACKAGE}
    DataPath:=ExtractFileDir(ParamStr(0))+DirDelim;
    (* On most systems, ParamStr(0) returns the full path to the executable.
       ExtractFileDir() takes a string and returns everything until the last
@@ -194,19 +195,12 @@ Procedure SetPaths();
       add the delimeter and voila, we now know where the executable resides.
       All the data files (gfx, sfx, maps) should be found within subfolders
       of this location. *)
-
-   {$I-} chDir(DataPath); {$I+}
-   (* Change current working directory to DataPath. On Winderps, unless the user
-      specifies otherwise, programs are run in their installation directory.
-      However, in Lunix, in most cases programs are run either in the current
-      directory (when launched from console) or in the user's home directory
-      (when launched from a file manager). So, we change the working directory
-      to DataPath, so we can later easily read all the gfx/sfx/maps. We could,
-      of course, just precede all file paths with DataPath, so
-      > Img:=Sour.LoadImage('gfx/hero.png')
-      would become
-      > Img:=Sour.LoadImage(DataPath+'gfx/hero.png')
-      but oh well, this is the simpler way. And the code is more readable. *)
+   
+   {$ELSE}
+   DataPath:='/usr/share/suve/colorful/';
+   (* If we are building a package version, data files should be found in
+      this pre-determined location. *)
+   {$ENDIF}
    end;
 
 initialization

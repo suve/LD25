@@ -1,5 +1,5 @@
 program ld25; {$MODE OBJFPC} {$TYPEDADDRESS ON} {$COPERATORS ON} {$WRITEABLECONST OFF}
-   uses SysUtils, Shared, SDL, Sour, GL, BASS, Rooms, Objects, FloatingText, configfiles;
+   uses SysUtils, Shared, SDL, Sour, GL, SDL_Mixer, Rooms, Objects, FloatingText, configfiles;
 
 //{$DEFINE DEVELOPER}
 (* Activates some debug functions. Remember to comment out when building a public release! *)
@@ -19,7 +19,7 @@ Procedure LoadUpdate(Name:AnsiString;Perc:Double);
    Const STARTX = RESOL_W div 32; SIZEX = RESOL_W - (STARTX*2);
          SIZEY = RESOL_H div 32; STARTY = RESOL_H - (SIZEY*3);
    Var Rect:Sour.TRect; Col:Sour.TColour;
-   begin
+   begin 
    Sour.BeginFrame(); DrawTitle();
    Sour.SetFontScaling(Font,2);
    Sour.PrintText(UpperCase(Name),Font,(RESOL_W div 2),STARTY-(Font^.ChrW*2),ALIGN_CENTER,ALIGN_MIDDLE);
@@ -229,12 +229,18 @@ Function Startup():Boolean;
       end;
    For GM:=Low(GM) to High(GM)
        do SaveExists[GM]:=IHasGame(GM);
-   Write('Initializing BASS... ');
-   If (Not BASS_Init(1,44100,0,0,NIL))
-      then Writeln('Failed!') else Writeln('Success!');
-   Write('Initializing SDL... ');
+   Write('Initializing SDL video... ');
    If (SDL_Init(SDL_Init_Video or SDL_Init_Timer)<>0) then begin
       Writeln('Failed!'); Halt(1) end else Writeln('Success!');
+   Write('Initializing SDL audio... ');
+   If (SDL_InitSubSystem(SDL_Init_Audio)<>0) then begin
+      Writeln('Failed!'); NoSound:=True end else Writeln('Success!');
+   If (Not NoSound) then begin
+      Write('Initializing SDL_mixer... ');
+      If (Mix_OpenAudio(AUDIO_FREQ, AUDIO_TYPE, AUDIO_CHAN, AUDIO_CSIZ)<>0) then begin
+         Writeln('Failed!'); NoSound:=True end else Writeln('Success!')
+      end else Writeln('SDL audio init failed - skipping SDL_mixer init.');
+   If (Not NoSound) then Mix_AllocateChannels(SFXCHANNELS);
    Sour.SetGLAttributes(8,8,8);
    Write('Opening window... ');
    If (Not Wnd_F)
@@ -249,11 +255,11 @@ Function Startup():Boolean;
    Sour.NonPOT := True;
    Write('Loading basic resources... ');
    If Not Shared.LoadBasics(S) then begin
-      Writeln('ERROR: ',S); Exit(False)
+      Writeln('ERROR'); Writeln(S); Exit(False)
       end else Writeln('Success!');
    Write('Loading gameworld resources... ');
    If Not Shared.LoadRes(S,@LoadUpdate) then begin
-      Writeln('ERROR: ',S); Exit(False);
+      Writeln('ERROR'); Writeln(S); Exit(False);
       end else Writeln('Success!');
    SetLength(Mob,0); SetLength(EBul,0); SetLength(PBul,0); SetLength(Gib,0); Hero:=NIL;
    Writeln('All done! Initialization finished in ',((GetMSecs()-Timu)/1000):0:2,' second(s).');
@@ -675,11 +681,27 @@ Function PlayableLulz():Boolean;
    Exit(Given >= 8)
    end;
 
+Procedure QuitProg();
+   Var Timu:Comp;
+   begin
+   Timu:=GetMSecs();
+   Write('Freeing resouces... '); Shared.Free(); Writeln('Done.');
+   Write('Closing SDL_mixer... '); Mix_CloseAudio(); Writeln('Done.');
+   Write('Closing SDL... '); SDL_Quit(); Writeln('Done.');
+   If (GameOn) then begin
+      Write('Saving current game...');
+      If (SaveGame(GameMode)) then Writeln('Done.') end;
+   Write('Saving configuration file... ');
+   If (SaveIni()) then Writeln('Done.');
+   Writeln('Finalization finished in ',((GetMSecs-Timu)/1000):0:2,' second(s).');
+   Writeln('Thanks for playing and have a nice day!');
+   end;
+
 begin
 Writeln(GAMENAME,' by ',GAMEAUTH);
 Writeln('v.',GAMEVERS,' (build ',GAMEDATE,')');
 Writeln(StringOfChar('-',36));
-Startup();
+If (Not Startup()) Then Halt(255);
 Repeat
    MenuChoice:=Menu();
    Case MenuChoice of
@@ -715,13 +737,6 @@ Repeat
    If (GameOn) and (GameMode <> GM_TUTORIAL) and (Given >= 8) then begin
       GameOn:=False; Outro() end;
    Until (MenuChoice = 'Q') or (Shutdown);
-Write('Freeing resouces... '); Shared.Free(); Writeln('Done.');
-Write('Closing BASS... '); BASS_Free(); Writeln('Done.');
-Write('Closing SDL... '); SDL_Quit(); Writeln('Done.');
-If (GameOn) then begin
-   Write('Saving current game...');
-   If (SaveGame(GameMode)) then Writeln('Done.') end;
-Write('Saving configuration file... ');
-If (SaveIni()) then Writeln('Done.');
+QuitProg()
 end.
 
