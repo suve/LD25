@@ -1,29 +1,25 @@
-Colorful
-by Super Vegeta
-
-Contact:   veg [ at ] svgames.pl
-Homepage:  http://svgames.pl
+**Colorful**
 
 A Ludum Dare 25 game
+
 48h compo entry
+
 Theme: You are the villain
 
-POST-COMPO VERSION
+__**POST-COMPO VERSION**__
 
-0. Licensing
-1. Language info
-2. Libraries used
-3. Building instructions
-4. Author's rambling
 
---- 0. Licensing ------------------------
+Licensing
+---------------------------
 Colorful is released under the "zlib with acknowledgement" license.
 
 The full text of the license can be found in the LICENSE.txt file.
 
 
---- 1. Language info --------------------
+Language info
+-----------------------
 Language: Object Pascal
+
 Recommended compiler: Free Pascal Compiler
 
 The release versions (both Win32 and Linux) have been compiled 
@@ -34,17 +30,19 @@ so I think that even older versions should be able to build
 the game quite eagerly.
 
 
---- 2. Libraries used -------------------
+Libraries used
+----------------------
 The game uses SDL (along with SDL_image and SDL_mixer) libraries
 for event handling, gfx and sfx; and the Sour lib.
 
 Simple DirectMedia Layer
 http://libsdl.org
 
-Sour is my own handiwork and can be downloaded from my site.
+Sour is my own handiwork and can be downloaded from my site. A copy is also bundled with those GitHub sources.
 
 
---- 3. Building instructions ------------
+Building instructions
+-----------------
 Since version 2.2.2, FPC comes with most of the SDL units included.
 You could, alternatively, get a copy from http://delphi-jedi.org.
 
@@ -52,11 +50,12 @@ Sour is bundled with the Colorful source.
 You could, alternatively, get a copy from my homepage.
 
 To build, just compile the main source.
-$ fpc ld25.pas
+    
+    $ fpc ld25.pas
 
-To cross-compile, consult FPC help for the list of available targets.
-$ fpc -Twin32 ld25.pas   // To compile for Windows 32-bit
-$ fpc -Tlinux ld25.pas   // To compile for Linux
+You can also use the makefile, which sets up some additional compile flags.
+    
+    $ make
 
 Note that the configfiles.pas file holds some game constants (mostly
 file paths) used to determine where to place config files. These
@@ -70,8 +69,11 @@ Also, note that, by default, on Linux, SDL_mixer links and depends on
 smpeg for MP3 support. Since Colorful does not use MP3s, and less 
 dependencies is better, my releases are compiled using a slightly 
 altered version of SDL_mixer.pas, disabling the smpeg capabilities.
+This version is also bundled with the GitHub sources.
 
---- 4. Author's rambling ----------------
+
+Author's rambling
+-------------------
 No, I'm not joking. It's that dead-since-always language, Pascal.
 Well actually, Pascal, despite not being to popular in business,
 has quite a large userbase, so contrary to what many C-users might
