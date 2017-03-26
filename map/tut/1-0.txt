@@ -1,0 +1,62 @@
+                    
+                    
+XXXXXXXXXXXXXXXXXXXX
+:                  X
+:                  X
+XXXXXXXXXXXXXXXXX  X
+X                  X
+X                  X
+X  XXXXXXXXXXXXXXXXX
+X                  X
+X                  X
+XXXXXXXXXXX  XXXXXXX
+XXXXXXXXXXX  XXXXXXX
+X                  X
+X        XX        X
+X  XX          XX  X
+X  XX          XX  X
+X        XX        :
+X                  :
+XXXXXXXXXXXXXXXXXXXX
+palette white
+text white 18 02 Use your fire keys (default: Z/X) to shoot.
+text white 18 12 When touching an enemy, you both get damaged.
+text white 18 22 So don't let 'em catch you!
+text black 168 36 These fellas are drones. 
+text black 076 84 Two shots should take them down.
+text black 01 178 These guys are bashers. 
+text black 01 188 They only move straight
+text black 01 198 up, down, left or right.
+text black 210 178 Quite quick.
+text black 210 188 Watch out!
+spawn drone 19 04
+spawn drone 18 05
+spawn drone 10 07
+spawn drone 10 08
+spawn drone 11 10 20
+spawn drone 11 11 21
+spawn drone 19 10 22
+spawn drone 19 11 23
+spawn basher 02 14
+spawn basher 15 14
+spawn basher 10 17
+if 25
+   tile 20 06 :
+   else
+   tile 20 06 X
+   fi
+if 10
+   tile 10 20 #
+   else
+   tile 10 20 X
+   fi
+if 11
+   tile 11 20 #
+   else
+   tile 11 20 X
+   fi
+if 12
+   tile 12 20 #
+   else
+   tile 12 20 X
+   fi

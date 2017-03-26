@@ -1,0 +1,44 @@
+XXXXXXXXXXXXXXXXXXXX
+XX              XXXX
+X                  :
+X     XXXX        XX
+X   XXXXX     XXXXXX
+X    XXXXX     XXXXX
+X      XXXX     XXXX
+XXX               XX
+XX   +-------+     X
+X    |       |     X
+X    |       |    XX
+X    +  +-+  |   XXX
+X    D  | D  |    XX
+X    +  +-+  |     X
+X    |       |     X
+X    |       |    XX
+XX   +-------+   XXX
+XXX             XXXX
+XXXX            XXXX
+XXXXXXXXXXXXXXXXXXXX
+palette red
+colour red 10 13 
+spawn drone 08 02
+spawn drone 08 03
+spawn drone 10 02
+spawn drone 10 03
+spawn basher 10 08
+spawn spitter 08 11
+spawn spitter 08 15
+spawn spitter 12 11
+spawn spitter 12 15
+spawn spammer 10 18
+spawn drone 19 10
+spawn drone 02 07
+if 09
+   tile 06 13
+   else
+   tile 06 13 D
+   fi
+if 08
+   tile 11 13
+   else
+   tile 11 13 D
+   fi

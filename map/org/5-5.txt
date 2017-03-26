@@ -1,0 +1,31 @@
+XXXXX::XXXXXX|::|XXX
+XXXX    XXXXX|  |XXX
+XXXX      XXX|  +---
+XXX        XX|     :
+X           X|     :
+X           X|  +---
+XXX          |  |XXX
+XXXXX        +  |XX 
+XXXXXXXXX       |X  
+XXXXXXXXX       |X  
+X   XXXX     +  |XX 
+X      XX    |  |XX 
+X           X|  |XXX
+XX         XX|  |XXX
+XXX      XXXX|  | XX
+XX      XXXXX|  |  X
+XX         XX|  |  X
+XXXX         |  | XX
+XXXX   X    X|  |XXX
+XXXXXXXXX::XX|::|XXX
+palette green
+spawn drone 18 17
+spawn spitter 05 19
+spawn spitter 03 12
+spawn drone 02 05
+spawn drone 12 05
+spawn drone 02 06
+spawn drone 12 06
+spawn drone 03 16
+spawn drone 03 17 
+spawn drone 02 11

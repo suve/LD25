@@ -1,0 +1,26 @@
+XXXXXXXX+::+XXXXXXXX
+XXXXX            XXX
+XXX             XXXX
+XX             XXXXX
+X              XXXXX
+XXXX          +--+XX
+XXXXXX           |XX
+XXXXXXX          |XX
+XXXXXXX       X+ |XX
+XXXXXX       XX| |XX
+XXXXX      XXXX| |XX
+XXXX       XXXX| |XX
+X           XXX| |XX
+XX           XX| |XX
+XX           XX| |XX
+X           XXX| |XX
+X           XXX| |XX
+XX        XXXXX| |XX
+XX+ +X   XXXXXX| |XX
+XX|:|XXXXXXXXXX|:|XX
+palette purple
+spawn spitter 09 07
+spawn spitter 09 08
+spawn drone 13 15
+spawn drone 12 17
+spawn basher 5 5

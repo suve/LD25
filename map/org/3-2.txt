@@ -1,0 +1,27 @@
+XX|:|XXXXXXXXXX|:|XX
+XX+ +XX      XX+ +XX
+XX   X        X   XX
+X                  X
+X                  X
+X                 XX
+XXXXXX            XX
+XXXXXXXXX        XXX
+XXXXXXXXXX       XXX
+XXXXXXXXXXX     XXXX
+XXXXXXX          XXX
+XXXXXX           XXX
+X                 XX
+X                  X
+X                  X
+X               XXXX
+XX             XXXXX
+XXX           XXXXXX
+XXXXX         XXXXXX
+XXXXXXXXX##XXXXXXXXX
+palette purple
+spawn basher 10 05
+spawn spitter 19 15
+spawn drone 3 14
+spawn drone 3 16
+spawn drone 10 3
+spawn drone 12 3

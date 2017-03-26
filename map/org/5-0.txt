@@ -1,0 +1,67 @@
+XXXXXXXXXXXXXXXXXXXX
+XX     XXXXXX    XXX
+X       XXXXX     XX
+XX        XX       :
+XX                 :
+XXXX              XX
+XXXXX         XXXXXX
+XX              +--+ 
+XXX             D  |
+XXXXXXX         D  |
++----+----------+==|
+|    |             |
+|    {             |
+|                  |
+|    }             |
+|    |             |
++ +--+----------+  |
+X   D D            X
+XX  D D           XX
+XXXXXXXXXXXXXXXXXXXX
+palette navy
+if 50 not
+   spawn generator 06 14 50
+   spawn turret 07 12
+   spawn turret 07 16
+   fi
+if 69
+   tile 17 09
+   tile 17 10
+   else
+   tile 17 09 D
+   tile 17 10 D
+   fi
+if 68
+   tile 18 11
+   tile 19 11
+   else
+   tile 18 11 =
+   tile 19 11 =
+   fi
+if 85
+   tile 05 18
+   tile 05 19
+   else 
+   tile 05 18 D
+   tile 05 19 D
+   fi
+if 86
+   tile 07 18
+   tile 07 19
+   else
+   tile 07 18 D
+   tile 07 19 D
+   fi
+spawn spitter 18 19
+spawn drone 10 18
+spawn drone 10 19
+spawn drone 12 18
+spawn drone 12 19
+spawn basher 05 06
+spawn spitter 16 09
+spawn spitter 04 03
+spawn drone 04 02
+spawn drone 03 03
+spawn drone 03 08
+spawn drone 04 09
+spawn drone 14 02

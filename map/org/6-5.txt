@@ -1,0 +1,31 @@
+XXXXXXXXXXXXXXXXXXXX
+XXXXXX           XXX
+---+               X
+:         XXX      X
+:        XXXXX     X
+---+       XXX     X
+XXXX              XX
+XXXXXX          XXXX
+XXXXXXX    XX    XXX
+XXXXXXX   XXXX     X
+XXXXX      XX     XX
+XXXX            XXXX
+XX      XXX      XXX
+X      XXXXXX      X
+X     XXXXXXXX     X
++ +------+-------+ +
+|        {         |
+|                  |
+|        }         |
++--------+---------+
+palette green  
+if 65 not
+   spawn generator 10 18 65
+   fi
+spawn spitter 07 15
+spawn spitter 15 15
+spawn basher 15 05
+spawn drone 17 02
+spawn drone 18 02
+spawn drone 18 07
+spawn drone 07 08

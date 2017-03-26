@@ -1,0 +1,29 @@
+XXXXXXXXXXXXXXXXXXXX
+XX          XXXXXXXX
+:   XX        XXXXXX
+XXXXXX            XX
+XXXX             XXX
+XXXX  +------------+
+XXXX  |            |
+XXX   |            |
+XX    |            |
+XX    |            |
+X     +            |
+X                  |
+X                  |
+X     +            |
+X     |            |
+X     |            |
+XX    |            |
+XXX   |            |
+XXXX  +----+  +----+
+XXXXXXXXXXX|::|XXXXX
+palette red
+spawn drone 02 11
+spawn drone 02 14
+spawn basher 06 19
+spawn basher 05 17
+spawn spitter 10 04
+spawn drone 12 02
+spawn ball 08 07 08
+spawn ball 19 07 09

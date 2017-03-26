@@ -1,0 +1,27 @@
+X::XXXXXXXXXXXXXXXXX
+X   XXXXXXXX|XXXXXXX
+X      XXXXX|XXX   X
+XXX         |XX    X
+XXXXX       |X    XX
+XXXXXXXXX   |X    XX
+XXXXXXXXXX  |      X
+X---+----+  +      X
+X   {              X
+X                 XX
+X   }           XXXX
+X---+----+  +------X
+XXXXXXXXX|  |XX    X
+XXXX   XX|  |X     :
+XXX     X|  |      :
+XX       +  +      X
+X                 XX
+XX               XXX
+XXXXXX         XXXXX
+XXXXXXXXX+::+XXXXXXX
+palette yellow
+spawn basher 4 17
+spawn drone 16 8
+spawn spitter 7 19
+if 35 not
+   spawn generator 5 10 35
+   fi
