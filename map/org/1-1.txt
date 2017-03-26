@@ -27,10 +27,10 @@ spawn basher 15 08
 spawn spitter 03 09
 spawn drone 09 02
 if 01 
-   tile 13 01 :
-   tile 14 01 :
-   else
-   tile 13 01 =
-   tile 14 01 =
-   spawn drone 13 03
-   fi
+	tile 13 01 :
+	tile 14 01 :
+else
+	tile 13 01 =
+	tile 14 01 =
+	spawn drone 13 03
+fi

@@ -23,5 +23,5 @@ spawn basher 4 17
 spawn drone 16 8
 spawn spitter 7 19
 if 35 not
-   spawn generator 5 10 35
-   fi
+	spawn generator 5 10 35
+fi

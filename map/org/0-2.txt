@@ -20,8 +20,8 @@ XX|           |  |XX
 +----------------+XX
 palette black
 if 02 not
-   spawn generator 15 04 02
-   fi
+	spawn generator 15 04 02
+fi
 spawn turret 04 17
 spawn turret 04 18
 spawn drone 17 19

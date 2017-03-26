@@ -31,12 +31,12 @@ spawn drone 03 04
 spawn drone 10 13
 spawn drone 11 14
 if 65
-   tile 03 18
-   else
-   tile 03 18 D
-   fi
+	tile 03 18
+else
+	tile 03 18 D
+fi
 if 66
-   tile 04 18
-   else
-   tile 04 18 D
-   fi
+	tile 04 18
+else
+	tile 04 18 D
+fi

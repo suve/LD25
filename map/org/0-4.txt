@@ -20,8 +20,8 @@
 +-------------------
 palette black
 if 04 not
-   spawn generator 10 3 04
-   fi
+	spawn generator 10 3 04
+fi
 spawn spammer 16 14
 spawn basher 10 09
 spawn drone 12 19

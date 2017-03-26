@@ -41,22 +41,22 @@ spawn basher 02 14
 spawn basher 15 14
 spawn basher 10 17
 if 25
-   tile 20 06 :
-   else
-   tile 20 06 X
-   fi
+	tile 20 06 :
+else
+	tile 20 06 X
+fi
 if 10
-   tile 10 20 #
-   else
-   tile 10 20 X
-   fi
+	tile 10 20 #
+else
+	tile 10 20 X
+fi
 if 11
-   tile 11 20 #
-   else
-   tile 11 20 X
-   fi
+	tile 11 20 #
+else
+	tile 11 20 X
+fi
 if 12
-   tile 12 20 #
-   else
-   tile 12 20 X
-   fi
+	tile 12 20 #
+else
+	tile 12 20 X
+fi

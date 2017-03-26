@@ -30,5 +30,5 @@ spawn drone 11 14
 spawn drone 09 14
 spawn drone 10 15
 if 15
-   spawn basher 15 04
-   fi
+	spawn basher 15 04
+fi

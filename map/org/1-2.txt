@@ -27,7 +27,7 @@ spawn spitter 11 02
 spawn drone 19 07
 spawn drone 19 08
 if 02
-   tile 03 04
-   else
-   tile 03 04 D
-   fi
+	tile 03 04
+else
+	tile 03 04 D
+fi

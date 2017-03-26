@@ -20,8 +20,8 @@ XX              XXXX
 XXXXXXXXXXXXXXXXXXXX
 palette purple
 if 20 not
-   spawn generator 16 07 20
-   fi
+	spawn generator 16 07 20
+fi
 spawn spitter 04 19
 spawn drone 18 03
 spawn drone 16 04

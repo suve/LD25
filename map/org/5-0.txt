@@ -20,38 +20,38 @@ XX  D D           XX
 XXXXXXXXXXXXXXXXXXXX
 palette navy
 if 50 not
-   spawn generator 06 14 50
-   spawn turret 07 12
-   spawn turret 07 16
-   fi
+	spawn generator 06 14 50
+	spawn turret 07 12
+	spawn turret 07 16
+fi
 if 69
-   tile 17 09
-   tile 17 10
-   else
-   tile 17 09 D
-   tile 17 10 D
-   fi
+	tile 17 09
+	tile 17 10
+else
+	tile 17 09 D
+	tile 17 10 D
+fi
 if 68
-   tile 18 11
-   tile 19 11
-   else
-   tile 18 11 =
-   tile 19 11 =
-   fi
+	tile 18 11
+	tile 19 11
+else
+	tile 18 11 =
+	tile 19 11 =
+fi
 if 85
-   tile 05 18
-   tile 05 19
-   else 
-   tile 05 18 D
-   tile 05 19 D
-   fi
+	tile 05 18
+	tile 05 19
+else 
+	tile 05 18 D
+	tile 05 19 D
+fi
 if 86
-   tile 07 18
-   tile 07 19
-   else
-   tile 07 18 D
-   tile 07 19 D
-   fi
+	tile 07 18
+	tile 07 19
+else
+	tile 07 18 D
+	tile 07 19 D
+fi
 spawn spitter 18 19
 spawn drone 10 18
 spawn drone 10 19

@@ -30,26 +30,26 @@ spawn ball 16 13
 spawn spitter 16 08
 spawn spitter 13 15
 if 00
-   spawn spammer 13 10
-   fi
+	spawn spammer 13 10
+fi
 if 10
-   tile 03 08
-   tile 03 09
-   else
-   tile 03 08 D
-   tile 03 09 D
-   fi
+	tile 03 08
+	tile 03 09
+else
+	tile 03 08 D
+	tile 03 09 D
+fi
 if 11
-   tile 05 08
-   tile 05 09
-   else
-   tile 05 08 D
-   tile 05 09 D
-   fi
+	tile 05 08
+	tile 05 09
+else
+	tile 05 08 D
+	tile 05 09 D
+fi
 if 12
-   tile 07 08
-   tile 07 09
-   else
-   tile 07 08 D
-   tile 07 09 D
-   fi
+	tile 07 08
+	tile 07 09
+else
+	tile 07 08 D
+	tile 07 09 D
+fi

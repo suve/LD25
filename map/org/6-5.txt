@@ -20,8 +20,8 @@ X     XXXXXXXX     X
 +--------+---------+
 palette green  
 if 65 not
-   spawn generator 10 18 65
-   fi
+	spawn generator 10 18 65
+fi
 spawn spitter 07 15
 spawn spitter 15 15
 spawn basher 15 05

@@ -25,22 +25,22 @@ text white 18 22 keys (arrow keys, by default) to move around.
 text black 01 37 This small guy is your hero.
 text black 18 308 Dotted areas mark passages between rooms.  
 if 20
-   tile 11 06
-   else
-   tile 11 06 X
-   fi
+	tile 11 06
+else
+	tile 11 06 X
+fi
 if 21
-   tile 11 07
-   else
-   tile 11 07 X
-   fi
+	tile 11 07
+else
+	tile 11 07 X
+fi
 if 22
-   tile 11 08
-   else
-   tile 11 08 X
-   fi
+	tile 11 08
+else
+	tile 11 08 X
+fi
 if 23
-   tile 11 09
-   else
-   tile 11 09 X
-   fi
+	tile 11 09
+else
+	tile 11 09 X
+fi

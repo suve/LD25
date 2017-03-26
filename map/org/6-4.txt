@@ -21,8 +21,8 @@ XX|  |  +----------+
 palette blue
 colour blue 02 19
 if 64 not
-   spawn generator 06 18 64
-   fi
+	spawn generator 06 18 64
+fi
 spawn basher 11 12
 spawn basher 15 08
 spawn drone 18 03

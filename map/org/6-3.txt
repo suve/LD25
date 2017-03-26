@@ -29,30 +29,30 @@ spawn drone 13 06
 spawn drone 14 10
 spawn drone 02 11
 if 80
-   tile 16 18
-   tile 16 19
-   else
-   tile 16 18 D
-   tile 16 19 D
-   fi
+	tile 16 18
+	tile 16 19
+else
+	tile 16 18 D
+	tile 16 19 D
+fi
 if 83
-   tile 14 18
-   tile 14 19
-   else 
-   tile 14 18 D
-   tile 14 19 D
-   fi
+	tile 14 18
+	tile 14 19
+else 
+	tile 14 18 D
+	tile 14 19 D
+fi
 if 81
-   tile 12 18
-   tile 12 19
-   else 
-   tile 12 18 D
-   tile 12 19 D
-   fi
+	tile 12 18
+	tile 12 19
+else 
+	tile 12 18 D
+	tile 12 19 D
+fi
 if 82
-   tile 10 18
-   tile 10 19
-   else
-   tile 10 18 D
-   tile 10 19 D
-   fi
+	tile 10 18
+	tile 10 19
+else
+	tile 10 18 D
+	tile 10 19 D
+fi

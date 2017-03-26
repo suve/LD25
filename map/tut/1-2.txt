@@ -31,12 +31,12 @@ spawn drone 19 16
 spawn drone 02 16
 spawn drone 11 09
 if 00 not
-   spawn generator 18 05 00
-   fi
+	spawn generator 18 05 00
+fi
 if 01
-   tile 11 07
-   tile 12 07
-   else
-   tile 11 07 =
-   tile 12 07 =
-   fi
+	tile 11 07
+	tile 12 07
+else
+	tile 11 07 =
+	tile 12 07 =
+fi

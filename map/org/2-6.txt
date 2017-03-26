@@ -21,15 +21,15 @@ XXXXXXXX     XX    X
 palette white
 colour white 02 19
 if 15
-   tile 03 19
-   else
-   tile 03 19 D
-   fi
+	tile 03 19
+else
+	tile 03 19 D
+fi
 if 16
-   tile 04 19
-   else
-   tile 04 19 D
-   fi
+	tile 04 19
+else
+	tile 04 19 D
+fi
 spawn basher 06 05
 spawn ball 15 10
 spawn spitter 17 17

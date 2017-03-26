@@ -33,49 +33,49 @@ spawn drone 13 06
 spawn drone 13 07
 spawn spitter 02 15
 if 01
-   tile 12 05
-   tile 13 05
-   tile 14 06
-   tile 14 07
-   tile 12 08
-   tile 13 08
-   tile 11 06
-   tile 11 07
-   else
-   tile 12 05 =
-   tile 13 05 =
-   tile 14 06 D
-   tile 14 07 D
-   tile 12 08 =
-   tile 13 08 =
-   tile 11 06 D
-   tile 11 07 D
-   fi
+	tile 12 05
+	tile 13 05
+	tile 14 06
+	tile 14 07
+	tile 12 08
+	tile 13 08
+	tile 11 06
+	tile 11 07
+else
+	tile 12 05 =
+	tile 13 05 =
+	tile 14 06 D
+	tile 14 07 D
+	tile 12 08 =
+	tile 13 08 =
+	tile 11 06 D
+	tile 11 07 D
+fi
 if 00
-   tile 05 08
-   tile 05 09
-   else
-   tile 05 08 D
-   tile 05 08 D
-   fi
+	tile 05 08
+	tile 05 09
+else
+	tile 05 08 D
+	tile 05 08 D
+fi
 if 10
-   tile 10 01 #
-   tile 10 02
-   else
-   tile 10 01 X
-   tile 10 02 X
-   fi
+	tile 10 01 #
+	tile 10 02
+else
+	tile 10 01 X
+	tile 10 02 X
+fi
 if 11
-   tile 11 01 #
-   tile 11 02
-   else
-   tile 11 01 X
-   tile 11 02 X
-   fi
+	tile 11 01 #
+	tile 11 02
+else
+	tile 11 01 X
+	tile 11 02 X
+fi
 if 12
-   tile 12 01 #
-   tile 12 02
-   else
-   tile 12 01 X
-   tile 12 02 X
-   fi
+	tile 12 01 #
+	tile 12 02
+else
+	tile 12 01 X
+	tile 12 02 X
+fi

@@ -24,7 +24,7 @@ spawn spitter 15 13
 spawn drone 18 19
 spawn drone 19 18 
 if 66 not
-   spawn generator 04 18 66
-   spawn turret 17 03
-   spawn turret 17 06
-   fi
+	spawn generator 04 18 66
+	spawn turret 17 03
+	spawn turret 17 06
+fi

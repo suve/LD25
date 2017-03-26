@@ -20,9 +20,9 @@
 --------------------
 palette white
 if 15 not
-   spawn generator 10 15 15
-   spawn turret 17 3
-   fi
+	spawn generator 10 15 15
+	spawn turret 17 3
+fi
 spawn spammer 15 09
 spawn drone 02 16
 spawn drone 19 16

@@ -25,9 +25,9 @@ spawn spammer 19 13
 spawn drone 4 4
 spawn basher 15 15
 if 35
-   tile 10 17
-   tile 11 17
-   else
-   tile 10 17 =
-   tile 11 17 =
-   fi
+	tile 10 17
+	tile 11 17
+else
+	tile 10 17 =
+	tile 11 17 =
+fi

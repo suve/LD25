@@ -32,7 +32,7 @@ spawn drone 15 13
 spawn drone 7 4
 colour yellow 19 18
 if 36
-   tile 14 18
-   else
-   tile 14 18 D
-   fi
+	tile 14 18
+else
+	tile 14 18 D
+fi
