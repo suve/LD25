@@ -205,7 +205,7 @@ Procedure TRoom.SetTile(tX,tY:sInt;tT:Char);
 Function TRoom.Collides(cX,cY:Double):Boolean;
    Var iX,iY:sInt;
    begin
-   If (cX<0) or (cX<0) then Exit(True);
+   If (cX<0) or (cY<0) then Exit(True);
    iX:=Trunc(cX / TILE_W); iY:=Trunc(cY / TILE_H);
    If (iX>=ROOM_W) or (iY>=ROOM_H) then Exit(True);
    Exit(Tile[iX][iY]<TILE_NoCollide)
@@ -214,7 +214,7 @@ Function TRoom.Collides(cX,cY:Double):Boolean;
 Procedure TRoom.HitSfx(cX,cY:Double);
    Var iX,iY:sInt;
    begin
-   If (cX<0) or (cX<0) then Exit;
+   If (cX<0) or (cY<0) then Exit;
    iX:=Trunc(cX / TILE_W); iY:=Trunc(cY / TILE_H);
    If (iX>=ROOM_W) or (iY>=ROOM_H) then Exit;
    If (Tile[iX][iY]=TILE_WALL)
