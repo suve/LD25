@@ -15,7 +15,7 @@ Const TILE_WALL  = 00; TILE_VBAR = 01; TILE_VBUP = 02; TILE_VBDO = 03;
 Type PRoom = ^TRoom;
      TRoom = Object
      Public
-       X, Y : LongWord;
+       X, Y : uInt;
        Tile : Array[0..(ROOM_W-1), 0..(ROOM_H-1)] of TTile;
        TCol : Array[0..(ROOM_W-1), 0..(ROOM_H-1)] of Sour.PColour;
        Scri : Array of AnsiString;
@@ -24,7 +24,7 @@ Type PRoom = ^TRoom;
        Procedure HitSfx(cX,cY:Double);
 
        Procedure RunScript();
-       Procedure SetTile(tX,tY:LongInt;tT:Char);
+       Procedure SetTile(tX,tY:sInt;tT:Char);
 
        Constructor Create();
        Destructor Destroy;
@@ -41,7 +41,7 @@ implementation
    uses FloatingText, SysUtils, StrUtils;
 
 Procedure TRoom.RunScript();
-   Var C,P,tX,tY,Col:LongWord; L:AnsiString; T:Array of AnsiString;
+   Var C,P,tX,tY,Col:uInt; L:AnsiString; T:Array of AnsiString;
        EnemType : TEnemyType; ElseSrch,FiSrch:Boolean;
    begin
    If (Length(Scri) = 0) then Exit;
@@ -179,7 +179,7 @@ Procedure TRoom.RunScript();
        end //for every line
    end;
 
-Procedure TRoom.SetTile(tX,tY:LongInt;tT:Char);
+Procedure TRoom.SetTile(tX,tY:sInt;tT:Char);
    begin
    if (tX<0) or (tY<0) or (tX>=ROOM_W) or (tY>=ROOM_H) then Exit;
    Case tT of
@@ -203,7 +203,7 @@ Procedure TRoom.SetTile(tX,tY:LongInt;tT:Char);
    end;
 
 Function TRoom.Collides(cX,cY:Double):Boolean;
-   Var iX,iY:LongInt;
+   Var iX,iY:sInt;
    begin
    If (cX<0) or (cX<0) then Exit(True);
    iX:=Trunc(cX / TILE_W); iY:=Trunc(cY / TILE_H);
@@ -212,7 +212,7 @@ Function TRoom.Collides(cX,cY:Double):Boolean;
    end;
 
 Procedure TRoom.HitSfx(cX,cY:Double);
-   Var iX,iY:LongInt;
+   Var iX,iY:sInt;
    begin
    If (cX<0) or (cX<0) then Exit;
    iX:=Trunc(cX / TILE_W); iY:=Trunc(cY / TILE_H);
@@ -231,7 +231,7 @@ Destructor TRoom.Destroy();
    end;
 
 Procedure FreeRooms();
-   Var X,Y:LongWord;
+   Var X,Y:uInt;
    begin
    For Y:=0 to (ORG_MAP_H-1) do For X:=0 to (ORG_MAP_W-1) do
        If (OrgRoom[X][Y]<>NIL) then Dispose(OrgRoom[X][Y],Destroy());
@@ -240,7 +240,7 @@ Procedure FreeRooms();
    end;
 
 Function LoadRoom(Name:AnsiString):PRoom;
-   Var X,Y,C:LongWord; R:PRoom; F:Text; L:AnsiString; T:Char;
+   Var X,Y,C:uInt; R:PRoom; F:Text; L:AnsiString; T:Char;
    begin
    Assign(F,Name); {$I-} Reset(F); {$I+} // Open file
    If (IOResult <> 0) then Exit(NIL); // Check for errors during opening

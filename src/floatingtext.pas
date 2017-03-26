@@ -7,7 +7,7 @@ interface
 
 Type PFloatTxt = ^TFloatTxt;
      TFloatTxt = Object
-     X, Y : LongInt;
+     X, Y : sInt;
      Col : Sour.PColour;
      Text : AnsiString;
 
@@ -17,13 +17,13 @@ Type PFloatTxt = ^TFloatTxt;
 
 Var FloatTxt:Array of PFloatTxt;
 
-Procedure AddFloatTxt(X,Y,ColID:LongInt;Text:AnsiString);
+Procedure AddFloatTxt(X,Y,ColID:sInt;Text:AnsiString);
 Procedure FlushFloatTxt();
 
 implementation
    uses SysUtils;
 
-Procedure AddFloatTxt(X,Y,ColID:LongInt;Text:AnsiString);
+Procedure AddFloatTxt(X,Y,ColID:sInt;Text:AnsiString);
    Var FT:PFloatTxt;
    begin
    SetLength(FloatTxt,Length(FloatTxt)+1);
@@ -37,7 +37,7 @@ Procedure AddFloatTxt(X,Y,ColID:LongInt;Text:AnsiString);
    end;
 
 Procedure FlushFloatTxt();
-   Var C:LongWord;
+   Var C:uInt;
    begin
    If (Length(FloatTxt)=0) then Exit;
    For C:=Low(FloatTxt) to High(FloatTxt) do

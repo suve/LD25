@@ -73,8 +73,8 @@ Type TPlayerKey = (KEY_UP, KEY_RIGHT, KEY_DOWN, KEY_LEFT, KEY_SHOOTLEFT, KEY_SHO
      TVolLevel = 0..VolLevel_MAX;
      TCrystal = record
      IsSet : Boolean;
-     mX, mY: LongInt;
-     Col : LongWord
+     mX, mY: sInt;
+     Col : uInt
      end;
 
 // Progstate and gamestate variables. This isn't a project big enough to actually
@@ -83,8 +83,8 @@ Type TPlayerKey = (KEY_UP, KEY_RIGHT, KEY_DOWN, KEY_LEFT, KEY_SHOOTLEFT, KEY_SHO
 var Screen : PSDL_Surface;  // SDL Video surface
     Ev     : TSDL_Event;    // For retrieving SDL events
 
-    Wnd_W, Wnd_H : LongWord; // Window width, height and fullscreen flag.
-    Wnd_F : Boolean;         // These can be read from Screen, but we save the .ini after closing SDL.
+    Wnd_W, Wnd_H : uInt; // Window width, height and fullscreen flag.
+    Wnd_F : Boolean;     // These can be read from Screen, but we save the .ini after closing SDL.
 
     TitleGfx, TileGfx, UIgfx, ColGfx : Sour.PImage;
     CharaGfx : Array[0..CHARAS-1] of Sour.PImage;
@@ -111,7 +111,7 @@ var Screen : PSDL_Surface;  // SDL Video surface
     Crystal : TCrystal;
     PaletteColour : Array[0..7] of Sour.TColour;
     CentralPalette : Array[0..7] of Sour.TColour;
-    RoomPalette, DeadTime, Carried, Given : LongInt;
+    RoomPalette, DeadTime, Carried, Given : sInt;
     // Gamestate variables
 
     SaveExists : Array[TGameMode] of Boolean;
@@ -120,14 +120,14 @@ var Screen : PSDL_Surface;  // SDL Video surface
 Type UpdateProc = Procedure(Name:AnsiString;Perc:Double);
 
 // The name is obvious, duh
-Procedure GetDeltaTime(Out Time:LongWord);
-Procedure GetDeltaTime(Out Time,Ticks:LongWord);
+Procedure GetDeltaTime(Out Time:uInt);
+Procedure GetDeltaTime(Out Time,Ticks:uInt);
 
 // Mainly used in initialization, as we later switch to SDL ticks
 Function GetMSecs:Comp;
 
 // Resize window, doh
-Procedure ResizeWindow(W,H:LongWord;Full:Boolean=FALSE);
+Procedure ResizeWindow(W,H:uInt;Full:Boolean=FALSE);
 Procedure SetResolution();
 
 // Some functions for calculating distances
@@ -137,37 +137,37 @@ Function  Hypotenuse(A,B:PEntity):Double;
 Procedure GetDist(A,B:PEntity;Out oX,oY,oD:Double);
 
 // Sign function (probably is implemented in math or sysutils, but I'm too lazy to check)
-Function Sgn(Wat:Double):LongInt;
+Function Sgn(Wat:Double):sInt;
 Function InRange(Num,Min,Max:Int64):Boolean;
 Function Random(Min,Max:Int64):Int64; Overload;
 
 // Check if objects overlap
-Function Overlap(AX,AY:Double;AW,AH:LongWord;BX,BY:Double;BW,BH:LongWord):Boolean;
+Function Overlap(AX,AY:Double;AW,AH:uInt;BX,BY:Double;BW,BH:uInt):Boolean;
 Function Overlap(A,B:PEntity):Boolean;
 
 // Some simple converstions from and to strings
-Function IntToStr(Num:LongWord;Digits:LongWord=0;Chr:Char='0'):AnsiString; Overload;
+Function IntToStr(Num:uInt;Digits:uInt=0;Chr:Char='0'):AnsiString; Overload;
 Function StrToInt(S:AnsiString):Int64;
 
 // Volume functions
-Procedure ChgVol(Change:LongInt;ChgChanVol:Boolean = TRUE);
+Procedure ChgVol(Change:sInt;ChgChanVol:Boolean = TRUE);
 Procedure SetVol(NewVol:TVolLevel;ChgChanVol:Boolean = TRUE);
 Function  GetVol:TVolLevel;
 
 // Play a sound
-Procedure PlaySfx(ID:LongWord);
+Procedure PlaySfx(ID:uInt);
 
 // Place a bullet, duh
-Procedure PlaceBullet(Owner:PEntity;XV,YV,Pow:Double;Tp:LongWord);
+Procedure PlaceBullet(Owner:PEntity;XV,YV,Pow:Double;Tp:uInt);
 
 // Spawn enemies
-Procedure SpawnEnemy(Tp:TEnemyType;mapX,mapY:LongInt;SwitchNum:LongInt=-1);
+Procedure SpawnEnemy(Tp:TEnemyType;mapX,mapY:sInt;SwitchNum:sInt=-1);
 
 // Someone got killed - place gibs!
 Procedure PlaceGibs(E:PEntity);
 
 // Change current room
-Function ChangeRoom(NX,NY:LongInt):Boolean;
+Function ChangeRoom(NX,NY:sInt):Boolean;
 
 // Used in new game, load game and change room.
 Procedure DestroyEntities(KillHero:Boolean=FALSE);
@@ -183,17 +183,17 @@ Procedure Free();
 implementation
    uses Rooms, FloatingText, ConfigFiles;
 
-var Tikku : LongWord;
+var Tikku : uInt;
     VolLevel : TVolLevel;
-    Volume : LongWord;
+    Volume : uInt;
 
-Procedure GetDeltaTime(Out Time:LongWord);
+Procedure GetDeltaTime(Out Time:uInt);
    begin
    While ((SDL_GetTicks - Tikku) < TICKS_MINIMUM) do SDL_Delay(1);
    Time:=(SDL_GetTicks - Tikku); Tikku+=Time
    end;
 
-Procedure GetDeltaTime(Out Time,Ticks:LongWord);
+Procedure GetDeltaTime(Out Time,Ticks:uInt);
    begin
    While ((SDL_GetTicks - Tikku) < TICKS_MINIMUM) do SDL_Delay(1);
    Time:=(SDL_GetTicks - Tikku); Tikku+=Time; Ticks:=Tikku
@@ -202,8 +202,8 @@ Procedure GetDeltaTime(Out Time,Ticks:LongWord);
 Function GetMSecs():Comp;
    begin Exit(TimeStampToMSecs(DateTimeToTimeStamp(Now()))) end;
 
-Procedure ResizeWindow(W,H:LongWord;Full:Boolean=FALSE);
-   Var Flag : LongWord;
+Procedure ResizeWindow(W,H:uInt;Full:Boolean=FALSE);
+   Var Flag : uInt;
    begin
    If (Full) then begin Flag:=SDL_FullScreen; W:=0; H:=0 end
              else Flag:=SDL_Resizable;
@@ -216,11 +216,11 @@ Procedure ResizeWindow(W,H:LongWord;Full:Boolean=FALSE);
 
 Procedure SetResolution();
 
-   Function FlagSet(Const Flag,Val:LongWord):Boolean;
+   Function FlagSet(Const Flag,Val:uInt):Boolean;
       begin Exit((Val and Flag) = Flag) end;
    (* Fuck yeah, Pascal allows creating sub-routines. Beat that, C! *)
 
-   Var X, Y : LongInt;
+   Var X, Y : sInt;
    begin
    Wnd_W:=Screen^.W; Wnd_H:=Screen^.H; Wnd_F:=FlagSet(SDL_FullScreen, Screen^.Flags);
    If (Wnd_H < Wnd_W)
@@ -248,7 +248,7 @@ Procedure GetDist(A,B:PEntity;Out oX,oY,oD:Double);
    oD:=Hypotenuse(oX,oY)
    end;
 
-Function Sgn(Wat:Double):LongInt;
+Function Sgn(Wat:Double):sInt;
    begin If (Wat>0) then Exit(+1) else If (Wat<0) then Exit(-1) else Exit(0) end;
 
 Function InRange(Num,Min,Max:Int64):Boolean;
@@ -257,7 +257,7 @@ Function InRange(Num,Min,Max:Int64):Boolean;
 Function Random(Min,Max:Int64):Int64; Overload;
    begin Exit(Min+Random(Max-Min+1)) end;
 
-Function Overlap(AX,AY:Double;AW,AH:LongWord;BX,BY:Double;BW,BH:LongWord):Boolean;
+Function Overlap(AX,AY:Double;AW,AH:uInt;BX,BY:Double;BW,BH:uInt):Boolean;
    begin
    If ((AX + AW - 1) < BX) then Exit(False);
    If ((BX + BW - 1) < AX) then Exit(False);
@@ -268,7 +268,7 @@ Function Overlap(AX,AY:Double;AW,AH:LongWord;BX,BY:Double;BW,BH:LongWord):Boolea
 Function Overlap(A,B:PEntity):Boolean;
    begin Exit(Overlap(A^.X,A^.Y,A^.W,A^.H,B^.X,B^.Y,B^.W,B^.H)) end;
 
-Function IntToStr(Num:LongWord;Digits:LongWord=0;Chr:Char='0'):AnsiString;
+Function IntToStr(Num:uInt;Digits:uInt=0;Chr:Char='0'):AnsiString;
    Var Res:AnsiString;
    begin
    WriteStr(Res,Num);
@@ -277,7 +277,7 @@ Function IntToStr(Num:LongWord;Digits:LongWord=0;Chr:Char='0'):AnsiString;
    end;
 
 Function StrToInt(S:AnsiString):Int64;
-   Var P:LongWord; R:Int64;
+   Var P:uInt; R:Int64;
    begin
    R:=0; If (Length(S) = 0) then Exit(0);
    For P:=1 to Length(S) do
@@ -285,7 +285,7 @@ Function StrToInt(S:AnsiString):Int64;
    If (S[1]<>'-') then Exit(R) else Exit(-R)
    end;
 
-Procedure ChgVol(Change:LongInt;ChgChanVol:Boolean = TRUE);
+Procedure ChgVol(Change:sInt;ChgChanVol:Boolean = TRUE);
    begin
    Change+=VolLevel;
    If (Change<Low(VolLevel)) then SetVol(Low(VolLevel),ChgChanVol) else
@@ -304,8 +304,8 @@ Procedure SetVol(NewVol:TVolLevel;ChgChanVol:Boolean = TRUE);
 Function GetVol:TVolLevel;
    begin Exit(VolLevel) end;
 
-Procedure PlaySfx(ID:LongWord);
-   Var Chan:LongInt;
+Procedure PlaySfx(ID:uInt);
+   Var Chan:sInt;
    begin
    If (NoSound) or (ID>=SOUNDS) then Exit;
    Chan:=Mix_PlayChannel(-1, Sfx[ID], 0);
@@ -313,7 +313,7 @@ Procedure PlaySfx(ID:LongWord);
    Mix_Volume(Chan, Volume)
    end;
 
-Procedure PlaceBullet(Owner:PEntity;XV,YV,Pow:Double;Tp:LongWord);
+Procedure PlaceBullet(Owner:PEntity;XV,YV,Pow:Double;Tp:uInt);
    Var B:PBullet;
    begin
    New(B,Create(Tp));
@@ -327,7 +327,7 @@ Procedure PlaceBullet(Owner:PEntity;XV,YV,Pow:Double;Tp:LongWord);
                      else PBul[High(PBul)]:=B
    end;
 
-Procedure SpawnEnemy(Tp:TEnemyType;mapX,mapY:LongInt;SwitchNum:LongInt=-1);
+Procedure SpawnEnemy(Tp:TEnemyType;mapX,mapY:sInt;SwitchNum:sInt=-1);
    Var Dron:PDrone;     Bash:PBasher; Ball:PBall; Spit:PSpitter; Spam:PSpammer;
        Gene:PGenerator; Turr:PTurret;
        E:PEntity;
@@ -349,7 +349,7 @@ Procedure SpawnEnemy(Tp:TEnemyType;mapX,mapY:LongInt;SwitchNum:LongInt=-1);
    end;
 
 Procedure PlaceGibs(E:PEntity);
-   Var X,Y,W,H,I:LongWord; Angle:Double; G:PGib;
+   Var X,Y,W,H,I:uInt; Angle:Double; G:PGib;
    begin
    I:=Length(Gib);
    SetLength(Gib,Length(Gib)+(GIB_X*GIB_Y));
@@ -365,7 +365,7 @@ Procedure PlaceGibs(E:PEntity);
        end
    end;
 
-Function ChangeRoom(NX,NY:LongInt):Boolean;
+Function ChangeRoom(NX,NY:sInt):Boolean;
    Var NoRoom:Boolean;
    begin
    // First, check if room exists
@@ -387,7 +387,7 @@ Function ChangeRoom(NX,NY:LongInt):Boolean;
    end;
 
 Procedure DestroyEntities(KillHero:Boolean=FALSE);
-   Var C:LongWord;
+   Var C:uInt;
    begin
    If (Length(Mob)>0) then
       For C:=Low(Mob) to High(Mob) do
@@ -409,7 +409,7 @@ Procedure DestroyEntities(KillHero:Boolean=FALSE);
    end;
 
 Procedure ResetGamestate();
-   Var C:LongInt;
+   Var C:sInt;
    begin
    For C:=0 to 7 do PaletteColour[C]:=Sour.MakeColour(MapColour[C]);
    For C:=0 to 7 do CentralPalette[C]:=Sour.MakeColour(127,127,127);
@@ -438,7 +438,7 @@ Function LoadBasics(Out Status:AnsiString):Boolean;
    end;
 
 Function LoadRes(Out Status:AnsiString; Update : UpdateProc = NIL):Boolean;
-   Var FilesLoaded, FilesTotal, C,X,Y:LongWord; S:AnsiString;
+   Var FilesLoaded, FilesTotal, C,X,Y:uInt; S:AnsiString;
        Img:Sour.PImage; Samp:PMix_Chunk; R:PRoom;
    begin
    FilesLoaded:=0;
@@ -587,7 +587,7 @@ Function LoadRes(Out Status:AnsiString; Update : UpdateProc = NIL):Boolean;
    end;
 
 Procedure Free;
-   Var C:LongWord;
+   Var C:uInt;
    begin
    (* Since this is called only on program exit, it doesn't
       really matter if we forget anything. It will all be freed

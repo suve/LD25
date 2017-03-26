@@ -36,7 +36,7 @@ Procedure BindKeys();
    Const KeyName : Array[TPlayerKey] of AnsiString = (
          'MOVE UP','MOVE RIGHT','MOVE DOWN','MOVE LEFT','SHOOT LEFT','SHOOT RIGHT',
          'PAUSE','VOLUME DOWN','VOLUME UP');
-   Var K:TPlayerKey; NewBind:Array[TPlayerKey] of TSDLKey; dt:LongWord; Finito,Bound:Boolean;
+   Var K:TPlayerKey; NewBind:Array[TPlayerKey] of TSDLKey; dt:uInt; Finito,Bound:Boolean;
    begin
    Finito:=False; Bound:=False; K:=Low(TPlayerKey);
    Repeat
@@ -69,7 +69,7 @@ Function GameworldDialog(Load:Boolean):Char;
    Const WorldNames:Array[TGameMode] of AnsiString = (
          'T - TUTORIAL','N - NORMAL  ');
    Var Msg:AnsiString; OK:Array[TGameMode] of Boolean; GM:TGameMode; Choice:Char;
-       YPos:LongWord; Col:Sour.PColour; dt:LongWord;
+       YPos:uInt; Col:Sour.PColour; dt:uInt;
    begin
    If Load then begin Msg:='LOAD GAME';
       For GM:=Low(GM) to High(GM) do Ok[GM]:=SaveExists[GM]
@@ -107,7 +107,7 @@ Function GameworldDialog(Load:Boolean):Char;
    end;
 
 Function ShowSlide(Img:Sour.PImage):Boolean;
-   Var Q:LongInt; dt:LongWord;
+   Var Q:sInt; dt:uInt;
    begin
    Q:=0;
    While (Q = 0) do begin
@@ -129,7 +129,7 @@ Function ShowSlide(Img:Sour.PImage):Boolean;
    end;
 
 Function Intro():Boolean;
-   Var C:LongWord;
+   Var C:uInt;
    begin
    For C:=Low(SlideIn) to High(SlideIn) do
        If (Not ShowSlide(SlideIn[C])) then Exit(False);
@@ -138,7 +138,7 @@ Function Intro():Boolean;
    end;
 
 Function Menu():Char;
-   Var Choice:Char; dt,XPos,YPos:LongWord; Col:Sour.PColour; IHasSaves:Boolean; GM:TGameMode;
+   Var Choice:Char; dt,XPos,YPos:uInt; Col:Sour.PColour; IHasSaves:Boolean; GM:TGameMode;
    begin
    XPos:=Length('I - INTRODUCTION');
    XPos:=Trunc(((Font^.SpaX*(XPos-1))+Font^.ChrW)*2);
@@ -187,7 +187,7 @@ Function Menu():Char;
    end;
 
 Procedure Outro();
-   Var C:LongWord; YPos:LongWord;
+   Var C:uInt; YPos:uInt;
    begin
    For C:=Low(SlideOut) to High(SlideOut) do
        If Not ShowSlide(SlideOut[C]) then Exit();
@@ -281,7 +281,7 @@ Procedure NewGame_Original();
    New(Hero,Create()); ChangeRoom(RespRoom[GM_Original].X,RespRoom[GM_Original].Y);
    end;
 
-Procedure DamageMob(X:LongWord;Power:Double);
+Procedure DamageMob(X:uInt;Power:Double);
    begin
    Mob[X]^.HP-=Power;
    If (Mob[X]^.HP <= 0) then begin
@@ -308,11 +308,11 @@ Function PlayableLulz():Boolean;
          FPSRect : Sour.TRect = (X: 32; Y:0; W:16; H:16);
          VolRect : Sour.TRect = (X: 48; Y:0; W:16; H:16);
          PAUSETXT_W = (64 - 35 - 2); PAUSETXT_H = (32 - 7 - 2);
-   Var Time,Ticks : LongWord; Q,Paused:Boolean; E:PEntity;
+   Var Time,Ticks : uInt; Q,Paused:Boolean; E:PEntity;
        XDif, YDif, ChkX, ChkY : Double;
-       C, X, Y : LongInt;
+       C, X, Y : sInt;
        Src,Dst,Rect,PauseRect : Sour.TRect; Crd,PauseTxt : Sour.TCrd; Col:Sour.TColour;
-       AniFra,FraTime,Frames:LongWord; FraStr:AnsiString;
+       AniFra,FraTime,Frames:uInt; FraStr:AnsiString;
        {$IFDEF DEVELOPER} debugY,debugU,debugI:Boolean; {$ENDIF}
    begin
    GetDeltaTime(Time); Q:=False; FraTime:=0; Frames:=0; FraStr:='???';

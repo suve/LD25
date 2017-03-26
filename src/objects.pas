@@ -12,39 +12,39 @@ Type // Basic class for all in-game entities
      PEntity = ^TEntity;
      TEntity = Object
      Private
-       fX, fY : Double;      //floating-point position
-       intX, intY : LongInt; //integer position
-       mapX, mapY : LongInt; //map (room) position
+       fX, fY : Double;   // floating-point position
+       intX, intY : sInt; // integer position
+       mapX, mapY : sInt; // map (room) position
 
        Procedure Set_fX(newX:Double);
        Procedure Set_fY(newY:Double);
-       Procedure Set_iX(newX:LongInt);
-       Procedure Set_iY(newY:LongInt);
-       Procedure Set_mX(newX:LongInt);
-       Procedure Set_mY(newY:LongInt); //army of setters, duh
+       Procedure Set_iX(newX:sInt);
+       Procedure Set_iY(newY:sInt);
+       Procedure Set_mX(newX:sInt);
+       Procedure Set_mY(newY:sInt); // army of setters, duh
 
      Public
        Gfx : Sour.PImage;    // Pointer to a Sour Picture
        Col : Sour.PColour;   // Pointer to a Sour Colour
        XVel, YVel : Double;  // X,Y velocity
        XCol, YCol : Boolean; // X,Y collision
-       W, H : LongWord;      // Width and height
+       W, H : uInt;          // Width and height
        HP  : Double;         // Health points
        Enemy : Boolean;      // Team indicator
        Face : TFacing;       // Facing
-       SfxID : LongInt;      // Death SFX ID. <0 means none.
-       SwitchNum : LongInt;  // Switch to trigger on death
+       SfxID : sInt;         // Death SFX ID. <0 means none.
+       SwitchNum : sInt;     // Switch to trigger on death
 
        Function GetCrd:Sour.TCrd; //fart out a Sour Coordinate
 
        Property X:Double read fX write Set_fX;
        Property Y:Double read fY write Set_fY;
-       Property iX:LongInt read intX write Set_iX;
-       Property iY:LongInt read intY write Set_iY;
-       Property mX:LongInt read mapX write Set_mX;
-       Property mY:LongInt read mapY write Set_mY;
+       Property iX:sInt read intX write Set_iX;
+       Property iY:sInt read intY write Set_iY;
+       Property mX:sInt read mapX write Set_mX;
+       Property mY:sInt read mapY write Set_mY;
 
-       Procedure Calculate(dt:LongWord); Virtual;
+       Procedure Calculate(dt:uInt); Virtual;
 
        Constructor Create;
        Destructor Destroy; Virtual;
@@ -56,7 +56,7 @@ Type // Basic class for all in-game entities
      Public
        Power : Double;
 
-       Constructor Create(Index:LongWord);
+       Constructor Create(Index:uInt);
        Destructor Destroy; Virtual;
      end;
 
@@ -65,7 +65,7 @@ Type // Basic class for all in-game entities
      TGib = Object(TEntity)
      Public
        Rect : Sour.TRect;
-       Constructor Create(pX,pY,pW,pH:LongWord);
+       Constructor Create(pX,pY,pW,pH:uInt);
        Destructor Destroy; Virtual;
      end;
 
@@ -73,13 +73,13 @@ Type // Basic class for all in-game entities
      PPlayer = ^TPlayer;
      TPlayer = Object(TEntity)
      Public
-       FireTimer : LongInt;
-       InvTimer  : LongInt;
+       FireTimer : sInt;
+       InvTimer  : sInt;
        MaxHP     : Double;
        FirePower : Double;
-       InvLength : LongWord;
+       InvLength : uInt;
 
-       Procedure Calculate(dt:LongWord); Virtual;
+       Procedure Calculate(dt:uInt); Virtual;
 
        Constructor Create;
        Destructor Destroy; Virtual;
@@ -89,11 +89,11 @@ Type // Basic class for all in-game entities
      PDrone = ^TDrone;
      TDrone = Object(TEntity)
      Private
-       ChaseTime, IdleTime : LongWord;
+       ChaseTime, IdleTime : uInt;
        Chase : Boolean;
-       Timer : LongInt;
+       Timer : sInt;
      Public
-       Procedure Calculate(dt:LongWord); Virtual;
+       Procedure Calculate(dt:uInt); Virtual;
 
        Constructor Create;
        Destructor Destroy; Virtual;
@@ -103,12 +103,12 @@ Type // Basic class for all in-game entities
      PBasher = ^TBasher;
      TBasher = Object(TEntity)
      Private
-       BashTime, IdleTime, AccelTime : LongWord;
-       Dir : LongWord;
+       BashTime, IdleTime, AccelTime : uInt;
+       Dir : uInt;
        Bash : Boolean;
-       Timer : LongInt;
+       Timer : sInt;
      Public
-       Procedure Calculate(dt:LongWord); Virtual;
+       Procedure Calculate(dt:uInt); Virtual;
 
        Constructor Create;
        Destructor Destroy; Virtual;
@@ -118,7 +118,7 @@ Type // Basic class for all in-game entities
      PBall = ^TBall;
      TBall = Object(TEntity)
      Public
-       Procedure Calculate(dt:LongWord); Virtual;
+       Procedure Calculate(dt:uInt); Virtual;
 
        Constructor Create;
        Destructor Destroy; Virtual;
@@ -128,11 +128,11 @@ Type // Basic class for all in-game entities
      PSpitter = ^TSpitter;
      TSpitter = Object(TEntity)
      Private
-       MoveTime, IdleTime, FireInterval : LongWord;
-       FireTimer, MoveTimer : LongInt;
+       MoveTime, IdleTime, FireInterval : uInt;
+       FireTimer, MoveTimer : sInt;
        Move : Boolean;
      Public
-       Procedure Calculate(dt:LongWord); Virtual;
+       Procedure Calculate(dt:uInt); Virtual;
 
        Constructor Create;
        Destructor Destroy; Virtual;
@@ -142,11 +142,11 @@ Type // Basic class for all in-game entities
      PSpammer = ^TSpammer;
      TSpammer = Object(TEntity)
      Private
-       FireInterval : LongWord;
-       FireTimer, MoveTimer : LongInt;
+       FireInterval : uInt;
+       FireTimer, MoveTimer : sInt;
        Angle : Double;
      Public
-       Procedure Calculate(dt:LongWord); Virtual;
+       Procedure Calculate(dt:uInt); Virtual;
 
        Constructor Create;
        Destructor Destroy; Virtual;
@@ -156,9 +156,9 @@ Type // Basic class for all in-game entities
      PGenerator = ^TGenerator;
      TGenerator = Object(TEntity)
      Private
-       BigTimer,SmallTimer : LongInt;
+       BigTimer,SmallTimer : sInt;
      Public
-       Procedure Calculate(dt:LongWord); Virtual;
+       Procedure Calculate(dt:uInt); Virtual;
 
        Constructor Create;
        Destructor Destroy; Virtual;
@@ -168,9 +168,9 @@ Type // Basic class for all in-game entities
      PTurret = ^TTurret;
      TTurret = Object(TEntity)
      Private
-       NorTime,SpamTime : LongInt;
+       NorTime,SpamTime : sInt;
      Public
-       Procedure Calculate(dt:LongWord); Virtual;
+       Procedure Calculate(dt:uInt); Virtual;
 
        Constructor Create;
        Destructor Destroy; Virtual;
@@ -181,7 +181,7 @@ implementation
 
 Const TwoRoot = Sqrt(2);
 
-Function RndInt(Val:LongInt;Dif:Double):LongInt;
+Function RndInt(Val:sInt;Dif:Double):sInt;
    begin Exit(Trunc(Val*(1+Random(-1000,+1000)/1000*Dif))) end;
 
 Function RndDbl(Val,Dif:Double):Double;
@@ -196,19 +196,19 @@ Procedure TEntity.Set_fX(newX:Double);
 Procedure TEntity.Set_fY(newY:Double);
    begin fY:=newY; intY:=Trunc(fY); mapY:=Trunc(fY / TILE_H) end;
 
-Procedure TEntity.Set_iX(newX:LongInt);
+Procedure TEntity.Set_iX(newX:sInt);
    begin fX:=newX; intX:=newX; mapX:=Trunc(fX / TILE_W) end;
 
-Procedure TEntity.Set_iY(newY:LongInt);
+Procedure TEntity.Set_iY(newY:sInt);
    begin fY:=newY; intY:=newY; mapY:=Trunc(fY / TILE_H) end;
 
-Procedure TEntity.Set_mX(newX:LongInt);
+Procedure TEntity.Set_mX(newX:sInt);
    begin mapX:=newX; iX:=newX*Tile_W; fX:=iX end;
 
-Procedure TEntity.Set_mY(newY:LongInt);
+Procedure TEntity.Set_mY(newY:sInt);
    begin mapY:=newY; iY:=newY*Tile_H; fY:=iY end;
 
-Procedure TEntity.Calculate(dt:LongWord);
+Procedure TEntity.Calculate(dt:uInt);
    begin end; //By default, an entity does nothing
 
 Constructor TEntity.Create();
@@ -223,7 +223,7 @@ Constructor TEntity.Create();
 Destructor TEntity.Destroy();
    begin end;
 
-Constructor TGib.Create(pX,pY,pW,pH:LongWord);
+Constructor TGib.Create(pX,pY,pW,pH:uInt);
    begin
    With Rect do begin X:=pX; Y:=pY; W:=pW; H:=pH end;
    Self.W:=pW; Self.H:=pH; HP:=3
@@ -232,7 +232,7 @@ Constructor TGib.Create(pX,pY,pW,pH:LongWord);
 Destructor TGib.Destroy();
    begin Inherited Destroy end;
 
-Constructor TBullet.Create(Index:LongWord);
+Constructor TBullet.Create(Index:uInt);
    begin Inherited Create();
    Gfx:=ShotGfx[Index];
    W:=Gfx^.W div 2; H:=Gfx^.H;
@@ -242,7 +242,7 @@ Destructor TBullet.Destroy();
    begin Inherited Destroy();
    end;
 
-Procedure TPlayer.Calculate(dt:LongWord);
+Procedure TPlayer.Calculate(dt:uInt);
    Const FireInterval = 250;
    begin
    XVel:=0; YVel:=0;
@@ -281,7 +281,7 @@ Destructor TPlayer.Destroy();
    begin Inherited Destroy();
    end;
 
-Procedure TDrone.Calculate(dt:LongWord);
+Procedure TDrone.Calculate(dt:uInt);
    Const Spd = TILE_S * 3;
    Var Dist : Double;
    begin
@@ -316,7 +316,7 @@ Destructor TDrone.Destroy();
    begin Inherited Destroy();
    end;
 
-Procedure TBasher.Calculate(dt:LongWord);
+Procedure TBasher.Calculate(dt:uInt);
    Const Spd = TILE_S * 8;
    Var XD,YD, Perc : Double;
    begin
@@ -360,7 +360,7 @@ Destructor TBasher.Destroy();
    begin Inherited Destroy();
    end;
 
-Procedure TBall.Calculate(dt:LongWord);
+Procedure TBall.Calculate(dt:uInt);
    Const Spd = TILE_S / 6;
    Var Dist : Double;
    begin
@@ -381,7 +381,7 @@ Destructor TBall.Destroy();
    begin Inherited Destroy();
    end;
 
-Procedure TSpitter.Calculate(dt:LongWord);
+Procedure TSpitter.Calculate(dt:uInt);
    Const Spd = TILE_S * 2.4;
    Var Dist : Double;
    begin
@@ -422,7 +422,7 @@ Destructor TSpitter.Destroy();
    begin Inherited Destroy();
    end;
 
-Procedure TSpammer.Calculate(dt:LongWord);
+Procedure TSpammer.Calculate(dt:uInt);
    Const MoveMin = 500; MoveMax = 700;
          Spd = TILE_S * 1.5;
    begin
@@ -458,10 +458,10 @@ Destructor TSpammer.Destroy();
    begin Inherited Destroy();
    end;
 
-Procedure TGenerator.Calculate(dt:LongWord);
+Procedure TGenerator.Calculate(dt:uInt);
    Const BigMin = 1500; BigMax = 2500; SmaMin = 700; SmaMax = 1000;
          BigSpd = HERO_SPEED * 1.75; SmaSpd = HERO_SPEED * 1.25;
-   Var Dist,XV,YV:Double; BulNum:LongWord;
+   Var Dist,XV,YV:Double; BulNum:uInt;
    begin
    If (BigTimer > 0) then BigTimer-=dt else begin
       BigTimer:=Random(BigMin,BigMax)+BigTimer;
@@ -493,10 +493,10 @@ Destructor TGenerator.Destroy();
    begin Inherited Destroy();
    end;
 
-Procedure TTurret.Calculate(dt:LongWord);
+Procedure TTurret.Calculate(dt:uInt);
    Const NorMin = 400; NorMax = 480; //SpamMin = 3000; SpamMax = 4000;
          NorSpd = HERO_SPEED * 0.8; //SpamSpd = HERO_SPEED * 1.2;
-   Var Dist,XV,YV:Double; //BulNum:LongWord;
+   Var Dist,XV,YV:Double; //BulNum:uInt;
    begin
    If (NorTime > 0) then NorTime-=dt else begin
       NorTime:=Random(NorMin,NorMax)+NorTime;

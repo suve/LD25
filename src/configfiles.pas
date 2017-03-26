@@ -47,7 +47,7 @@ Function CheckConfPath():Boolean;
    end;
 
 Function SaveGame(GM:TGameMode):Boolean;
-   Var F:Text; C:LongWord; Path:AnsiString;
+   Var F:Text; C:uInt; Path:AnsiString;
    begin
    If (Not CheckConfPath()) then Exit(False);
    WriteStr(Path,ConfPath,GM,'.ini');
@@ -84,7 +84,7 @@ Function SaveGame(GM:TGameMode):Boolean;
    end;
 
 Function LoadGame(GM:TGameMode):Boolean;
-   Var Ini:TIniFile; Str:TStringList; Path:AnsiString; C:LongWord;
+   Var Ini:TIniFile; Str:TStringList; Path:AnsiString; C:uInt;
    begin
    WriteStr(Path,ConfPath,GM,'.ini');
    Ini:=TIniFile.Create(Path);
