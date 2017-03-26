@@ -1,4 +1,6 @@
-unit objects; {$MODE OBJFPC} {$COPERATORS ON} {$WRITEABLECONST OFF}
+unit objects;
+
+{$INCLUDE defines.inc}
 
 interface
    uses SysUtils, Sour;

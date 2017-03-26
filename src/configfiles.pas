@@ -1,4 +1,6 @@
-unit configfiles; {$MODE OBJFPC} {$COPERATORS ON} {$WRITEABLECONST OFF}
+unit configfiles; 
+
+{$INCLUDE defines.inc}
 
 interface
    uses Shared;

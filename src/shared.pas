@@ -1,4 +1,7 @@
-unit shared; {$MODE OBJFPC} {$COPERATORS ON} {$WRITEABLECONST OFF} {$TYPEDADDRESS ON}
+unit shared; 
+
+{$INCLUDE defines.inc}
+
 
 interface
 

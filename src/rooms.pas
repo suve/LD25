@@ -1,4 +1,6 @@
-unit rooms; {$MODE OBJFPC} {$COPERATORS ON} {$WRITEABLECONST OFF}
+unit rooms;
+
+{$INCLUDE defines.inc}
 
 interface
    uses Sour, Shared;

@@ -1,4 +1,6 @@
-unit floatingtext; {$MODE OBJFPC} {$COPERATORS ON} {$WRITEABLECONST OFF}
+unit floatingtext; 
+
+{$INCLUDE defines.inc}
 
 interface
    uses Shared, Sour;

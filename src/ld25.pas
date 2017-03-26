@@ -1,8 +1,9 @@
-program ld25; {$MODE OBJFPC} {$TYPEDADDRESS ON} {$COPERATORS ON} {$WRITEABLECONST OFF}
-   uses SysUtils, Shared, SDL, Sour, GL, SDL_Mixer, Rooms, Objects, FloatingText, configfiles;
+program ld25; 
 
-//{$DEFINE DEVELOPER}
-(* Activates some debug functions. Remember to comment out when building a public release! *)
+{$INCLUDE defines.inc}
+
+uses SysUtils, Shared, SDL, Sour, GL, SDL_Mixer, Rooms, Objects, FloatingText, configfiles;
+
 
 Var MenuChoice:Char;
 
