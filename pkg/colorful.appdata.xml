@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2017 suve <veg@svgames.pl> -->
+<component type="desktop">
+<id>colorful.desktop</id>
+	<metadata_license>CC-BY-SA-3.0</metadata_license>
+	<project_license>zlib with acknowledgement</project_license>
+	<name>Colorful</name>
+	<summary>Side-view shooter game</summary>
+	<description>
+		<p>
+			Colorful is a simple side-view shooter game, where the protagonist 
+			travels a maze of caves and corridors in order to collect color artifacts. 
+		</p>
+	</description>
+	<screenshots>
+		<screenshot type="default">
+			<image>https://svgames.pl/fedora/appdata/colorful0.png</image>
+		</screenshot>
+		<screenshot>
+			<image>https://svgames.pl/fedora/appdata/colorful1.png</image>
+		</screenshot>
+		<screenshot>
+			<image>https://svgames.pl/fedora/appdata/colorful2.png</image>
+		</screenshot>
+	</screenshots>
+	<url type="homepage">https://svgames.pl/</url>
+	<update_contact>veg@svgames.pl</update_contact>
+</component>
