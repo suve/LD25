@@ -6,10 +6,15 @@
 	<project_license>zlib with acknowledgement</project_license>
 	<name>Colorful</name>
 	<summary>Side-view shooter game</summary>
+	<summary xml:lang="pl">Strzelanka 2D</summary>
 	<description>
 		<p>
 			Colorful is a simple side-view shooter game, where the protagonist 
 			travels a maze of caves and corridors in order to collect color artifacts. 
+		</p>
+		<p xml:lang="pl">
+			Colorful jest prostą strzelanką z widokiem z boku, w której bohater
+			przemierza labirynt jaskiń i korytarzy w celu zebrania kolorowych artefaktów.
 		</p>
 	</description>
 	<screenshots>

@@ -1,0 +1,31 @@
+.\" Manpage for colorful
+.\" Contact veg@svgames.pl to correct errors or typos.
+.TH man 6 "2017-04-12" "1.2" "Gry"
+.SH NAZWA
+colorful - prosta strzelanka 2D
+.SH SKŁADNIA
+\fBcolorful\fR
+.SH OPIS
+Colorful jest prostą strzelanką z widokiem z boku, w której bohater
+przemierza labirynt jaskiń i korytarzy w celu zebrania kolorowych artefaktów.
+.SH STEROWANIE
+Grę obsługuje się wyłącznie przy użyciu klawiatury. Domyślne ustawienia:
+.TP
+\fBStrzałki\fR
+Poruszanie się
+.TP
+\fBZ\fR/\fBX\fR
+Strzał w lewo / prawo
+.TP
+\fB\-\fR/\fB+\fR
+Głośność w doł / górę
+.TP
+\fBP\fR
+Pauza / odpauzuj
+.TP
+Ustawienia klawiszy mogą zostać dowolnie zmienione.
+.SH KATALOGI
+Pliki z danymi gry znajdują się w \fB/usr/share/suve/colorful\fR. 
+Gra przechowuje swoje ustawienia oraz zapisy w \fB~/.suve/colorful/\fR.
+.SH AUTOR
+suve (veg@svgames.pl)
