@@ -14,6 +14,14 @@ Uses
 	SDL,
 	ConfigFiles, FloatingText, Objects, Rooms, Shared, Sour;
 
+Type
+	TRoomChange = (
+		RCHANGE_NONE,
+		RCHANGE_UP,
+		RCHANGE_RIGHT,
+		RCHANGE_DOWN,
+		RCHANGE_LEFT
+	);
 
 Const
 	PAUSETXT_W = (64 - 35 - 2); 
@@ -24,6 +32,7 @@ Var
 	FrameStr: ShortString;
 	PauseTxt: Sour.TCrd;
 	Paused, WantToQuit: Boolean;
+	RoomChange: TRoomChange;
 {$IFDEF DEVELOPER} 
 	debugY,debugU,debugI:Boolean;
 {$ENDIF}
@@ -186,24 +195,20 @@ End;
 Procedure CalculateRoomChange();
 Begin
 	If (Hero^.iX <= 0) then begin
-		If (Room^.Tile[Hero^.mX][Hero^.mY]=TILE_ZONE) or (Room^.Tile[Hero^.mX][Hero^.mY]=TILE_ROOM) then begin 
-			If (ChangeRoom(Room^.X-1,Room^.Y)) then Hero^.mX:=(ROOM_W-1) 
-		end
+		If (Room^.Tile[Hero^.mX][Hero^.mY]=TILE_ZONE) or (Room^.Tile[Hero^.mX][Hero^.mY]=TILE_ROOM) then
+			RoomChange := RCHANGE_LEFT
 	end else
 	If (Hero^.iY <= 0) then begin
-		If (Room^.Tile[Hero^.mX][Hero^.mY]=TILE_ZONE) or (Room^.Tile[Hero^.mX][Hero^.mY]=TILE_ROOM) then begin
-			If (ChangeRoom(Room^.X,Room^.Y-1)) then Hero^.mY:=(ROOM_H-1) 
-		end
+		If (Room^.Tile[Hero^.mX][Hero^.mY]=TILE_ZONE) or (Room^.Tile[Hero^.mX][Hero^.mY]=TILE_ROOM) then
+			RoomChange := RCHANGE_UP
 	end else
 	If (Hero^.iX >= ((ROOM_W-1)*TILE_W)) then begin
-		If (Room^.Tile[Hero^.mX][Hero^.mY]=TILE_ZONE) or (Room^.Tile[Hero^.mX][Hero^.mY]=TILE_ROOM) then begin
-			If (ChangeRoom(Room^.X+1,Room^.Y)) then Hero^.X:=1
-		end
+		If (Room^.Tile[Hero^.mX][Hero^.mY]=TILE_ZONE) or (Room^.Tile[Hero^.mX][Hero^.mY]=TILE_ROOM) then
+			RoomChange := RCHANGE_RIGHT
 	end else
 	If (Hero^.iY >= ((ROOM_H-1)*TILE_H)) then begin
-		If (Room^.Tile[Hero^.mX][Hero^.mY]=TILE_ZONE) or (Room^.Tile[Hero^.mX][Hero^.mY]=TILE_ROOM) then begin 
-			If (ChangeRoom(Room^.X,Room^.Y+1)) then Hero^.Y:=1 
-		end
+		If (Room^.Tile[Hero^.mX][Hero^.mY]=TILE_ZONE) or (Room^.Tile[Hero^.mX][Hero^.mY]=TILE_ROOM) then
+			RoomChange := RCHANGE_DOWN
 	end
 End;
 
@@ -655,6 +660,29 @@ Begin
 	// Count frames, duh
 End;
 
+Procedure PerformRoomChange();
+Begin
+	Case (RoomChange) of
+		RCHANGE_UP: begin
+			If (ChangeRoom(Room^.X,Room^.Y-1)) then Hero^.mY:=(ROOM_H-1)
+		end;
+		
+		RCHANGE_RIGHT: begin
+			If (ChangeRoom(Room^.X+1,Room^.Y)) then Hero^.mX:=0
+		end;
+		
+		RCHANGE_DOWN: begin
+			If (ChangeRoom(Room^.X,Room^.Y+1)) then Hero^.mY:=0
+		end;
+		
+		RCHANGE_LEFT: begin
+			If (ChangeRoom(Room^.X-1,Room^.Y)) then Hero^.mX:=(ROOM_W-1)
+		end
+	end;
+	
+	RoomChange := RCHANGE_NONE
+End;
+
 
 Procedure DamageMob(Const mID:uInt; Const Power:Double);
 Begin
@@ -688,6 +716,8 @@ Var
 	Time, Ticks: uInt;
 Begin
 	GetDeltaTime(Time);
+	
+	RoomChange:=RCHANGE_NONE;
 	Paused:=False; WantToQuit:=False; 
 	Frames:=0; FrameTime:=0; FrameStr:='???';
 	
@@ -696,11 +726,13 @@ Begin
 	
 	{$IFDEF DEVELOPER} debugY:=False; debugU:=False; debugI:=False; {$ENDIF}
 	Repeat
+		If (RoomChange <> RCHANGE_NONE) then PerformRoomChange();
+		
 		GetDeltaTime(Time, Ticks);
 		Animate(Ticks);
 		GatherInput();
 
-		If(Not Paused) then CalculateGameCycle(Time);
+		If (Not Paused) then CalculateGameCycle(Time);
 
 		DrawFrame();
 		CountFrames(Time);

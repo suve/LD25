@@ -2,7 +2,7 @@ program ld25;
 
 {$INCLUDE defines.inc}
 
-uses SysUtils, Shared, SDL, Sour, GL, SDL_Mixer, Rooms, Objects, FloatingText, configfiles, Game;
+uses SysUtils, Shared, SDL, Sour, GL, SDL_Mixer, Objects, FloatingText, configfiles, Game;
 
 
 Var MenuChoice:Char;
