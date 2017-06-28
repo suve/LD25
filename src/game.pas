@@ -194,20 +194,20 @@ End;
 
 Procedure CalculateRoomChange();
 Begin
-	If (Hero^.iX <= 0) then begin
-		If (Room^.Tile[Hero^.mX][Hero^.mY]=TILE_ZONE) or (Room^.Tile[Hero^.mX][Hero^.mY]=TILE_ROOM) then
+	If (Hero^.iX < 0) then begin
+		If (Room^.Tile[0][Hero^.mY]=TILE_ZONE) or (Room^.Tile[0][Hero^.mY]=TILE_ROOM) then
 			RoomChange := RCHANGE_LEFT
 	end else
-	If (Hero^.iY <= 0) then begin
-		If (Room^.Tile[Hero^.mX][Hero^.mY]=TILE_ZONE) or (Room^.Tile[Hero^.mX][Hero^.mY]=TILE_ROOM) then
+	If (Hero^.iY < 0) then begin
+		If (Room^.Tile[Hero^.mX][0]=TILE_ZONE) or (Room^.Tile[Hero^.mX][0]=TILE_ROOM) then
 			RoomChange := RCHANGE_UP
 	end else
-	If (Hero^.iX >= ((ROOM_W-1)*TILE_W)) then begin
-		If (Room^.Tile[Hero^.mX][Hero^.mY]=TILE_ZONE) or (Room^.Tile[Hero^.mX][Hero^.mY]=TILE_ROOM) then
+	If (Hero^.iX > ((ROOM_W-1)*TILE_W)) then begin
+		If (Room^.Tile[ROOM_W-1][Hero^.mY]=TILE_ZONE) or (Room^.Tile[ROOM_W-1][Hero^.mY]=TILE_ROOM) then
 			RoomChange := RCHANGE_RIGHT
 	end else
-	If (Hero^.iY >= ((ROOM_H-1)*TILE_H)) then begin
-		If (Room^.Tile[Hero^.mX][Hero^.mY]=TILE_ZONE) or (Room^.Tile[Hero^.mX][Hero^.mY]=TILE_ROOM) then
+	If (Hero^.iY > ((ROOM_H-1)*TILE_H)) then begin
+		If (Room^.Tile[Hero^.mX][ROOM_H-1]=TILE_ZONE) or (Room^.Tile[Hero^.mX][ROOM_H-1]=TILE_ROOM) then
 			RoomChange := RCHANGE_DOWN
 	end
 End;
@@ -235,7 +235,7 @@ Begin
 				E^.Face:=FACE_RIGHT; ChkX:=E^.X+E^.W-1 
 			end;
 			
-			If (Not Room^.Collides(ChkX+XDif,E^.Y)) and (Not Room^.Collides(ChkX+XDif,E^.Y+E^.H-1)) then begin 
+			If (Not Room^.CollidesOrOutside(ChkX+XDif,E^.Y)) and (Not Room^.CollidesOrOutside(ChkX+XDif,E^.Y+E^.H-1)) then begin 
 				E^.X:=E^.X+XDif; E^.XCol:=False 
 			end else
 				E^.XCol:=True;
@@ -245,7 +245,7 @@ Begin
 		If (YDif<>0) then begin
 			If (YDif<0) then ChkY:=E^.Y else ChkY:=E^.Y+E^.H-1;
 			
-			If (Not Room^.Collides(E^.X,ChkY+YDif)) and (Not Room^.Collides(E^.X+E^.W-1,ChkY+YDif)) then begin
+			If (Not Room^.CollidesOrOutside(E^.X,ChkY+YDif)) and (Not Room^.CollidesOrOutside(E^.X+E^.W-1,ChkY+YDif)) then begin
 				E^.Y:=E^.Y+YDif; E^.YCol:=False
 			end else
 				E^.YCol:=True
@@ -272,10 +272,10 @@ Begin
 		If (XDif<>0) then begin
 			If (XDif<0) then ChkX:=PBul[B]^.X else ChkX:=PBul[B]^.X+PBul[B]^.W-1;
 			
-			If (Room^.Collides(ChkX+XDif,PBul[B]^.Y)) then begin
+			If (Room^.CollidesOrOutside(ChkX+XDif,PBul[B]^.Y)) then begin
 				Room^.HitSfx(ChkX+XDif,PBul[B]^.Y); PBul[B]^.HP:=-10 
 			end else
-			If (Room^.Collides(ChkX+XDif,PBul[B]^.Y+PBul[B]^.H-1)) then begin 
+			If (Room^.CollidesOrOutside(ChkX+XDif,PBul[B]^.Y+PBul[B]^.H-1)) then begin 
 				Room^.HitSfx(ChkX+XDif,PBul[B]^.Y+PBul[B]^.H-1); PBul[B]^.HP:=-10
 			end else
 				PBul[B]^.X:=PBul[B]^.X+XDif
@@ -284,10 +284,10 @@ Begin
 		If (YDif<>0) then begin
 			If (YDif<0) then ChkY:=PBul[B]^.Y else ChkY:=PBul[B]^.Y+PBul[B]^.H-1;
 			
-			If (Room^.Collides(PBul[B]^.X,ChkY+YDif)) then begin 
+			If (Room^.CollidesOrOutside(PBul[B]^.X,ChkY+YDif)) then begin 
 				Room^.HitSfx(PBul[B]^.X,ChkY+YDif); PBul[B]^.HP:=-10 
 			end else
-			If (Room^.Collides(PBul[B]^.X+PBul[B]^.W-1,ChkY+YDif)) then begin 
+			If (Room^.CollidesOrOutside(PBul[B]^.X+PBul[B]^.W-1,ChkY+YDif)) then begin 
 				Room^.HitSfx(PBul[B]^.X+PBul[B]^.W-1,ChkY+YDif); PBul[B]^.HP:=-10
 			end else
 				PBul[B]^.Y:=PBul[B]^.Y+YDif
@@ -330,10 +330,10 @@ Begin
 		If (XDif<>0) then begin
 			If (XDif<0) then ChkX:=EBul[B]^.X else ChkX:=EBul[B]^.X+EBul[B]^.W-1;
 			
-			If (Room^.Collides(ChkX+XDif,EBul[B]^.Y)) then begin 
+			If (Room^.CollidesOrOutside(ChkX+XDif,EBul[B]^.Y)) then begin 
 				Room^.HitSfx(ChkX+XDif,EBul[B]^.Y); EBul[B]^.HP:=-10 
 			end else
-			If (Room^.Collides(ChkX+XDif,EBul[B]^.Y+EBul[B]^.H-1)) then begin
+			If (Room^.CollidesOrOutside(ChkX+XDif,EBul[B]^.Y+EBul[B]^.H-1)) then begin
 				Room^.HitSfx(ChkX+XDif,EBul[B]^.Y+EBul[B]^.H-1); EBul[B]^.HP:=-10 
 			end else
 				EBul[B]^.X:=EBul[B]^.X+XDif
@@ -342,10 +342,10 @@ Begin
 		If (YDif<>0) then begin
 			If (YDif<0) then ChkY:=EBul[B]^.Y else ChkY:=EBul[B]^.Y+EBul[B]^.H-1;
 			
-			If (Room^.Collides(EBul[B]^.X,ChkY+YDif)) then begin 
+			If (Room^.CollidesOrOutside(EBul[B]^.X,ChkY+YDif)) then begin 
 				Room^.HitSfx(EBul[B]^.X,ChkY+YDif); EBul[B]^.HP:=-10 
 			end else
-			If (Room^.Collides(EBul[B]^.X+EBul[B]^.W-1,ChkY+YDif)) then begin 
+			If (Room^.CollidesOrOutside(EBul[B]^.X+EBul[B]^.W-1,ChkY+YDif)) then begin 
 				Room^.HitSfx(EBul[B]^.X+EBul[B]^.W-1,ChkY+YDif); EBul[B]^.HP:=-10
 			end else
 				EBul[B]^.Y:=EBul[B]^.Y+YDif
@@ -379,7 +379,7 @@ Begin
 		If (XDif<>0) then begin
 			If (XDif<0) then ChkX:=Gib[G]^.X else ChkX:=Gib[G]^.X+Gib[G]^.W-1;
 			
-			If (Room^.Collides(ChkX+XDif,Gib[G]^.Y)) or (Room^.Collides(ChkX+XDif,Gib[G]^.Y+Gib[G]^.H-1))
+			If (Room^.CollidesOrOutside(ChkX+XDif,Gib[G]^.Y)) or (Room^.CollidesOrOutside(ChkX+XDif,Gib[G]^.Y+Gib[G]^.H-1))
 				then Gib[G]^.HP:=-10 
 				else Gib[G]^.X:=Gib[G]^.X+XDif
 		end;
@@ -387,7 +387,7 @@ Begin
 		If (YDif<>0) then begin
 			If (YDif<0) then ChkY:=Gib[G]^.Y else ChkY:=Gib[G]^.Y+Gib[G]^.H-1;
 			
-			If (Room^.Collides(Gib[G]^.X,ChkY+YDif)) or (Room^.Collides(Gib[G]^.X+Gib[G]^.W-1,ChkY+YDif))
+			If (Room^.CollidesOrOutside(Gib[G]^.X,ChkY+YDif)) or (Room^.CollidesOrOutside(Gib[G]^.X+Gib[G]^.W-1,ChkY+YDif))
 				then Gib[G]^.HP:=-10 
 				else Gib[G]^.Y:=Gib[G]^.Y+YDif
 		end;

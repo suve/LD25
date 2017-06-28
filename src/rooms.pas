@@ -14,13 +14,16 @@ Const TILE_WALL  = 00; TILE_VBAR = 01; TILE_VBUP = 02; TILE_VBDO = 03;
 
 Type PRoom = ^TRoom;
      TRoom = Object
+     Private
+       Function CollisionCheck(Const cX, cY:Double; Const OutsideVal:Boolean):Boolean;
      Public
        X, Y : uInt;
        Tile : Array[0..(ROOM_W-1), 0..(ROOM_H-1)] of TTile;
        TCol : Array[0..(ROOM_W-1), 0..(ROOM_H-1)] of Sour.PColour;
        Scri : Array of AnsiString;
 
-       Function  Collides(cX,cY:Double):Boolean;
+       Function  CollidesOrOutside(Const cX,cY:Double):Boolean;
+       Function  Collides(Const cX,cY:Double):Boolean;
        Procedure HitSfx(cX,cY:Double);
 
        Procedure RunScript();
@@ -202,14 +205,25 @@ Procedure TRoom.SetTile(tX,tY:sInt;tT:Char);
       end
    end;
 
-Function TRoom.Collides(cX,cY:Double):Boolean;
-   Var iX,iY:sInt;
-   begin
-   If (cX<0) or (cY<0) then Exit(True);
-   iX:=Trunc(cX / TILE_W); iY:=Trunc(cY / TILE_H);
-   If (iX>=ROOM_W) or (iY>=ROOM_H) then Exit(True);
-   Exit(Tile[iX][iY]<TILE_NoCollide)
-   end;
+Function TRoom.CollisionCheck(Const cX, cY:Double; Const OutsideVal:Boolean):Boolean;
+Var 
+	iX,iY:sInt;
+Begin
+	If (cX<0) or (cY<0) then Exit(OutsideVal);
+	iX:=Trunc(cX / TILE_W); iY:=Trunc(cY / TILE_H);
+	If (iX>=ROOM_W) or (iY>=ROOM_H) then Exit(OutsideVal);
+	Exit(Tile[iX][iY]<TILE_NoCollide)
+End;
+
+Function TRoom.CollidesOrOutside(Const cX, cY:Double):Boolean;
+Begin
+   Exit(Self.CollisionCheck(cX, cY, True))
+End;
+
+Function TRoom.Collides(Const cX, cY:Double):Boolean;
+Begin
+   Exit(Self.CollisionCheck(cX, cY, False))
+End;
 
 Procedure TRoom.HitSfx(cX,cY:Double);
    Var iX,iY:sInt;
