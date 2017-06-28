@@ -21,7 +21,7 @@ XXXXXX|  |XXXXXXXXXX
 palette yellow
 text black 162 02 Doors are most often
 text black 162 12 opened by destroying
-text black 162 22 generators like this.  
+text black 162 22 generators like this one.  
 spawn drone 11 18
 spawn drone 11 19
 spawn basher 05 14

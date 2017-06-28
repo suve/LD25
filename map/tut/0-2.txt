@@ -21,7 +21,7 @@ XXXXXXXXXXXXXXXXXXXX
 palette red
 text white 18 02 Death does not reset your progress. Any doors
 text white 18 12 you might have opened will remain so.
-text white 02 22 Watch our for generator's powerful bullets!
+text white 02 22 Watch our for the generator's powerful bullets!
 spawn drone 6 18
 spawn drone 8 19
 spawn drone 19 12
