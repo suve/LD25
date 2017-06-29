@@ -19,6 +19,13 @@ XXXX         |  | XX
 XXXX   X    X|  |XXX
 XXXXXXXXX::XX|::|XXX
 palette green
+if 65 not
+	tile 14  9 D
+	tile 14 10 D
+else
+	tile 14 9
+	tile 14 10
+fi
 spawn drone 18 17
 spawn spitter 05 19
 spawn spitter 03 12
