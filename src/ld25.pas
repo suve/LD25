@@ -242,6 +242,7 @@ Function Startup():Boolean;
          Writeln('Failed!'); NoSound:=True end else Writeln('Success!')
       end else Writeln('SDL audio init failed - skipping SDL_mixer init.');
    If (Not NoSound) then Mix_AllocateChannels(SFXCHANNELS);
+   LoadAndSetWindowIcon();
    Sour.SetGLAttributes(8,8,8);
    Write('Opening window... ');
    If (Not Wnd_F)

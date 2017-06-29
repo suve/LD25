@@ -33,7 +33,7 @@ Const ORG_MAP_W = 7; ORG_MAP_H = 7; ORG_ROOMNUM = ORG_MAP_W*ORG_MAP_H;
 
       GFX_HERO = 0; GFX_ENEM = 1;
       CHARAS = 8; BULLETS = 5; SLIDES_IN = 6; SLIDES_OUT = 10;
-      OTHERS = 3; //tiles, ui, colours
+      OTHERS = 3; //tiles, ui, colours; icon gets loaded separately
 
       WALL_SFX = 4; METAL_SFX = 3; DIE_SFX = 6; SHOT_SFX = 4; HIT_SFX = 1; EXTRA_SFX = 3;
       SFX_WALL = 0; SFX_METAL = SFX_WALL+WALL_SFX; SFX_DIE = SFX_METAL+METAL_SFX;
@@ -86,6 +86,7 @@ var Screen : PSDL_Surface;  // SDL Video surface
     Wnd_W, Wnd_H : uInt; // Window width, height and fullscreen flag.
     Wnd_F : Boolean;     // These can be read from Screen, but we save the .ini after closing SDL.
 
+    IconSurf: PSDL_Surface;
     TitleGfx, TileGfx, UIgfx, ColGfx : Sour.PImage;
     CharaGfx : Array[0..CHARAS-1] of Sour.PImage;
     ShotGfx  : Array[0..BULLETS-1] of Sour.PImage;
@@ -174,14 +175,15 @@ Procedure DestroyEntities(KillHero:Boolean=FALSE);
 Procedure ResetGamestate();
 
 // Load gfx and sfx, melady
-Function LoadBasics(Out Status:AnsiString):Boolean;
-Function LoadRes(Out Status:AnsiString; Update : UpdateProc = NIL):Boolean;
+Function  LoadBasics(Out Status:AnsiString):Boolean;
+Function  LoadRes(Out Status:AnsiString; Const Update: UpdateProc = NIL):Boolean;
+Procedure LoadAndSetWindowIcon();
 
 // Free resources
 Procedure Free();
 
 implementation
-   uses Rooms, FloatingText, ConfigFiles;
+   uses Rooms, FloatingText, ConfigFiles, SDL_Image;
 
 var Tikku : uInt;
     VolLevel : TVolLevel;
@@ -420,6 +422,7 @@ Procedure ResetGamestate();
    end;
 
 const GFX_TITLE = 'gfx/title.png'; FILE_FONT = 'gfx/font.png';
+      ICON_FILE = 'gfx/icon.png';
       GFX_FILE : Array[0..CHARAS-1] of String = (
       'gfx/hero.png','gfx/enem0.png','gfx/enem1.png','gfx/enem2.png','gfx/enem3.png',
       'gfx/enem4.png','gfx/enem5.png','gfx/enem6.png');
@@ -437,7 +440,7 @@ Function LoadBasics(Out Status:AnsiString):Boolean;
    Exit(True)
    end;
 
-Function LoadRes(Out Status:AnsiString; Update : UpdateProc = NIL):Boolean;
+Function LoadRes(Out Status:AnsiString; Const Update: UpdateProc = NIL):Boolean;
    Var FilesLoaded, FilesTotal, C,X,Y:uInt; S:AnsiString;
        Img:Sour.PImage; Samp:PMix_Chunk; R:PRoom;
    begin
@@ -586,12 +589,27 @@ Function LoadRes(Out Status:AnsiString; Update : UpdateProc = NIL):Boolean;
    Exit(True)
    end;
 
+Procedure LoadAndSetWindowIcon();
+Begin
+	If(IconSurf = NIL) then begin
+		IconSurf:=IMG_Load(PChar(DataPath+ICON_FILE));
+		
+		If (IconSurf = NIL) then begin
+			Writeln('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}ICON_FILE);
+			Exit()
+		end
+	end;
+	
+	SDL_WM_SetIcon(IconSurf, NIL)
+End;
+
 Procedure Free;
    Var C:uInt;
    begin
    (* Since this is called only on program exit, it doesn't
       really matter if we forget anything. It will all be freed
       by the OS when the program dies, afterall. *)
+   If (IconSurf<>NIL) then SDL_FreeSurface(IconSurf);
    If (TitleGfx<>NIL) then Sour.FreeImage(TitleGfx);
    If (Font<>NIL) then Sour.FreeFont(Font);
    If (NumFont<>NIL) then Sour.FreeFont(NumFont);
