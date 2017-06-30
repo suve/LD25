@@ -1,4 +1,4 @@
-Copyright (c) 2012-2014 Artur "suve" Iwicki
+Copyright (c) 2012-2017 Artur "suve" Iwicki
 
 This software is provided 'as-is', without any express or implied warranty.
 In no event will the authors be held liable for any damages arising from the
@@ -13,7 +13,7 @@ subject to the following restrictions:
    an acknowledgment (see the following) in the product documentation
    is required.
 
-   Portions Copyright (c) 2012-2014 Artur "suve" Iwicki
+   Portions Copyright (c) 2012-2017 Artur "suve" Iwicki
 
 2. Altered source versions must be plainly marked as such, and must not be
    misrepresented as being the original software.

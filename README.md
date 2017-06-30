@@ -13,7 +13,7 @@ Licensing
 ---------------------------
 Colorful is released under the "zlib with acknowledgement" license.
 
-The full text of the license can be found in the LICENSE.txt file.
+The full text of the license can be found in the LICENCE.txt file.
 
 
 Language info
