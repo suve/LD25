@@ -716,6 +716,7 @@ Var
 	Time, Ticks: uInt;
 Begin
 	GetDeltaTime(Time);
+	SDL_ShowCursor(0);
 	
 	RoomChange:=RCHANGE_NONE;
 	Paused:=False; WantToQuit:=False; 
@@ -737,7 +738,9 @@ Begin
 		DrawFrame();
 		CountFrames(Time);
 
-		until WantToQuit;
+	Until WantToQuit;
+	
+	SDL_ShowCursor(1);
 	Exit(Given >= 8)
 End;
 
