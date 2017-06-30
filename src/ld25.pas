@@ -16,6 +16,36 @@ Procedure DrawTitle();
                   Font,(RESOL_W div 2),82,ALIGN_CENTER,ALIGN_MIDDLE)
    end;
 
+Procedure PrintMenuText(Const Text:AnsiString; Const X, Y:sInt; Const AlignX: Sour.HorizontalAlign; Const Colour: Sour.PColour; Out Rect: Sour.TRect);
+Var
+	TextLen: sInt;
+Begin
+	Sour.PrintText(Text, Shared.Font, X, Y, AlignX, Colour);
+	
+	TextLen := Length(Text);
+	Rect.W := Trunc(Shared.Font^.Scale * (TextLen * Shared.Font^.SpaX));
+	Rect.H := Trunc(Shared.Font^.Scale * Shared.Font^.ChrW);
+	
+	Rect.Y := Y;
+	Case (AlignX) of
+		Sour.ALIGN_LEFT:   Rect.X := X;
+		Sour.ALIGN_CENTER: Rect.X := X - (Rect.W div 2);
+		Sour.ALIGN_RIGHT:  Rect.X := X - Rect.W;
+	end
+End;
+
+Function MouseInRect(Const Rect: Sour.TRect):Boolean;
+Var
+	MouseX, MouseY: Double;
+Begin
+	// The mouse coordinates inside SDL_Event are given in window-size terms.
+	// We need to convert them to game-resolution terms first.
+	MouseX := Ev.Button.X * (RESOL_W / Screen^.W);
+	MouseY := Ev.Button.Y * (RESOL_H / Screen^.H);
+	
+	Exit(Overlap(Rect.X, Rect.Y, Rect.W, Rect.H, MouseX, MouseY, 1, 1))
+End;
+
 Procedure LoadUpdate(Name:AnsiString;Perc:Double);
    Const STARTX = RESOL_W div 32; SIZEX = RESOL_W - (STARTX*2);
          SIZEY = RESOL_H div 32; STARTY = RESOL_H - (SIZEY*3);
@@ -66,45 +96,65 @@ Procedure BindKeys();
    end;
 
 Function GameworldDialog(Load:Boolean):Char;
-   Const WorldNames:Array[TGameMode] of AnsiString = (
-         'T - TUTORIAL','N - NORMAL  ');
-   Var Msg:AnsiString; OK:Array[TGameMode] of Boolean; GM:TGameMode; Choice:Char;
-       YPos:uInt; Col:Sour.PColour; dt:uInt;
-   begin
-   If Load then begin Msg:='LOAD GAME';
-      For GM:=Low(GM) to High(GM) do Ok[GM]:=SaveExists[GM]
-      end else begin Msg:='NEW GAME';
-      For GM:=Low(GM) to High(GM) do Ok[GM]:=True
-      end;
-   Choice:=#$20;
-   While (Choice = #$20) do begin
-      Sour.BeginFrame(); DrawTitle();
-      Sour.SetFontScaling(Font,2.0);
-      Sour.PrintText([Msg,'','SELECT GAMEWORLD'],Font,(RESOL_W div 2),TitleGfx^.H,ALIGN_CENTER);
-      YPos:=((RESOL_H * 3) div 5);
-      For GM:=Low(GM) to High(GM) do begin
-          If (OK[GM]) then Col:=@WhiteColour else Col:=@GreyColour;
-          Sour.PrintText(WorldNames[GM],Font,(RESOL_W div 2),YPos,ALIGN_CENTER,Col);
-          YPos+=Trunc(Font^.SpaY*2*Font^.Scale)
-          end;
-      Sour.FinishFrame();
-      GetDeltaTime(dt);
-      While (SDL_PollEvent(@Ev)>0) do begin
-          If (Ev.Type_ = SDL_QuitEv) then begin
-             Shutdown:=True; Exit('Q') end else
-          If (Ev.Type_ = SDL_KeyDown) then begin
-             If (Ev.Key.Keysym.Sym = SDLK_Escape) then Choice:='Q' else
-             If (Ev.Key.Keysym.Sym = SDLK_T) then begin
-                If (OK[GM_TUTORIAL]) then Choice:='T' end else
-             If (Ev.Key.Keysym.sym = SDLK_N) then begin
-                If (Ok[GM_ORIGINAL]) then Choice:='N' end else
-             end else
-          If (Ev.Type_ = SDL_VideoResize) then
-            Shared.ResizeWindow(Ev.Resize.W,Ev.Resize.H,False) else
-          end;
-      end;
-   Exit(Choice)
-   end;
+Const
+	WorldNames:Array[TGameMode] of AnsiString = (
+		'T - TUTORIAL',
+		'N - NORMAL  '
+	);
+Var
+	WorldRect:Array[TGameMode] of Sour.TRect;
+	
+	Msg:AnsiString;
+	OK:Array[TGameMode] of Boolean; GM:TGameMode;
+	Choice:Char; YPos:uInt; Col:Sour.PColour; dt:uInt;
+Begin
+	If Load then begin Msg:='LOAD GAME';
+		For GM:=Low(GM) to High(GM) do Ok[GM]:=SaveExists[GM]
+	end else begin Msg:='NEW GAME';
+		For GM:=Low(GM) to High(GM) do Ok[GM]:=True
+	end;
+   
+	Choice:=#$20;
+	While (Choice = #$20) do begin
+		Sour.BeginFrame(); DrawTitle();
+		Sour.SetFontScaling(Font,2.0);
+		Sour.PrintText([Msg,'','SELECT GAMEWORLD'],Font,(RESOL_W div 2),TitleGfx^.H,ALIGN_CENTER);
+		
+		YPos:=((RESOL_H * 3) div 5);
+		For GM:=Low(GM) to High(GM) do begin
+			If (OK[GM]) then Col:=@WhiteColour else Col:=@GreyColour;
+			PrintMenuText(WorldNames[GM], (RESOL_W div 2), YPos, ALIGN_CENTER, Col, WorldRect[GM]);
+			YPos+=Trunc(Font^.SpaY*2*Font^.Scale)
+		end;
+		
+		Sour.FinishFrame();
+		GetDeltaTime(dt);
+		While (SDL_PollEvent(@Ev)>0) do begin
+			If (Ev.Type_ = SDL_QuitEv) then begin
+				Shutdown:=True; Exit('Q') end else
+			If (Ev.Type_ = SDL_KeyDown) then begin
+				If (Ev.Key.Keysym.Sym = SDLK_Escape) then Choice:='Q' else
+				If (Ev.Key.Keysym.Sym = SDLK_T) then begin
+					If (OK[GM_TUTORIAL]) then Choice:='T' 
+				end else
+				If (Ev.Key.Keysym.sym = SDLK_N) then begin
+					If (Ok[GM_ORIGINAL]) then Choice:='N'
+				end else
+			end else
+			If(Ev.Type_ = SDL_MouseButtonDown) then begin
+				If (MouseInRect(WorldRect[GM_TUTORIAL])) then begin
+					If (OK[GM_TUTORIAL]) then Choice:='T' 
+				end else
+				If (MouseInRect(WorldRect[GM_ORIGINAL])) then begin
+					If (Ok[GM_ORIGINAL]) then Choice:='N'
+				end else
+			end else
+			If (Ev.Type_ = SDL_VideoResize) then
+				Shared.ResizeWindow(Ev.Resize.W,Ev.Resize.H,False)
+		end;
+	end;
+	Exit(Choice)
+End;
 
 Function ShowSlide(Img:Sour.PImage):Boolean;
    Var Q:sInt; dt:uInt;
@@ -138,53 +188,74 @@ Function Intro():Boolean;
    end;
 
 Function Menu():Char;
-   Var Choice:Char; dt,XPos,YPos:uInt; Col:Sour.PColour; IHasSaves:Boolean; GM:TGameMode;
-   begin
-   XPos:=Length('I - INTRODUCTION');
-   XPos:=((Font^.SpaX*(XPos-1))+Font^.ChrW)*2;
-   XPos:=(RESOL_W - XPos) div 2;
-   IHasSaves:=False;
-   For GM:=Low(GM) to High(GM) do If (SaveExists[GM]) then IHasSaves:=True;
-   Choice:=#$20;
-   While (Choice = #32) do begin
-      Sour.BeginFrame(); DrawTitle();
-      Sour.SetFontScaling(Font,2); YPos:=TitleGfx^.H;
-      Sour.PrintText('I - INTRODUCTION',Font,XPos,YPos,@WhiteColour);
-         YPos+=Trunc(Font^.ChrH * 2 * Font^.Scale);
-      If (GameOn) then Col:=@WhiteColour else Col:=@GreyColour;
-      Sour.PrintText('C - CONTINUE',Font,XPos,YPos,Col);
-         YPos+=Trunc(Font^.ChrH * 2 * Font^.Scale);
-      Sour.PrintText('N - NEW GAME',Font,XPos,YPos,@WhiteColour);
-         YPos+=Trunc(Font^.ChrH * 2 * Font^.Scale);
-      If (IHasSaves) then Col:=@WhiteColour else Col:=@GreyColour;
-      Sour.PrintText('L - LOAD GAME',Font,XPos,YPos,Col);
-         YPos+=Trunc(Font^.ChrH * 2 * Font^.Scale);
-      Sour.PrintText('B - BIND KEYS',Font,XPos,YPos,@WhiteColour);
-         YPos+=Trunc(Font^.ChrH * 2 * Font^.Scale);
-      Sour.PrintText('Q - QUIT',Font,XPos,YPos,@WhiteColour);
-      Sour.FinishFrame();
-      GetDeltaTime(dt);
-      // Draw the title and menu
-      While (SDL_PollEvent(@Ev)>0) do begin
-            If (Ev.Type_ = SDL_QuitEv) then begin
-               Shutdown:=True; Exit('Q') end else
-            If (Ev.Type_ = SDL_KeyDown) then begin
-               If (Ev.Key.Keysym.Sym = SDLK_ESCAPE) then Choice:='Q' else
-               If (Ev.Key.Keysym.Sym = SDLK_Q) then Choice:='Q' else
-               If (Ev.Key.Keysym.Sym = SDLK_I) then Choice:='I' else
-               If (Ev.Key.Keysym.Sym = SDLK_N) then Choice:='N' else
-               If (Ev.Key.Keysym.Sym = SDLK_C) then begin
-                  If (GameOn) then Choice:='C' end else
-               If (Ev.Key.Keysym.Sym = SDLK_L) then begin
-                  If (IHasSaves) then Choice:='L' end else
-               If (Ev.Key.Keysym.Sym = SDLK_B) then Choice:='B' else
-               end else
-            If (Ev.Type_ = SDL_VideoResize) then
-               Shared.ResizeWindow(Ev.Resize.W,Ev.Resize.H,False) else
-         end // Check SDL events
-      end;
-   Exit(Choice)
-   end;
+Var
+	Choice:Char;
+	dt, XPos, YPos:uInt; Col:Sour.PColour; 
+	IHasSaves:Boolean; GM:TGameMode;
+	
+	IntroRect, ContinueRect, NewGameRect, LoadGameRect, BindRect, QuitRect: Sour.TRect;
+Begin
+	XPos:=Length('I - INTRODUCTION');
+	XPos:=((Font^.SpaX*(XPos-1))+Font^.ChrW)*2;
+	XPos:=(RESOL_W - XPos) div 2;
+   
+	IHasSaves:=False;
+	For GM:=Low(GM) to High(GM) do If (SaveExists[GM]) then IHasSaves:=True;
+   
+	Choice:=#$20;
+	While (Choice = #32) do begin
+		Sour.BeginFrame(); DrawTitle();
+		Sour.SetFontScaling(Font,2); YPos:=TitleGfx^.H;
+		PrintMenuText('I - INTRODUCTION', XPos, YPos, ALIGN_LEFT, @WhiteColour, IntroRect);
+		
+		YPos+=Trunc(Font^.ChrH * 2 * Font^.Scale);
+		If (GameOn) then Col:=@WhiteColour else Col:=@GreyColour;
+		PrintMenuText('C - CONTINUE', XPos, YPos, ALIGN_LEFT, Col, ContinueRect);
+		
+		YPos+=Trunc(Font^.ChrH * 2 * Font^.Scale);
+		PrintMenuText('N - NEW GAME', XPos, YPos, ALIGN_LEFT, @WhiteColour, NewGameRect);
+		
+		YPos+=Trunc(Font^.ChrH * 2 * Font^.Scale);
+		If (IHasSaves) then Col:=@WhiteColour else Col:=@GreyColour;
+		PrintMenuText('L - LOAD GAME', XPos, YPos, ALIGN_LEFT, Col, LoadGameRect);
+		
+		YPos+=Trunc(Font^.ChrH * 2 * Font^.Scale);
+		PrintMenuText('B - BIND KEYS', XPos, YPos, ALIGN_LEFT, @WhiteColour, BindRect);
+		
+		YPos+=Trunc(Font^.ChrH * 2 * Font^.Scale);
+		PrintMenuText('Q - QUIT', XPos, YPos, ALIGN_LEFT, @WhiteColour, QuitRect);
+		
+		Sour.FinishFrame();
+		GetDeltaTime(dt);
+		While (SDL_PollEvent(@Ev)>0) do begin
+			If (Ev.Type_ = SDL_QuitEv) then begin
+				Shutdown:=True; Exit('Q') end else
+			If (Ev.Type_ = SDL_KeyDown) then begin
+				If (Ev.Key.Keysym.Sym = SDLK_ESCAPE) then Choice:='Q' else
+				If (Ev.Key.Keysym.Sym = SDLK_Q) then Choice:='Q' else
+				If (Ev.Key.Keysym.Sym = SDLK_I) then Choice:='I' else
+				If (Ev.Key.Keysym.Sym = SDLK_N) then Choice:='N' else
+				If (Ev.Key.Keysym.Sym = SDLK_C) then begin
+					If (GameOn) then Choice:='C' end else
+				If (Ev.Key.Keysym.Sym = SDLK_L) then begin
+					If (IHasSaves) then Choice:='L' end else
+				If (Ev.Key.Keysym.Sym = SDLK_B) then Choice:='B' else
+			end else
+			If (Ev.Type_ = SDL_MouseButtonDown) then begin
+				If (MouseInRect(IntroRect)) then Choice:='I' else
+				If (MouseInRect(NewGameRect)) then Choice:='N' else
+				If (MouseInRect(ContinueRect)) then begin
+					If (GameOn) then Choice:='C' end else
+				If (MouseInRect(LoadGameRect)) then begin
+					If (IHasSaves) then Choice:='L' end else
+				If (MouseInRect(BindRect)) then Choice:='B' else
+				If (MouseInRect(QuitRect)) then Choice:='Q' else
+			end else
+			If (Ev.Type_ = SDL_VideoResize) then Shared.ResizeWindow(Ev.Resize.W,Ev.Resize.H,False)
+		end
+	end;
+	Exit(Choice)
+End;
 
 Procedure Outro();
    Var C:uInt; YPos:uInt;
