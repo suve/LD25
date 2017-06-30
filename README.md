@@ -65,11 +65,19 @@ you'll have to meddle with the code a bit and add these constants for
 your new platform. Or just remove the compiler directives and hard-code
 them for your OS - whatever you find suitable.
 
-Also, note that, by default, on Linux, SDL_mixer links and depends on
-smpeg for MP3 support. Since Colorful does not use MP3s, and less 
-dependencies is better, my releases are compiled using a slightly 
-altered version of SDL_mixer.pas, disabling the smpeg capabilities.
-This version is also bundled with the GitHub sources.
+
+Bundled SDL_Mixer
+-----------------
+By default, on Linux, SDL_mixer links and depends on smpeg for MP3 support.
+Since Colorful does not use MP3s, and less dependencies is better, 
+my releases are compiled using a slightly altered version of `sdl_mixer.pas`,
+disabling the smpeg capabilities. This version is bundled in the repo.
+
+If you're using FPC >= 3.0, the compiler comes with an smpeg-disabled
+version of SDL_Mixer by default. If you want to use the compiler-provided
+unit, instead of relying on the bundled one, just go through the code
+and change all `uses SDL_Mixer` to `uses SDL_Mixer_nosmpeg`. After that, you
+can safely remove the bundled `sdl_mixer.pas` and `jedi.inc`.
 
 
 Author's rambling
