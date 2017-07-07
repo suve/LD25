@@ -6,6 +6,20 @@ Legend:
 * Altered
 > Comment
 
+= 2017.0707 =
+* If the game is compiled using FPC 3.0.0 or newer, it will include ("uses")
+  the compiler-provided version of SDL_Mixer, instead of the bundled one.
+
+= 2017.0630 =
++ It is now possible to use the mouse to select options in the menus.
++ The mouse cursor is now hidden upon entering the game (and shown again when
+  going back to the menu).
+
+= 2017.0629 =
++ The game now properly loads and sets its window icon.
+* Made the green zone a little bit harder (added a door that forces the player
+  to take a longer way to a generator).
+
 = 2017.0628 =
 * Moved room change so it doesn't take place during the game step.
 * Changed the way hero-room collisions are handled - should improve

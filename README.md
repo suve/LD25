@@ -32,7 +32,7 @@ the game quite eagerly.
 
 Libraries used
 ----------------------
-The game uses SDL (along with SDL_image and SDL_mixer) libraries
+The game uses SDL (along with SDL_Image and SDL_Mixer) libraries
 for event handling, gfx and sfx; and the Sour lib.
 
 Simple DirectMedia Layer
@@ -69,15 +69,19 @@ them for your OS - whatever you find suitable.
 Bundled SDL_Mixer
 -----------------
 By default, on Linux, SDL_mixer links and depends on smpeg for MP3 support.
-Since Colorful does not use MP3s, and less dependencies is better, 
-my releases are compiled using a slightly altered version of `sdl_mixer.pas`,
-disabling the smpeg capabilities. This version is bundled in the repo.
+Since Colorful does not use MP3s, and less dependencies is better 
+(not to mention that until quite recently, MP3 was patent-encumbered), 
+we want to avoid dragging smpeg into the picture.
+ 
+Since FPC 3.0.0, the compiler comes with an smpeg-disabled version of SDL_Mixer
+by default. However, for older versions of the compiler, it was necessary
+to bundle a copy of SDL_Mixer and modify it appropriately.
 
-If you're using FPC >= 3.0, the compiler comes with an smpeg-disabled
-version of SDL_Mixer by default. If you want to use the compiler-provided
-unit, instead of relying on the bundled one, just go through the code
-and change all `uses SDL_Mixer` to `uses SDL_Mixer_nosmpeg`. After that, you
-can safely remove the bundled `sdl_mixer.pas` and `jedi.inc`.
+There are macros in the source code that detect whether you're using
+FPC >= 3.0.0 and switch to using the compiler-provided library, instead
+of relying on the bundled one. In this case, it's safe to competely remove
+the `src/sdl_mixer_bundled.pas` and `src/jedi.inc` files 
+without affecting the build.
 
 
 Author's rambling

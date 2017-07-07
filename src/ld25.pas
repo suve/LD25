@@ -2,7 +2,17 @@ program ld25;
 
 {$INCLUDE defines.inc}
 
-uses SysUtils, Shared, SDL, Sour, GL, SDL_Mixer, Objects, FloatingText, configfiles, Game;
+uses
+	SysUtils, SDL, Sour, GL, 
+
+	{$IF FPC_FULLVERSION >= 30000}
+		SDL_Mixer_nosmpeg,
+	{$ELSE}
+		SDL_Mixer_bundled,
+	{$ENDIF}
+
+	Shared, Objects, FloatingText, configfiles, Game
+;
 
 
 Var MenuChoice:Char;

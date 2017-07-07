@@ -5,7 +5,13 @@ unit shared;
 
 interface
 
-uses SDL, Sour, GL, Objects, SDL_Mixer, SysUtils;
+uses SDL, Sour, GL, Objects, SysUtils,
+	{$IF FPC_FULLVERSION >= 30000}
+		SDL_Mixer_nosmpeg
+	{$ELSE}
+		SDL_Mixer_bundled
+	{$ENDIF}
+;
 
 // A shitload of constants - but hey, this is the 'shared' unit, isn't it?
 
