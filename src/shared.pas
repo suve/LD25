@@ -427,173 +427,224 @@ Procedure ResetGamestate();
    Carried:=0; Given:=0;
    end;
 
-const GFX_TITLE = 'gfx/title.png'; FILE_FONT = 'gfx/font.png';
-      ICON_FILE = 'gfx/icon.png';
-      GFX_FILE : Array[0..CHARAS-1] of String = (
-      'gfx/hero.png','gfx/enem0.png','gfx/enem1.png','gfx/enem2.png','gfx/enem3.png',
-      'gfx/enem4.png','gfx/enem5.png','gfx/enem6.png');
-      FILE_TILES = 'gfx/tiles.png'; FILE_UI = 'gfx/ui.png'; FILE_COLOURS = 'gfx/colours.png';
-      NUMFONTFILE = 'gfx/numbers.png';
-      PATH_ORG = 'map/org/'; PATH_TUT = 'map/tut/';
+const
+	GFX_TITLE = 'gfx/title.png';
+	FILE_FONT = 'gfx/font.png';
+	ICON_FILE = 'gfx/icon.png';
+	GFX_FILE : Array[0..CHARAS-1] of String = (
+		'gfx/hero.png','gfx/enem0.png','gfx/enem1.png','gfx/enem2.png','gfx/enem3.png',
+		'gfx/enem4.png','gfx/enem5.png','gfx/enem6.png'
+	);
+	FILE_TILES = 'gfx/tiles.png';
+	FILE_UI = 'gfx/ui.png';
+	FILE_COLOURS = 'gfx/colours.png';
+	NUMFONTFILE = 'gfx/numbers.png';
+	PATH_ORG = 'map/org/'; 
+	PATH_TUT = 'map/tut/';
 
 Function LoadBasics(Out Status:AnsiString):Boolean;
-   begin
-   TitleGfx:=Sour.LoadImage(DataPath+GFX_TITLE);
-   If (TitleGfx=NIL) then begin Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}GFX_TITLE); Exit(False) end;
-   Font:=Sour.LoadFont(DataPath+FILE_FONT,$000000,5,7,#32);
-   If (Font=NIL) then begin Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}FILE_FONT); Exit(False) end;
-   Sour.SetFontSpacing(Font,1,1);
-   Exit(True)
-   end;
+begin
+	TitleGfx:=Sour.LoadImage(DataPath+GFX_TITLE);
+	If (TitleGfx=NIL) then begin Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}GFX_TITLE); Exit(False) end;
+
+	Font:=Sour.LoadFont(DataPath+FILE_FONT,$000000,5,7,#32);
+	If (Font=NIL) then begin Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}FILE_FONT); Exit(False) end;
+	Sour.SetFontSpacing(Font,1,1);
+
+	Exit(True)
+End;
 
 Function LoadRes(Out Status:AnsiString; Const Update: UpdateProc = NIL):Boolean;
-   Var FilesLoaded, FilesTotal, C,X,Y:uInt; S:AnsiString;
-       Img:Sour.PImage; Samp:PMix_Chunk; R:PRoom;
-   begin
-   FilesLoaded:=0;
-   If (Not NoSound) then FilesTotal:=FILES_TO_LOAD
-                    else FilesTotal:=FILES_NOSOUND;
-   // SOME MINOR SETUP
-   NumFont:=Sour.LoadFont(DataPath+NUMFONTFILE,$000000,3,5,'0');
-   If (NumFont = NIL) then begin
-      Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}NUMFONTFILE);
-      Exit(False)
-      end;
-   Sour.SetFontSpacing(NumFont,1,1);
-   FilesLoaded+=1; Update(NUMFONTFILE,FilesLoaded / FilesTotal);
-   // Loaded numfont for fps
-   TileGfx:=Sour.LoadImage(DataPath+FILE_TILES,$000000);
-   If (TileGfx = NIL) then begin
-      Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}FILE_TILES);
-      Exit(False)
-      end;
-   FilesLoaded+=1; Update(FILE_TILES,FilesLoaded / FilesTotal);
-   // Loaded tiles
-   UIgfx:=Sour.LoadImage(DataPath+FILE_UI,$00FF00);
-   If (UIgfx = NIL) then begin
-      Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}FILE_UI);
-      Exit(False)
-      end;
-   FilesLoaded+=1; Update(FILE_UI,FilesLoaded / FilesTotal);
-   // UI loaded
-   ColGfx:=Sour.LoadImage(DataPath+FILE_COLOURS,$808080);
-   If (ColGfx = NIL) then begin
-      Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}FILE_UI);
-      Exit(False)
-      end;
-   FilesLoaded+=1; Update(FILE_COLOURS,FilesLoaded / FilesTotal);
-   // Loaded colours (crystals). Load intro/outro slides
-   For C:=0 to SLIDES_IN-1 do begin
-       WriteStr(S,'intro/slide',C,'.png');
-       Img:=Sour.LoadImage(DataPath+S,$000000);
-       If (Img=NIL) then begin
-          Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S);
-          Exit(False)
-          end;
-       SlideIn[C]:=Img;
-       FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
-       end;
-   For C:=0 to SLIDES_OUT-1 do begin
-       WriteStr(S,'intro/out',C,'.png');
-       Img:=Sour.LoadImage(DataPath+S,$000000);
-       If (Img=NIL) then begin
-          Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S);
-          Exit(False)
-          end;
-       SlideOut[C]:=Img;
-       FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
-       end;
-   // Loaded slides. Load charas
-   For C:=0 to CHARAS-1 do begin
-       Img:=Sour.LoadImage(DataPath+GFX_FILE[C],$000000);
-       If (Img=NIL) then begin
-          Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}GFX_FILE[C]);
-          Exit(False)
-          end;
-       CharaGfx[C]:=Img;
-       FilesLoaded+=1; Update(GFX_FILE[C],FilesLoaded / FilesTotal)
-       end;
-   // Loaded characters, time for them bullets
-   For C:=0 to BULLETS-1 do begin
-       WriteStr(S,'gfx/shot',C,'.png');
-       Img:=Sour.LoadImage(DataPath+S,$000000);
-       If (Img=NIL) then begin
-          Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S);
-          Exit(False)
-          end;
-       ShotGfx[C]:=Img;
-       FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
-       end;
-   // Loaded bullets, time for sfx
-   If (Not NoSound) then begin
-      For C:=0 to (WALL_SFX - 1) do begin
-          WriteStr(S,'sfx/wall',C,'.wav');
-          Samp:=Mix_LoadWAV(PChar(DataPath+S));
-          If (Samp = NIL) then begin
-             Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S; Exit(False) end;
-          Sfx[SFX_WALL+C]:=Samp;
-          FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
-          end;
-      For C:=0 to (METAL_SFX - 1) do begin
-          WriteStr(S,'sfx/metal',C,'.wav');
-          Samp:=Mix_LoadWAV(PChar(DataPath+S));
-          If (Samp = NIL) then begin
-             Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S; Exit(False) end;
-          Sfx[SFX_METAL+C]:=Samp;
-          FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
-          end;
-      For C:=0 to (DIE_SFX - 1) do begin
-          WriteStr(S,'sfx/die',C,'.wav');
-          Samp:=Mix_LoadWAV(PChar(DataPath+S));
-          If (Samp = NIL) then begin
-             Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S; Exit(False) end;
-          Sfx[SFX_DIE+C]:=Samp;
-          FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
-          end;
-      For C:=0 to (SHOT_SFX - 1) do begin
-          WriteStr(S,'sfx/shot',C,'.wav');
-          Samp:=Mix_LoadWAV(PChar(DataPath+S));
-          If (Samp = NIL) then begin
-             Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S; Exit(False) end;
-          Sfx[SFX_SHOT+C]:=Samp;
-          FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
-          end;
-      For C:=0 to (HIT_SFX - 1) do begin
-          WriteStr(S,'sfx/hit',C,'.wav');
-          Samp:=Mix_LoadWAV(PChar(DataPath+S));
-          If (Samp = NIL) then begin
-             Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S; Exit(False) end;
-          Sfx[SFX_HIT+C]:=Samp;
-          FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
-          end;
-      For C:=0 to (EXTRA_SFX - 1) do begin
-          WriteStr(S,'sfx/extra',C,'.wav');
-          Samp:=Mix_LoadWAV(PChar(DataPath+S));
-          If (Samp = NIL) then begin
-             Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S; Exit(False) end;
-          Sfx[SFX_EXTRA+C]:=Samp;
-          FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
-          end
-      end;
-   // Sounds loaded (or skipped). Get them maps!
-   For Y:=0 to (ORG_MAP_H-1) do For X:=0 to (ORG_MAP_W-1) do begin
-       WriteStr(S,PATH_ORG,X,'-',Y,'.txt');
-       R:=LoadRoom(DataPath+S);
-       If (R = NIL) then begin
-          Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S; Exit(False) end;
-       R^.X:=X; R^.Y:=Y; OrgRoom[X][Y]:=R;
-       FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
-       end;
-   For Y:=0 to (TUT_MAP_H-1) do For X:=0 to (TUT_MAP_W-1) do begin
-       WriteStr(S,PATH_TUT,X,'-',Y,'.txt');
-       R:=LoadRoom(DataPath+S);
-       If (R = NIL) then begin
-          Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S; Exit(False) end;
-       R^.X:=X; R^.Y:=Y; TutRoom[X][Y]:=R;
-       FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
-       end;
-   Exit(True)
-   end;
+Var
+	FilesLoaded, FilesTotal, C,X,Y:uInt; S:AnsiString;
+	Img: Sour.PImage; 
+	Samp: PMix_Chunk; 
+	R: PRoom;
+Begin
+	FilesLoaded:=0;
+	If (Not NoSound)
+		then FilesTotal:=FILES_TO_LOAD
+		else FilesTotal:=FILES_NOSOUND;
+
+	// Numfont used for FPS display
+	NumFont:=Sour.LoadFont(DataPath+NUMFONTFILE,$000000,3,5,'0');
+	If (NumFont = NIL) then begin
+		Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}NUMFONTFILE);
+		Exit(False)
+	end;
+	Sour.SetFontSpacing(NumFont,1,1);
+	FilesLoaded+=1; Update(NUMFONTFILE,FilesLoaded / FilesTotal);
+
+	TileGfx:=Sour.LoadImage(DataPath+FILE_TILES,$000000);
+	If (TileGfx = NIL) then begin
+		Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}FILE_TILES);
+		Exit(False)
+	end;
+	FilesLoaded+=1; Update(FILE_TILES,FilesLoaded / FilesTotal);
+   
+	UIgfx:=Sour.LoadImage(DataPath+FILE_UI,$00FF00);
+	If (UIgfx = NIL) then begin
+		Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}FILE_UI);
+		Exit(False)
+	end;
+	FilesLoaded+=1; Update(FILE_UI,FilesLoaded / FilesTotal);
+
+	ColGfx:=Sour.LoadImage(DataPath+FILE_COLOURS,$808080);
+	If (ColGfx = NIL) then begin
+		Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}FILE_UI);
+		Exit(False)
+	end;
+	FilesLoaded+=1; Update(FILE_COLOURS,FilesLoaded / FilesTotal);
+   
+	// Load intro slides
+	For C:=0 to SLIDES_IN-1 do begin
+		WriteStr(S,'intro/slide',C,'.png');
+		
+		Img:=Sour.LoadImage(DataPath+S,$000000);
+		If (Img=NIL) then begin
+			Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S);
+			Exit(False)
+		end;
+		
+		SlideIn[C]:=Img;
+		FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
+	end;
+     
+	// Load outro slides  
+	For C:=0 to SLIDES_OUT-1 do begin
+		WriteStr(S,'intro/out',C,'.png');
+		Img:=Sour.LoadImage(DataPath+S,$000000);
+		If (Img=NIL) then begin
+			Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S);
+			Exit(False)
+		end;
+		
+		SlideOut[C]:=Img;
+		FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
+	end;
+
+	// Characters
+	For C:=0 to CHARAS-1 do begin
+		Img:=Sour.LoadImage(DataPath+GFX_FILE[C],$000000);
+		If (Img=NIL) then begin
+			Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}GFX_FILE[C]);
+			Exit(False)
+		end;
+		
+		CharaGfx[C]:=Img;
+		FilesLoaded+=1; Update(GFX_FILE[C],FilesLoaded / FilesTotal)
+	end;
+
+	// Bullets
+	For C:=0 to BULLETS-1 do begin
+		WriteStr(S,'gfx/shot',C,'.png');
+		Img:=Sour.LoadImage(DataPath+S,$000000);
+		If (Img=NIL) then begin
+			Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S);
+			Exit(False)
+		end;
+		
+		ShotGfx[C]:=Img;
+		FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
+	end;
+
+	If (Not NoSound) then begin
+		For C:=0 to (WALL_SFX - 1) do begin
+			WriteStr(S,'sfx/wall',C,'.wav');
+			
+			Samp:=Mix_LoadWAV(PChar(DataPath+S));
+			If (Samp = NIL) then begin
+				Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S; Exit(False)
+			end;
+			
+			Sfx[SFX_WALL+C]:=Samp;
+			FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
+		end;
+		For C:=0 to (METAL_SFX - 1) do begin
+			WriteStr(S,'sfx/metal',C,'.wav');
+			
+			Samp:=Mix_LoadWAV(PChar(DataPath+S));
+			If (Samp = NIL) then begin
+				Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S; Exit(False) 
+			end;
+			
+			Sfx[SFX_METAL+C]:=Samp;
+			FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
+		end;
+		For C:=0 to (DIE_SFX - 1) do begin
+			WriteStr(S,'sfx/die',C,'.wav');
+			
+			Samp:=Mix_LoadWAV(PChar(DataPath+S));
+			If (Samp = NIL) then begin
+				Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S; Exit(False)
+			end;
+			
+			Sfx[SFX_DIE+C]:=Samp;
+			FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
+		end;
+		For C:=0 to (SHOT_SFX - 1) do begin
+			WriteStr(S,'sfx/shot',C,'.wav');
+			
+			Samp:=Mix_LoadWAV(PChar(DataPath+S));
+			If (Samp = NIL) then begin
+				Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S; Exit(False)
+			end;
+			
+			Sfx[SFX_SHOT+C]:=Samp;
+			FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
+		end;
+		For C:=0 to (HIT_SFX - 1) do begin
+			WriteStr(S,'sfx/hit',C,'.wav');
+			
+			Samp:=Mix_LoadWAV(PChar(DataPath+S));
+			If (Samp = NIL) then begin
+				Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S; Exit(False)
+			end;
+			
+			Sfx[SFX_HIT+C]:=Samp;
+			FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
+		end;
+		For C:=0 to (EXTRA_SFX - 1) do begin
+			WriteStr(S,'sfx/extra',C,'.wav');
+			
+			Samp:=Mix_LoadWAV(PChar(DataPath+S));
+			If (Samp = NIL) then begin
+				Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S; Exit(False)
+			end;
+			
+			Sfx[SFX_EXTRA+C]:=Samp;
+			FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
+		end
+	end;
+      
+	// Maps. Original levels first, tutorial second.
+	For Y:=0 to (ORG_MAP_H-1) do For X:=0 to (ORG_MAP_W-1) do begin
+		WriteStr(S,PATH_ORG,X,'-',Y,'.txt');
+		
+		R:=LoadRoom(DataPath+S);
+		If (R = NIL) then begin
+			Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S;
+			Exit(False) 
+		end;
+		
+		R^.X:=X; R^.Y:=Y; OrgRoom[X][Y]:=R;
+		FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
+	end;
+	For Y:=0 to (TUT_MAP_H-1) do For X:=0 to (TUT_MAP_W-1) do begin
+		WriteStr(S,PATH_TUT,X,'-',Y,'.txt');
+		
+		R:=LoadRoom(DataPath+S);
+		If (R = NIL) then begin
+			Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}S;
+			Exit(False)
+		end;
+		
+		R^.X:=X; R^.Y:=Y; TutRoom[X][Y]:=R;
+		FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
+	end;
+       
+	Exit(True)
+End;
 
 Procedure LoadAndSetWindowIcon();
 Begin
