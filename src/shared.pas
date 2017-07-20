@@ -427,6 +427,22 @@ Procedure ResetGamestate();
    Carried:=0; Given:=0;
    end;
 
+
+Function CheckForExitEvent():Boolean;
+Var
+	ExitRequested: Boolean;
+Begin
+	ExitRequested := False;
+	While(SDL_PollEvent(@Ev) > 0) do Case(Ev.Type_) of
+		SDL_QuitEv:
+			ExitRequested := True;
+	end;
+	
+	Result := ExitRequested
+End;
+
+{$DEFINE IGNORE_EVENTS := If(CheckForExitEvent()) then begin Status := 'Interrupted by user'; Exit(False) end;}
+
 const
 	GFX_TITLE = 'gfx/title.png';
 	FILE_FONT = 'gfx/font.png';
@@ -446,11 +462,14 @@ Function LoadBasics(Out Status:AnsiString):Boolean;
 begin
 	TitleGfx:=Sour.LoadImage(DataPath+GFX_TITLE);
 	If (TitleGfx=NIL) then begin Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}GFX_TITLE); Exit(False) end;
+	
+	IGNORE_EVENTS;
 
 	Font:=Sour.LoadFont(DataPath+FILE_FONT,$000000,5,7,#32);
 	If (Font=NIL) then begin Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}FILE_FONT); Exit(False) end;
 	Sour.SetFontSpacing(Font,1,1);
 
+	IGNORE_EVENTS;
 	Exit(True)
 End;
 
@@ -473,28 +492,28 @@ Begin
 		Exit(False)
 	end;
 	Sour.SetFontSpacing(NumFont,1,1);
-	FilesLoaded+=1; Update(NUMFONTFILE,FilesLoaded / FilesTotal);
+	FilesLoaded+=1; Update(NUMFONTFILE,FilesLoaded / FilesTotal); IGNORE_EVENTS;
 
 	TileGfx:=Sour.LoadImage(DataPath+FILE_TILES,$000000);
 	If (TileGfx = NIL) then begin
 		Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}FILE_TILES);
 		Exit(False)
 	end;
-	FilesLoaded+=1; Update(FILE_TILES,FilesLoaded / FilesTotal);
+	FilesLoaded+=1; Update(FILE_TILES,FilesLoaded / FilesTotal); IGNORE_EVENTS;
    
 	UIgfx:=Sour.LoadImage(DataPath+FILE_UI,$00FF00);
 	If (UIgfx = NIL) then begin
 		Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}FILE_UI);
 		Exit(False)
 	end;
-	FilesLoaded+=1; Update(FILE_UI,FilesLoaded / FilesTotal);
+	FilesLoaded+=1; Update(FILE_UI,FilesLoaded / FilesTotal); IGNORE_EVENTS;
 
 	ColGfx:=Sour.LoadImage(DataPath+FILE_COLOURS,$808080);
 	If (ColGfx = NIL) then begin
 		Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}FILE_UI);
 		Exit(False)
 	end;
-	FilesLoaded+=1; Update(FILE_COLOURS,FilesLoaded / FilesTotal);
+	FilesLoaded+=1; Update(FILE_COLOURS,FilesLoaded / FilesTotal); IGNORE_EVENTS;
    
 	// Load intro slides
 	For C:=0 to SLIDES_IN-1 do begin
@@ -507,7 +526,7 @@ Begin
 		end;
 		
 		SlideIn[C]:=Img;
-		FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
+		FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal); IGNORE_EVENTS
 	end;
      
 	// Load outro slides  
@@ -520,7 +539,7 @@ Begin
 		end;
 		
 		SlideOut[C]:=Img;
-		FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
+		FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal); IGNORE_EVENTS
 	end;
 
 	// Characters
@@ -532,7 +551,7 @@ Begin
 		end;
 		
 		CharaGfx[C]:=Img;
-		FilesLoaded+=1; Update(GFX_FILE[C],FilesLoaded / FilesTotal)
+		FilesLoaded+=1; Update(GFX_FILE[C],FilesLoaded / FilesTotal); IGNORE_EVENTS
 	end;
 
 	// Bullets
@@ -545,7 +564,7 @@ Begin
 		end;
 		
 		ShotGfx[C]:=Img;
-		FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
+		FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal); IGNORE_EVENTS
 	end;
 
 	If (Not NoSound) then begin
@@ -558,7 +577,7 @@ Begin
 			end;
 			
 			Sfx[SFX_WALL+C]:=Samp;
-			FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
+			FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal); IGNORE_EVENTS
 		end;
 		For C:=0 to (METAL_SFX - 1) do begin
 			WriteStr(S,'sfx/metal',C,'.wav');
@@ -569,7 +588,7 @@ Begin
 			end;
 			
 			Sfx[SFX_METAL+C]:=Samp;
-			FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
+			FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal); IGNORE_EVENTS
 		end;
 		For C:=0 to (DIE_SFX - 1) do begin
 			WriteStr(S,'sfx/die',C,'.wav');
@@ -580,7 +599,7 @@ Begin
 			end;
 			
 			Sfx[SFX_DIE+C]:=Samp;
-			FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
+			FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal); IGNORE_EVENTS
 		end;
 		For C:=0 to (SHOT_SFX - 1) do begin
 			WriteStr(S,'sfx/shot',C,'.wav');
@@ -591,7 +610,7 @@ Begin
 			end;
 			
 			Sfx[SFX_SHOT+C]:=Samp;
-			FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
+			FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal); IGNORE_EVENTS
 		end;
 		For C:=0 to (HIT_SFX - 1) do begin
 			WriteStr(S,'sfx/hit',C,'.wav');
@@ -602,7 +621,7 @@ Begin
 			end;
 			
 			Sfx[SFX_HIT+C]:=Samp;
-			FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
+			FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal); IGNORE_EVENTS
 		end;
 		For C:=0 to (EXTRA_SFX - 1) do begin
 			WriteStr(S,'sfx/extra',C,'.wav');
@@ -613,7 +632,7 @@ Begin
 			end;
 			
 			Sfx[SFX_EXTRA+C]:=Samp;
-			FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
+			FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal); IGNORE_EVENTS
 		end
 	end;
       
@@ -628,7 +647,7 @@ Begin
 		end;
 		
 		R^.X:=X; R^.Y:=Y; OrgRoom[X][Y]:=R;
-		FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
+		FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal); IGNORE_EVENTS
 	end;
 	For Y:=0 to (TUT_MAP_H-1) do For X:=0 to (TUT_MAP_W-1) do begin
 		WriteStr(S,PATH_TUT,X,'-',Y,'.txt');
@@ -640,7 +659,7 @@ Begin
 		end;
 		
 		R^.X:=X; R^.Y:=Y; TutRoom[X][Y]:=R;
-		FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal)
+		FilesLoaded+=1; Update(S,FilesLoaded / FilesTotal); IGNORE_EVENTS
 	end;
        
 	Exit(True)
