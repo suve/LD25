@@ -9,6 +9,7 @@ Legend:
 = 2017.0723 =
 * The woman will now cycle through colours at a fixed rate, instead of
   randomly picking a colour each frame.
+* Cropped the game font to remove unused space.
 
 = 2017.0721 =
 + The game will now listen to events when loading assets (it will not freeze
