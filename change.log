@@ -6,6 +6,14 @@ Legend:
 * Altered
 > Comment
 
+= 2017.0723 =
+* The woman will now cycle through colours at a fixed rate, instead of
+  randomly picking a colour each frame.
+
+= 2017.0721 =
++ The game will now listen to events when loading assets (it will not freeze
+  and will respond properly to a "quit" request).
+
 = 2017.0707 =
 * If the game is compiled using FPC 3.0.0 or newer, it will include ("uses")
   the compiler-provided version of SDL_Mixer, instead of the bundled one.

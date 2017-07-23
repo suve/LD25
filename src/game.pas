@@ -533,7 +533,7 @@ Begin
 	
 	If (Crystal.Col <> WOMAN)
 		then Sour.DrawImage(ColGfx,@Src,@Crd)
-		else Sour.DrawImage(ColGfx,@Src,@Crd,@CentralPalette[Random(8)])
+		else Sour.DrawImage(ColGfx,@Src,@Crd,@CentralPalette[FrameTime div (1000 div 8)])
 End;
 
 Procedure DrawFloatingTexts();
