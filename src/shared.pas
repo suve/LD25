@@ -350,6 +350,7 @@ Procedure SpawnEnemy(Tp:TEnemyType;mapX,mapY:sInt;SwitchNum:sInt=-1);
       ENEM_SPAMMER:   begin New(Spam,Create()); E:=Spam end;
       ENEM_GENERATOR: begin New(Gene,Create()); E:=Gene end;
       ENEM_TURRET:    begin New(Turr,Create()); E:=Turr end;
+      otherwise Exit();
       end;
    E^.mX:=mapX; E^.mY:=mapY; E^.SwitchNum:=SwitchNum;
    If (RoomPalette < 8) then E^.Col:=@PaletteColour[RoomPalette];
@@ -380,6 +381,7 @@ Function ChangeRoom(NX,NY:sInt):Boolean;
    Case GameMode of
       GM_TUTORIAL: NoRoom:=(NX<0) or (NY<0) or (NX>=TUT_MAP_W) or (NY>=TUT_MAP_H) or (TutRoom[NX][NY]=NIL);
       GM_ORIGINAL: NoRoom:=(NX<0) or (NY<0) or (NX>=ORG_MAP_W) or (NY>=ORG_MAP_H) or (OrgRoom[NX][NY]=NIL);
+      otherwise Exit(False)
       end;
    If (NoRoom) then begin
       Writeln('Error: Room ',GameMode,':',NX,':',NY,' not found!'); Exit(False) end;
@@ -544,7 +546,8 @@ Begin
 		
 		Sfx[SFX_EXTRA+i]:=Sample;
 		FilesLoaded+=1; Update(Filename, FilesLoaded / FilesTotal); IGNORE_EVENTS
-	end
+	end;
+	Exit(True)
 End;
 
 Function LoadRes(Out Status:AnsiString; Const Update: UpdateProc = NIL):Boolean;
