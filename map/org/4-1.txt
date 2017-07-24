@@ -1,0 +1,29 @@
+XXXXXXXXXXXXXXXXXXXX
+XXXXX              :
+XXXX       XXX     :
+X      XXXXXXX    XX
+X       XXXX     XXX
+XX       XXX      XX
+XXXX      XX       X
+XXXX               X
+XXX             XXXX
+XXX     XX    XXXXXX
+XX      XX     XXXXX
+XX      XXX     XXXX
+XX  XX   XXX     XXX
+X   XXX   XXX     XX
+X  XXXX   XXX     XX
+XXXXXX    XX    XXXX
+XXXX     XXX   XXXXX
+XXX     XXXX    XXXX
+XXX    XXXXXX    XXX
+XXXXX::XXXXXXX::XXXX
+palette navy
+spawn basher 13 05
+spawn drone 11 03
+spawn drone 02 04
+spawn spammer 02 15
+spawn drone 05 08
+spawn drone 04 09
+spawn drone 19 07
+spawn drone 19 08

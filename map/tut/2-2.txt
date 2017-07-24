@@ -1,0 +1,55 @@
+XXXXXXXXXXXXXXXXXXXX
+XXXXXXXXXXXXXXXXXXXX
++-+-+-+-+-+-+-+-+XXX
+v { v { v { v { | XX
+:               |  X
+^ } ^ } ^ } ^ } |XXX
++-+-+-+-+-+-+-+-+XXX
+: D D D         |XXX
+: D D D         |XX 
++-+-+-+         |X  
+|           +   |XX 
+|           |   |XXX
+|           |   | XX
+|     <-->  +---+  X
+|               |XXX
+|               |XXX
++-----+  +------+-X-
+:               XXXX
+:             XXXXXX
+--------------------
+palette red
+text white 18 02 Apart from generators, doors are quite often
+text white 18 12 tied to turrets, and sometimes even balls. But
+text white 02 22 no matter the type, the enemy is always in another
+text white 280 32 room.
+spawn drone 15 18
+spawn drone 14 19
+spawn basher 2 11
+spawn ball 16 13
+spawn spitter 16 08
+spawn spitter 13 15
+if 00
+	spawn spammer 13 10
+fi
+if 10
+	tile 03 08
+	tile 03 09
+else
+	tile 03 08 D
+	tile 03 09 D
+fi
+if 11
+	tile 05 08
+	tile 05 09
+else
+	tile 05 08 D
+	tile 05 09 D
+fi
+if 12
+	tile 07 08
+	tile 07 09
+else
+	tile 07 08 D
+	tile 07 09 D
+fi

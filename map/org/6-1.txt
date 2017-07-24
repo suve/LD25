@@ -1,0 +1,50 @@
+XXX+---+XXXXXX::XXXX
+XXX|   |XX        XX
+XXX|   |X|         X
+---+   +-+  +------+
+:                  |
+:                  |
++   +--------+  +--+
+|                  |
+|                  |
+|      <-->        |
+|                  |
+|                  |
++----------+-------+
+XXXXXXXXXXX|XXXXXXXX
+XXXX       +   XXXXX
+XXX        D    XXXX
+X       XXX+      XX
+:     XXXXXXX      X
+:    XXXXXXXXX     X
+XXXXXXXXXXXXXXXXXXXX
+palette navy
+colour navy 19 19
+if 50
+	tile 12 16
+	spawn spitter 12 16
+else
+	tile 12 16 D
+fi
+spawn drone 18 17
+spawn drone 15 19
+spawn drone 09 05
+spawn drone 09 06
+spawn drone 19 03
+spawn spammer 06 02
+spawn spitter 02 12
+spawn spitter 19 12
+if 68 not
+	spawn turret 07 10 68
+else
+	spawn spitter 07 10
+	spawn drone 08 09
+	spawn drone 08 11
+fi
+if 69 not
+	spawn turret 12 10 69
+else
+	spawn spitter 12 10
+	spawn drone 11 09
+	spawn drone 11 11
+fi

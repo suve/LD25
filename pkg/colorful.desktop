@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Colorful
+Comment=Simple 2D sideview shooter
+Exec=colorful
+Icon=colorful
+Terminal=false
+Categories=Game;
+StartupNotify=false

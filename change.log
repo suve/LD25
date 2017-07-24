@@ -6,20 +6,55 @@ Legend:
 * Altered
 > Comment
 
-> 2014.0316
+= 2017.0723 =
+* The woman will now cycle through colours at a fixed rate, instead of
+  randomly picking a colour each frame.
+* Cropped the game font to remove unused space.
+
+= 2017.0721 =
++ The game will now listen to events when loading assets (it will not freeze
+  and will respond properly to a "quit" request).
+
+= 2017.0707 =
+* If the game is compiled using FPC 3.0.0 or newer, it will include ("uses")
+  the compiler-provided version of SDL_Mixer, instead of the bundled one.
+
+= 2017.0630 =
++ It is now possible to use the mouse to select options in the menus.
++ The mouse cursor is now hidden upon entering the game (and shown again when
+  going back to the menu).
+
+= 2017.0629 =
++ The game now properly loads and sets its window icon.
+* Made the green zone a little bit harder (added a door that forces the player
+  to take a longer way to a generator).
+
+= 2017.0628 =
+* Moved room change so it doesn't take place during the game step.
+* Changed the way hero-room collisions are handled - should improve
+  the room-change experience.
+* Minor fixes to maps.
+
+= 2017.0627 =
+* Moved game loop code to a separate code file.
+
+= 2017.0326 =
+* Fixed possible segfault in TRoom.Collides() and TRoom.HitSfx().
+
+= 2014.0316 =
 * Fixed a bug which made an SDL_Mixer call before the library was initialized.
   Which, quite amusingly, led to division by zero and crash on some machines,
   and worked perfectly fine on others.
 > v.1.2 released, after sitting on my HDD for over a year.
 
-> 2013.0108
+= 2013.0108 =
 * Replaced BASS with SDL_Mixer for audio handling.
 * Moved finalization from main() to QuitProg().
 
-> 2012.1226
+= 2012.1226 =
 > v.1.1 realeased.
 
-> 2012.1225
+= 2012.1225 =
 + Implemented the keybinding dialog.
 + Added a global shutdown variable.
 * All enemy behaviour times have been changed from consts to object fields,
@@ -29,21 +64,21 @@ Legend:
   gameworld selection dialog when (s)he wishes to begin/load a game.
 > Finished the tutorial.
 
-> 2012.1224
+= 2012.1224 =
 + Added automatic pause upon losing application focus.
 + Added automatic savegame upon death, progress (delivering a colour)
   and program exit.
 * Moved ChangeRoom() and DestoryEntities() to shared.
 * Separate savegames for every gameworld.
 
-> 2012.1223
+= 2012.1223 =
 + Added the configfiles unit.
 + Added some comments in case anyone would actually want to read the code.
 * Divided tutorial and game maps into subfolders.
 * "tile" roomscript command now takes (1,1)-(20,20) coords,
   instead of (0,0)-(19,19).
 
-> 2012.1222
+= 2012.1222 =
 * Fixed loading sounds not updating the progress bar.
 * Moved room loading from rooms/initialization to shared/interface/LoadRes().
 + Added the floatingtext unit.

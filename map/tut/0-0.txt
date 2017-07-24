@@ -1,0 +1,46 @@
+                    
+                    
+XXXXXXXXXXXXXXXXXXXX
+X  X      X        :
+X  X      X        :
+X  XXXXX  X  XXXXXXX
+X         X  X     X
+X         X  X     X
+XXXXXXXX  X  X  X  X
+X         X     X  X
+X         X     X  X
+X  XXXXXXXXXXXXXX  X
+X               X  X
+X               X  X
+X  XXXXXXXXXXX  X  X
+X  X            X  X
+X  X            X  X
+X  XXXXXXXXXXXXXX  X
+X                  X
+XXXXXXXXXXXXXXXXXXXX
+palette white
+text white 18 02 Welcome to the tutorial. It will introduce you
+text white 18 12 to the basics of the game. Use your movement
+text white 18 22 keys (arrow keys, by default) to move around.
+text black 01 37 This small guy is your hero.
+text black 18 308 Dotted areas mark passages between rooms.  
+if 20
+	tile 11 06
+else
+	tile 11 06 X
+fi
+if 21
+	tile 11 07
+else
+	tile 11 07 X
+fi
+if 22
+	tile 11 08
+else
+	tile 11 08 X
+fi
+if 23
+	tile 11 09
+else
+	tile 11 09 X
+fi

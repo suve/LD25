@@ -1,0 +1,31 @@
+XXXX+--------------+
+XXXX|              |
+XXXX|              |
+XXXX|              |
+XX+-+          +---+
+XX|            {   |
++-+                |
+|              }   |
+|              +---+
++->                |
+|                  +
++->                :
+|                  :
++->                +
+|                  |
++----------+  +----+
+XXXX            XXXX
+X                 XX
+XX              XXXX
+XXXXXXXXXXXXXXXXXXXX
+palette purple
+if 20 not
+	spawn generator 16 07 20
+fi
+spawn spitter 04 19
+spawn drone 18 03
+spawn drone 16 04
+spawn drone 12 02
+spawn turret 04 10
+spawn turret 04 12
+spawn turret 04 14

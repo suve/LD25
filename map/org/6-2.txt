@@ -1,0 +1,45 @@
+XXX+---------------+
+XXX|               |
+XXX|             <-+
+XXX|               |
+---+             <-+
+:                  |
+:                  |
+---+             <-+
+XXX|               |
+XXX|             <-+
+XXX|               |
+XXX+---+  +--------+
+XXXXXXX|  |XXXXXXXXX
+XXXXXXX+  +XXX   XXX
+XXXXX     XXXX    XX
+XX       XXXXXXX  XX
+XXX     XXXXX      X
+XXXX               X
+XXXXXX          XXXX
+XXXXXXXXXX::XXXXXXXX
+palette blue
+spawn spitter 15 14
+spawn drone 19 18
+spawn drone 03 16
+spawn drone 05 18
+if 80 not
+	spawn turret 17 03 80
+else
+	spawn spitter 16 03
+fi
+if 81 not
+	spawn turret 17 05 81
+else
+	spawn spitter 16 05
+fi
+if 82 not
+	spawn turret 17 08 82
+else
+	spawn spitter 16 08
+fi
+if 83 not 
+	spawn turret 17 10 83
+else
+	spawn spitter 16 10
+fi

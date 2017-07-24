@@ -1,0 +1,31 @@
+.\" Manpage for colorful
+.\" Contact veg@svgames.pl to correct errors or typos.
+.TH man 6 "2014-03-16" "1.2" "Games Manual"
+.SH NAME
+colorful - simple 2D sideview shooter
+.SH SYNOPSIS
+\fBcolorful\fR
+.SH DESCRIPTION
+Colorful is a simple sideview shooter game, where the protagonist 
+travels a maze of caves and corridors in order to colect colour artifacts.
+.SH CONTROLS
+The game is played solely using the keyboard. Default key bindings:
+.TP
+\fBArrow keys\fR
+Movement
+.TP
+\fBZ\fR/\fBX\fR
+Shoot left / right
+.TP
+\fB\-\fR/\fB+\fR
+Volume down / up
+.TP
+\fBP\fR
+Pause / unpause
+.TP
+These key bindings can be fully redefined.
+.SH DIRECTORIES
+Game data files are located in \fB/usr/share/suve/colorful\fR. 
+The game stores its settings and savegames in \fB~/.suve/colorful/\fR.
+.SH AUTHOR
+suve (veg@svgames.pl)

@@ -1,0 +1,47 @@
++------------------+
+|                  |
+|                  |
+|                  |
++-------+==+-------|
+|                  |
+|                  |
+|                  |
++-------+==+-------+
+|                  |
++                  +
+:                  :
+:                  :
++                  +
+|                  |
++---+  +----+  +---+
+|       +--+       |
+|                  |
+|                  |
++-------+::+-------+
+palette purple
+spawn spammer 03 03
+colour purple 18 03
+spawn drone 03 17
+spawn drone 18 17
+spawn spitter 10 11
+spawn spitter 12 12
+if 20
+	tile 10 05
+	tile 11 05
+	spawn drone 03 06
+	spawn drone 03 08
+	spawn spitter 05 07
+else
+	tile 10 05 =
+	tile 11 05 =
+fi
+if 40
+	tile 10 09
+	tile 11 09
+	spawn drone 18 06
+	spawn drone 18 08
+	spawn spitter 16 07
+else
+	tile 10 09 =
+	tile 11 09 =
+fi

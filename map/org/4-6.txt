@@ -1,0 +1,38 @@
+XXXXXXX|::::|XXXXXXX
+XXXXXXX|    |XX    X
+XX    X|    |X     X
+X      |    +---+  X
+X      |           X
+-+  +--+           X
+:                  X
+-------------+ +---X
+XXXXXXXX       |  XX
+XXXXX          | XXX
+XXX            |   X
+XX             |X  X
+XX             |XXXX
+X              |XXXX
+X             X|XXXX
+X            +-+---+
+XXX          v     |
+XXXXXX       D     |
+XXXXXXX      ^     |
+XXXXXXXXXXXXX+-----+
+palette yellow
+spawn basher 19  7
+spawn basher 13  5
+spawn basher  8 15
+spawn spammer 4 14
+spawn spammer 6 16
+spawn drone 11 09
+spawn drone 12 10
+spawn drone 13 11
+spawn drone 14 12
+spawn drone 15 13
+spawn drone 7 4
+colour yellow 19 18
+if 36
+	tile 14 18
+else
+	tile 14 18 D
+fi

@@ -1,0 +1,36 @@
+XXXXXXXXXX::XXXXXXXX
+XXXXXXXXX    XXXXXXX
+X XXXXXX        XXXX
+X   XXXXX        XXX
+X    XXXXX       XXX
+X    XXXXXX        X
+X      XXXX        X
+X      XXXX      XXX
+X       XXXX   XXXXX
+#               XXXX
+#                  X
+X        XX        X
+X      XXXXX      XX
+X      XXXX      XXX
+X    XXXXX       XXX
+X   XXXXXX      XXXX
+X   XXXXX       +---
+X    XXXX       D  :
+X   XXXX        D  :
+XXXXXXXXXXXXXXXX+---
+palette blue
+spawn spitter 19 06
+spawn spitter 19 11
+spawn drone 11 18
+spawn drone 11 19
+spawn basher 14 09
+spawn drone 07 07
+spawn drone 07 14
+spawn drone 16 03
+if 64
+	tile 17 18
+	tile 17 19
+else
+	tile 17 18 D
+	tile 17 19 D
+fi

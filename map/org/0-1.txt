@@ -1,0 +1,34 @@
+XXXXXXXXXXXXXXXXXXXX
+XXX      XXXXX    XX
+XXXX      XXX      :
+XX                XX
+XXX              XXX
+XXX   XXXXXX     XXX
+XX   XXXXXXXX   XXXX
+XXX     XXXX     XXX
+XXXX            XXXX
+XXX         XXXXXXXX
+XXX      XXXXXXXXXXX
+XXXX    XXXX     XXX
+XXX     XXX       XX
+XXX             +--+
+XXXXX              |
++--+------------+  +
+|  {               |
+|                  |
+|  }               |
++--+---------------+
+palette red
+spawn basher 10 14
+spawn spitter 12 05
+spawn spitter 06 03
+spawn drone 04 05
+spawn drone 16 09
+spawn drone 08 08
+spawn drone 11 05
+spawn spitter 04 02
+if 01 not
+	spawn generator 04 18 01
+	spawn turret 16 14
+	spawn drone 19 19
+fi 

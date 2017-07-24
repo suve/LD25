@@ -1,0 +1,33 @@
+XXXXXXXXXXXXXXXXXXXX
+XXXXXX      XXXXXXXX
+XXXX            XXXX
+XX                XX
+XXX                X
+XXXXXXX            X
+XXXXXX          XXXX
+XXXXX         XXXXXX
+XXXX     X     XXXXX
+XXXX     XX      XXX
+XXX      XXX      XX
+X       XXXX       X
+X     XXXXXXX      X
+:     X+-----+  +--X
+:    XX|        |XXX
+X    XX|        |XXX
+X    XX+>==<+---+XXX
+X   XXX|    |XXXXXXX
+X  XXXX|    |XXXXXXX
+XXXXXXX|::::|XXXXXXX
+palette yellow
+spawn spitter 12 2
+spawn spitter 19 5
+spawn spammer 19 13
+spawn drone 4 4
+spawn basher 15 15
+if 35
+	tile 10 17
+	tile 11 17
+else
+	tile 10 17 =
+	tile 11 17 =
+fi

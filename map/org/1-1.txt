@@ -1,0 +1,36 @@
+XXXXXXXXXXX+==+-----
+XX       XX|       :
+:         X|       :
+XX         +--------
+XXXX           XXXXX
+XXXXXX           XXX
+XXXXXXX       XXXXXX
+XXX              XXX
+X               XXXX
+X           XXXXXXXX
+XXX        XXXXXXXXX
+XXXX      XXX    XXX
+XXX     XXXX      XX
+XX     XXXX        X
+X     XXXXXXX      :
+X        XXXX      X
+X  XX           XXXX
+XXXXX          XXXXX
+XXXXXXX       XXXXXX
+XXXXXXXXXXXXXXXXXXXX
+palette red
+spawn drone 12 14
+spawn drone 13 13
+spawn drone 14 12
+spawn basher 15 06
+spawn basher 15 08
+spawn spitter 03 09
+spawn drone 09 02
+if 01 
+	tile 13 01 :
+	tile 14 01 :
+else
+	tile 13 01 =
+	tile 14 01 =
+	spawn drone 13 03
+fi

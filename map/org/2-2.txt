@@ -1,0 +1,30 @@
+XXXXXXXXXXXXXXXXX|:|
+XXXXXXX       XXX| |
+XXXXX          +-+ |
+XXX                |
+XX             +---+
+X               XXXX
+X         XX     XXX
+X       XXXXX     XX
+X     XXXXXXX      X
+X      XXXXXXX     X
+XXX      XXX       X
+XXXX      XX      XX
+XX                XX
+X                XXX
+XXX             XXXX
+XXX             XXXX
+XX             XXXXX
+X              XXXXX
+XXXX        XXXXXXXX
+XXXXXXXXX##XXXXXXXXX
+palette red
+spawn basher 04 13
+spawn spitter 18 10
+spawn drone 17 09
+spawn drone 17 11
+spawn drone 02 18
+spawn drone 02 14
+spawn spitter 08 08
+spawn drone 02 06
+spawn drone 02 09

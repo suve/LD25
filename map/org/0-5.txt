@@ -1,0 +1,34 @@
++-------------------
+|XXXXX             :
+|XX                :
+|              +---+
+|XXX             XX|
+|XXXXX            X|
++---------+        |
+|XXXXXXXXX|        |
+|XXXXXXXXX|        |
++---------+        |
+|XXXXXX            |
+|XXXX              |
+|XX               X|
+|X       +      XXX|
+|              XXXX|
+|               XXX|
+|  +-----+  +------+
+|                  :
+|                  :
+|::+----------------
+palette white
+spawn drone 07 18
+spawn drone 07 19
+spawn basher 19 10
+spawn spitter 19 07
+spawn spitter 19 12
+spawn basher 02 04
+spawn drone 10 13
+spawn drone 11 14
+spawn drone 09 14
+spawn drone 10 15
+if 15
+	spawn basher 15 04
+fi

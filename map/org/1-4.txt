@@ -1,0 +1,29 @@
+XXX::XXXXXXXXXXXXXXX
+XXX          XXXXXXX
+XXX            XXXXX
+XXXX             XXX
+XXXXXX            XX
+XXXXXXXXX         XX
+XXXXXXXXXX        XX
+XXXXXXXXX         XX
+XXXXX           XXXX
+X          XXXXXXXXX
+X         XXXXXXXXXX
+XX          XXXXXXXX
+XXXXXXX        XXXXX
+XXXXXXXXX        XXX
+XXXXXXXXX      XXXXX
+XXXXXXX         XXXX
+--+             XXXX
+:            XXXXXXX
+:        XXXXXXXXXXX
+--+XXXXXXXXXXXXXXXXX
+palette black
+spawn basher 12 12
+spawn basher 13 02
+spawn spitter 16 14
+spawn spitter 03 10
+spawn drone 18 05
+spawn drone 17 06
+spawn drone 17 07
+spawn drone 18 08

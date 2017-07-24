@@ -1,0 +1,48 @@
+XXXXXXXXXXXXXXXXXXXX
+XXXXXXXXXXXXXXXXXXXX
++--------------+---+
+|              |   |
+|              {   |
+|                  |
+|              }   |
+|              |   |
+|  +-----------+---+
+|                  |
+|               <--+
+|                  |
+|               <--+
+|                  |
+|               <--+
+|                  |
+|  +---------------+
+|                  #
+|                  #
++------------------+
+palette red
+text white 18 02 Death does not reset your progress. Any doors
+text white 18 12 you might have opened will remain so.
+text white 02 22 Watch our for the generator's powerful bullets!
+spawn drone 6 18
+spawn drone 8 19
+spawn drone 19 12
+spawn drone 19 14
+spawn drone 15 04
+spawn drone 15 08
+if 01 not
+	spawn generator 16 06 01
+fi
+if 10 not
+	spawn turret 16 11 10
+else
+	spawn spitter 16 11
+fi
+if 11 not
+	spawn turret 16 13 11
+else
+	spawn spitter 16 13
+fi
+if 12 not
+	spawn turret 16 15 12
+else
+	spawn spitter 16 15
+fi

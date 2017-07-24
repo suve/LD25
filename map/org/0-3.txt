@@ -1,0 +1,60 @@
+XXXXXXXXXXXXXXXXXXXX
+XXXX     XXXXXXXXXXX
+XXX->===<-XXXXXXXXXX
+XX           XXXXXXX
+XX             XXXXX
+X              XXXXX
+X                XXX
+XX               XXX
++--+-+             X
+|  D D             :
+|  D D             :
++--+-+             X
+XX                XX
+X                XXX
+X                XXX
+X              XXXXX
+XX            XXXXXX
+XXX->===<-XXXXXXXXXX
+XXXX     XXXXXXXXXXX
+XXXXXXXXXXXXXXXXXXXX
+palette black
+colour black 2 10
+spawn drone 03 08
+spawn drone 03 13
+spawn drone 15 05
+spawn drone 15 15
+if 02
+	tile 06 03
+	tile 07 03
+	tile 08 03
+	spawn ball 06 03
+	spawn ball 08 03
+	tile 06 10
+	tile 06 11
+else
+	tile 06 03 =
+	tile 07 03 =
+	tile 08 03 =
+	spawn ball 06 02
+	spawn ball 08 02
+	tile 06 10 D
+	tile 06 11 D
+fi
+if 04
+	tile 06 18
+	tile 07 18
+	tile 08 18
+	spawn ball 06 18
+	spawn ball 08 18
+	tile 04 10
+	tile 04 11
+else
+	tile 06 18 =
+	tile 07 18 =
+	tile 08 18 =
+	spawn ball 06 19
+	spawn ball 08 19
+	tile 04 10 D
+	tile 04 11 D
+fi

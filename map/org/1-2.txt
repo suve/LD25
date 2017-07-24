@@ -1,0 +1,33 @@
+XXXXXXXXXXXXXXXXXXXX
+XXXXXXX        XXXXX
+--+XX            XXX
+: D      XXX     XXX
+--+      XXXX    XXX
+XXXX   XXXXXX     XX
+XXXXXXXXXXXXXX     X
+XXXXXXXXX          X
+XXXXXXX           XX
+XXXX            XXXX
+XXXXXXX        XXXXX
+XXXXXXXX        XXXX
+XXXXX           XXXX
+XXX              XXX
+--+    XXXXX   XXXXX
+:    XXXXXX     XXXX
+:   XXX        XXXXX
+--+XXX        XXXXXX
+XXXXXX       XXXXXXX
+XXXXXX::XXXXXXXXXXXX
+palette black
+spawn basher 08 10
+spawn drone 14 18
+spawn drone 17 14
+spawn spitter 14 08
+spawn spitter 11 02
+spawn drone 19 07
+spawn drone 19 08
+if 02
+	tile 03 04
+else
+	tile 03 04 D
+fi

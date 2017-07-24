@@ -1,0 +1,22 @@
+XXXXXXXXX##XXXXXXXXX
+X   X          X   X
+X   X          X   X
+X   X          X   X
+XXXXX          XXXXX
+X                  X
+X                  X
+X                  X
+X                  X
+:                  :
+:    XXXXXXXXXX    :
+X                  X
+X                  X
+X                  X
+X                  X
+XXXXX          XXXXX
+X   X          X   X
+X   X          X   X
+X   X          X   X
+XXXXXXXXX##XXXXXXXXX
+palette central
+colour woman 11 10

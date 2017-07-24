@@ -1,0 +1,29 @@
+XXXXX::XXXXXXX::XXXX
+XXXXX   XXXXX   XXXX
+XXXX    XXXX     XXX
+X        XX       XX
+X        XXX      XX
+XX     XXXXX       X
+XXX   XXXXXX      XX
+XXX   XXXXX     XXXX
+XX     XXX      XXXX
+X       XXX    XXXXX
+X      XXX      XXXX
+X     XXXXX      XXX
+X      XXXXX      XX
+X      XXXXX      XX
+XX      XXX        X
+XX      XXXX      XX
+XXX      XX      XXX
+XXXX            XXXX
+XXXXX          XXXXX
+XXXXXXXXX##XXXXXXXXX
+palette navy
+spawn spitter 05 10
+spawn spitter 15 10
+spawn drone 18 14
+spawn drone 18 16
+spawn drone 7 13
+spawn drone 2 10
+spawn drone 8 10
+spawn drone 19 6

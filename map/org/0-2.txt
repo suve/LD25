@@ -1,0 +1,31 @@
+XX+-----------+--+XX
+XX|           |  |XX
++-+           {  +--
+|                  :
+|             }  +--
+|             |  |XX
++  +----------+--+XX
+|  |XXXXX    XXXX|XX
+|  |XX          X|XX
+|  |X            |XX
+|  +----+  +--+  |XX
+|             |  |XX
+|  +--------+ |  |XX
+|  |XXXXXXXX| |  |XX
+|  +--------+ +  +--
+|                  :
+|->                :
+|->              +--
+|                |XX
++----------------+XX
+palette black
+if 02 not
+	spawn generator 15 04 02
+fi
+spawn turret 04 17
+spawn turret 04 18
+spawn drone 17 19
+spawn basher 04 12
+spawn spitter 14 06
+spawn drone 06 10
+spawn drone 11 08

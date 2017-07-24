@@ -1,0 +1,42 @@
+XXXXXXXXX::XX|::|XXX
+XXXXXX      X|  |XXX
+XXX         X|  +---
+XX        XXX|     :
+X        XXXX|     :
+XXX        XX+------
+XXXX              XX
+XXXXXX          XXXX
+XXXXXXX          XXX
+XXXXXXX            X
+XXXXX             XX
+XXXX            XXXX
+XX      XXX      XXX
+XX         X     XXX
+XXX      XXX      XX
+XXXX    XXXXX      X
++---+      XX      X
+| DD              XX
++---+XXXXX      XXXX
+XXXXXXXXXXXXXXXXXXXX
+palette green  
+colour green 02 18
+spawn ball 18 18
+spawn basher 18 10
+spawn spitter 11 14
+spawn spitter 18 07
+spawn drone 03 14
+spawn drone 04 15 
+spawn drone 02 05
+spawn drone 03 04
+spawn drone 10 13
+spawn drone 11 14
+if 65
+	tile 03 18
+else
+	tile 03 18 D
+fi
+if 66
+	tile 04 18
+else
+	tile 04 18 D
+fi

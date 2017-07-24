@@ -1,0 +1,42 @@
+---------+::+XXXXXXX
+:              XXXXX
+:                XXX
+---------+      XXXX
+XXX            XXXXX
+X           XXXXXXXX
+XXX        XXXXXXXXX
+XXXX     XXXXXXXXXXX
+XX      XXXXX   XXXX
+X        XXX     XXX
+X       XXXX      XX
+X                  X
+X                XXX
+X              XXXXX
+XXX              XXX
+XXXXXXX            X
+XXXXXXXX     XX    X
++---+       XXXX  XX
+| DD        XXXXXXXX
++---+XXXXXXXXXXXXXXX
+palette white
+colour white 02 19
+if 15
+	tile 03 19
+else
+	tile 03 19 D
+fi
+if 16
+	tile 04 19
+else
+	tile 04 19 D
+fi
+spawn basher 06 05
+spawn ball 15 10
+spawn spitter 17 17
+spawn drone 02 14
+spawn drone 04 15
+spawn drone 02 13
+spawn drone 02 10
+spawn drone 09 10
+spawn drone 19 12
+spawn spitter 12 19

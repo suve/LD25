@@ -1,0 +1,28 @@
+XXXXXXXXXXXXXXXXX|#|
+XXXXXXXXXXXXXXXXX| |
+XXXXXXXXXXXXXXXXX| |
+XXX            XX| |
+XX              X| |
+X                + +
+X                  X
+X                  X
+X                  X
+XXXXXXXX+  +XXXXXXXX
+XXXXX          XXXXX
+XXX              XXX
+XXX     XXXX      XX
+X     XXXXXXXX     X
+:      XXXXXX      X
+:       XXXX       X
+X       XX      XXXX
+XXX            XXXXX
+XXXX         XXXXXXX
+XXXXXXXXXXXXXXXXXXXX
+palette green
+text black 18 02 Balls are constantly on the move. They
+text black 18 12 accelerate themselves in your direction.
+text black 18 22 Reaching high speeds and moving in an
+text black 18 32 arc, they are dangerous enemies.
+spawn ball 04 04
+spawn ball 15 05
+spawn ball 19 16

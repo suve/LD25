@@ -1,0 +1,13 @@
+*.o
+*.a
+*.so
+*.dll
+*.exe
+*.elf
+*.ppu
+*.geany
+*.patch
+
+*.*~
+var/*
+

@@ -1,0 +1,33 @@
+XX|::|::|XXXXXXXXXXX
+XX|  |  +----------+
++-+  |            X|
+|    |X     XX     |
+|    |XX    XXX    |
+|  +-+--+   XXXX   |
+|  |XXXX|    XXX   |
+|  +----+          |
+|  |XXX      XX    |
+|  |XX     XXXXX   |
+|  |X    XXXX   X  |
+|  |               |
+|  |XX             |
+|  |XXX     X+ + + |
+|  |XXXX   XX| | | |
+|  +-+-------+ + + |
+|  | {             |
+|  |               |
+|  | }             |
++--+-+-------------+
+palette blue
+colour blue 02 19
+if 64 not
+	spawn generator 06 18 64
+fi
+spawn basher 11 12
+spawn basher 15 08
+spawn drone 18 03
+spawn drone 19 04
+spawn drone 09 05
+spawn spitter 05 12
+spawn spitter 15 11
+spawn drone 15 09
