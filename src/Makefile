@@ -1,3 +1,6 @@
+# Use a var for FPC to ease cross-compiling
+FPC ?= fpc
+
 # Compile-time warnings and hints, line info for debugging, basic optimisations
 FLAGS_DEBUG   = -vewnh -gl -OG1
 
@@ -13,13 +16,13 @@ FLAGS_PACKAGE = -vewn -OG3 -g
 
 
 debug:
-	fpc $(FLAGS_DEBUG)   -dDEVELOPER -o'colorful' ld25.pas
+	$(FPC) $(FLAGS_DEBUG)   -dDEVELOPER -o'colorful' ld25.pas
 
 release:
-	fpc $(FLAGS_RELEASE)             -o'colorful' ld25.pas
+	$(FPC) $(FLAGS_RELEASE)             -o'colorful' ld25.pas
 
 package:
-	fpc $(FLAGS_PACKAGE) -dPACKAGE   -o'colorful' ld25.pas  
+	$(FPC) $(FLAGS_PACKAGE) -dPACKAGE   -o'colorful' ld25.pas  
 
 clean:
 	rm *.o *.ppu *.a || echo 'Already clean!'

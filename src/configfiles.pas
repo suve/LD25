@@ -5,14 +5,14 @@ unit configfiles;
 interface
    uses Shared;
 
-const HomeVar = {$IFDEF LINUX} 'HOME';    {$ELSE}
-                {$IFDEF WIN32} 'APPDATA'; {$ELSE}
+const HomeVar = {$IFDEF LINUX}   'HOME';    {$ELSE}
+                {$IFDEF WINDOWS} 'APPDATA'; {$ELSE}
                 {$FATAL Please set up the HomeVar, ConfDir and DirDelim constants before trying to compile for a new platform.} {$ENDIF} {$ENDIF}
-      ConfDir = {$IFDEF LINUX} '/.suve/colorful/'; {$ELSE}
-                {$IFDEF WIN32} '\suve\colorful\';  {$ELSE}
+      ConfDir = {$IFDEF LINUX}   '/.suve/colorful/'; {$ELSE}
+                {$IFDEF WINDOWS} '\suve\colorful\';  {$ELSE}
                 {$FATAL Didn't I just tell you something?} {$ENDIF} {$ENDIF}
-      DirDelim = {$IFDEF LINUX} '/'; {$ELSE}
-                 {$IFDEF WIN32} '\'; {$ELSE}
+      DirDelim = {$IFDEF LINUX}   '/'; {$ELSE}
+                 {$IFDEF WINDOWS} '\'; {$ELSE}
                  {$FATAL Awful troll, 1/10.} {$ENDIF} {$ENDIF}
 
 Var ConfPath, DataPath : AnsiString; //Configuration and data paths
