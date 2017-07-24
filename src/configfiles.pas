@@ -190,13 +190,14 @@ Procedure SetPaths();
       add our folder tree to create the configuration path. *)
    
    {$IFNDEF PACKAGE}
-   DataPath:=ExtractFileDir(ParamStr(0))+DirDelim;
+   DataPath:=ExtractFileDir(ParamStr(0))+DirDelim+'..'+DirDelim+'..'+DirDelim;
    (* On most systems, ParamStr(0) returns the full path to the executable.
       ExtractFileDir() takes a string and returns everything until the last
       directory delimeter. So, we take the executable path, extract the dir,
       add the delimeter and voila, we now know where the executable resides.
-      All the data files (gfx, sfx, maps) should be found within subfolders
-      of this location. *)
+      Since the executables are placed in bin/platform/, we need to go two
+      folders up to reach the game's main directory. All the data files 
+      (gfx, sfx, maps) should be found within subfolders of that location. *)
    
    {$ELSE}
    DataPath:='/usr/share/suve/colorful/';
