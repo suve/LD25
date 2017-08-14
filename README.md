@@ -11,9 +11,15 @@ __**POST-COMPO VERSION**__
 
 Licensing
 ---------------------------
-Colorful is released under the "zlib with acknowledgement" license.
+Colorful is subject to two different licences.
 
-The full text of the license can be found in the LICENCE.txt file.
+- Game code (found in the `src/` directory) is available under the terms of the
+GNU General Public License, version 3, as published by the Free Software Foundation.
+The full text of this licence is available in the LICENCE-CODE.txt file.
+
+- Anything not covered by the point above is made available under the terms
+of the "zlib with acknowledgement" license. The full text of this licence
+is available in the LICENCE-ASSETS.txt file.
 
 
 Language info
@@ -32,7 +38,7 @@ the game quite eagerly.
 
 Libraries used
 ----------------------
-The game uses SDL (along with SDL_Image and SDL_Mixer) libraries
+The game uses SDL (along with SDL\_Image and SDL\_Mixer) libraries
 for event handling, gfx and sfx; and the Sour lib.
 
 Simple DirectMedia Layer
