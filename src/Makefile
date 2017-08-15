@@ -20,6 +20,9 @@
 # Use a var for FPC to ease cross-compiling
 FPC ?= fpc
 
+# We need to set up SDL2 file location flags appropriately
+FLAGS_SDL2 = -Fu../SDL2/
+
 # Compile-time warnings and hints, line info for debugging, basic optimisations
 FLAGS_DEBUG   = -vewnh -gl -OG1
 
@@ -35,13 +38,13 @@ FLAGS_PACKAGE = -vewn -OG3 -g
 
 
 debug:
-	$(FPC) $(FLAGS_DEBUG)   -dDEVELOPER -o'colorful' ld25.pas
+	$(FPC) $(FLAGS_SDL2) $(FLAGS_DEBUG)   -dDEVELOPER -o'colorful' ld25.pas
 
 release:
-	$(FPC) $(FLAGS_RELEASE)             -o'colorful' ld25.pas
+	$(FPC) $(FLAGS_SDL2) $(FLAGS_RELEASE)             -o'colorful' ld25.pas
 
 package:
-	$(FPC) $(FLAGS_PACKAGE) -dPACKAGE   -o'colorful' ld25.pas  
+	$(FPC) $(FLAGS_SDL2) $(FLAGS_PACKAGE) -dPACKAGE   -o'colorful' ld25.pas  
 
 clean:
 	rm *.o *.ppu *.a || echo 'Already clean!'
