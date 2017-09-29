@@ -1,0 +1,31 @@
+.\" Manpage for colorful
+.\" Contact veg@svgames.pl to correct errors or typos.
+.TH man 6 "2014-03-16" "1.2" "Games Manual"
+.SH NAME
+colorful - Einfacher 2D-Seitenansicht Shooter
+.SH SYNOPSIS
+\fBcolorful\fR
+.SH DESCRIPTION
+Colorful ist ein einfacher 2D Shooter, indem der Protagonist
+durch ein Labyrinth aus Höhlen und Korridoren reist und dabei farbige Artifakte einsammlet. 
+.SH CONTROLS
+Das Spiel wird nur mit der Tastatur gespielt. Standard Steuerung:
+.TP
+\fBArrow keys\fR
+Bewegen
+.TP
+\fBZ\fR/\fBX\fR
+Links / Rechts schießen
+.TP
+\fB\-\fR/\fB+\fR
+Lautstärke erhöhen / Verringern
+.TP
+\fBP\fR
+Spiel pausieren
+.TP
+Die Tastaturbelegung ist frei anpassbar.
+.SH DIRECTORIES
+Die Spieldateien befinden sich unter: \fB/usr/share/suve/colorful\fR. 
+Das Spiel speicher seine Einstellungen und die Spielstände unter: \fB~/.suve/colorful/\fR.
+.SH AUTHOR
+suve (veg@svgames.pl)
