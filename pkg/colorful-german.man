@@ -1,6 +1,6 @@
 .\" Manpage for colorful
 .\" Contact veg@svgames.pl to correct errors or typos.
-.TH man 6 "2014-03-16" "1.2" "Games Manual"
+.TH man 6 "2014-03-16" "1.2" "Spielanleitung"
 .SH NAME
 colorful - Einfacher 2D-Seitenansicht Shooter
 .SH ZUSAMMENFASSUNG
@@ -11,7 +11,7 @@ durch ein Labyrinth aus Höhlen und Korridoren reist und dabei farbige Artifakte
 .SH STEUERUNG
 Das Spiel wird nur mit der Tastatur gespielt. Standard Steuerung:
 .TP
-\fBArrow keys\fR
+\fBPfeiltasten\fR
 Bewegen
 .TP
 \fBZ\fR/\fBX\fR
