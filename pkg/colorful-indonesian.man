@@ -8,10 +8,10 @@ colorful - Tembak-tembakan 2D sederhana
 .SH DESKRIPSI
 Colorful adalah permainan tembak-tembakan sederhana dari samping, dimana protagonis
 perjalanan labirin gua dan koridor untuk mendapatkan artifak warna.
-.SH Kontrol
+.SH KONTROL
 Permainan ini dimainkan menggunakan papan tik. Tombol default:
 .TP
-\fBArrow keys\fR
+\fBTombol Arah\fR
 Pergerakan
 .TP
 \fBZ\fR/\fBX\fR
@@ -24,8 +24,8 @@ Volume turun / naik
 Tunda / mulai
 .TP
 Tombol ini bisa diatur ulang seluruhnya.
-.SH DIRECTORIES
+.SH DIREKTORI
 Berkas permainan berlokasi di \fB/usr/share/suve/colorful\fR. 
 Permainan ini menyimpan pengaturan dan savegames di \fB~/.suve/colorful/\fR.
-.SH AUTHOR
+.SH PENULIS
 suve (veg@svgames.pl)
