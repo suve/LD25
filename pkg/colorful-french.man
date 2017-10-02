@@ -1,0 +1,32 @@
+.\" Manpage for colorful
+.\" Contact veg@svgames.pl to correct errors or typos.
+.TH man 6 "2017-10-01" "1.2" "Manuels de jeux"
+.SH NOM
+colorful - un jeu de tir 2D en vue de côté
+.SH SYNOPSIS
+\fBcolorful\fR
+.SH DESCRIPTION
+Colorful est un jeu de tir en vue de côté, ou le protagoniste
+travcerse un labyrinthe de grottes et de couloirs afin de récupérer
+des artefacts de couleur.
+.SH CONTRÔLES
+Ce jeu se joue uniquement avec le clavier. Les touches par défaut sont :
+.TP
+\fBles touches fléchées\fR
+Mouvement
+.TP
+\fBZ\fR/\fBX\fR
+tirer à gauche ou à droite
+.TP
+\fB\-\fR/\fB+\fR
+Augmenter / diminuer le volume
+.TP
+\fBP\fR
+Mettre en pause / Reprendre le jeu
+.TP
+Toutes ces touches peuvent être redéfinies.
+.SH DOSSIERS
+Les données du jeu se trouvent dans : \fB/usr/share/suve/colorful\fR. 
+Les réglages ainsi que les sauvegardes sont dans : \fB~/.suve/colorful/\fR.
+.SH AUTEUR
+suve (veg@svgames.pl)
