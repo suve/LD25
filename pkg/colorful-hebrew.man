@@ -1,0 +1,31 @@
+.\" דף הוראות של Colorful
+.\" צרו קשר עם veg@svgames.pl לתיקוני בעיות או שגיאות.
+.TH man 6 "2014-03-16" "1.2" "Games Manual"
+.SH NAME
+colorful - משחק יריות פשוט בדו-מימד.
+.SH SYNOPSIS
+\fBcolorful\fR
+.SH DESCRIPTION
+Colorful הוא משחק פשוט יריות פשוט דו-מימדי, בו הפרוטגוניסט מטייל במבוך של 
+מערות ומסדרונות במטרה לאסוף יצירות צבע.
+.SH CONTROLS
+המשחק משוחק בעזרת המקלדת בלבד. הגדרות החצים במתכונת ברירת מחדל:
+.TP
+\fBArrow keys\fR
+תנועה
+.TP
+\fBZ\fR/\fBX\fR
+ירייה שמאלה או ימינה
+.TP
+\fB\-\fR/\fB+\fR
+הגברת או הנמכת הקול
+.TP
+\fBP\fR
+השהייה או החזרה של המשחק
+.TP
+ניתן לשנות את כל הגדרות המקשים הללו.
+.SH DIRECTORIES
+קבצי נתוני המשחק שמורים ב- \fB/usr/share/suve/colorful\fR. 
+המשחק מאחסן את ההגדרות והמשחקים השמורים ב- \fB~/.suve/colorful/\fR.
+.SH AUTHOR
+suve (veg@svgames.pl)
