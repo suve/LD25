@@ -9,10 +9,10 @@ colorful - um simples jogo de tiro 2D
 Colorful é um jogo de tiro simples em visão lateral, onde o protagonista 
 viaja num labirinto de cavernas e corredores para coletar objetos coloridos.
 .SH CONTROLES
-O jogo só pode ser jogado com teclado. As teclas são:
+O único controle para o jogo é o teclado. Os controles são:
 .TP
-\fBTeclas de setas\fR
-Movimento
+\fBTeclas direcionais (setas)\fR
+Movimentar
 .TP
 \fBZ\fR/\fBX\fR
 Tiro esquerda / direita
