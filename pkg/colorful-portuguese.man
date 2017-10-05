@@ -1,8 +1,8 @@
 .\" Manpage para colorful
 .\" Entre em contato com veg@svgames.pl para corrigir erros de digitação.
-.TH man 6 "2014-03-16" "1.2" "Games Manual"
+.TH man 6 "2017-10-04" "1.2" "Manual do Jogo"
 .SH NOME
-colorful - um simples jogo 2D de tiro em visão lateral
+colorful - um simples jogo de tiro 2D
 .SH SINOPSE
 \fBcolorful\fR
 .SH DESCRIÇÃO
