@@ -1,0 +1,31 @@
+.\" Halaman manual untuk colorful
+.\" Hubungi veg@svgames.pl untuk memperbaiki galat atau saltik.
+.TH man 6 "2014-03-16" "1.2" "Manual permainan"
+.SH NAME
+colorful - permainan menembak dengan pandangan 2D sederhana
+.SH SYNOPSIS
+\fBcolorful\fR
+.SH DESCRIPTION
+Colorful adalah permainan menembak dengan pandangan 2D sederhana, dimana protagonisnya
+menyusuri labirin gua dan koridor untuk mengumpulkan artifak berwarna.
+.SH CONTROLS
+Permainan hanya dimainkan dengan menggunakan papan tik. Binding kunci standar:
+.TP
+\fBTombol arah\fR
+Gerakan
+.TP
+\fBZ\fR/\fBX\fR
+Tembak kiri / kanan
+.TP
+\fB\-\fR/\fB+\fR
+Volume bawah / atas
+.TP
+\fBP\fR
+Berhenti / lanjutkan
+.TP
+Binding kunci ini bisa didefinisikan ulang sepenuhnya.
+.SH DIRECTORIES
+Data permainan berlokasi \fB/usr/share/suve/colorful\fR. 
+Permainan menyimpan pengaturan dan permainan di \fB~/.suve/colorful/\fR.
+.SH AUTHOR
+suve (veg@svgames.pl)
