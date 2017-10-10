@@ -1,0 +1,31 @@
+.\" Man pagina voor colorful
+.\" Contact veg@svgames.pl om errors en spelfouten te melden
+.TH man 6 "2014-03-16" "1.2" "Games Manual"
+.SH NAME
+colorful - eenvoudige 2D sideview shooter
+.SH VERHAAL
+\fBcolorful\fR
+.SH BESCHRIJVING
+Colorful is een eenvoudige sideview shooter spel, waar het hoofdpersonage
+doorheen een doolhof van grotten en gangen reist om kleurrijke artefacten te verzamelen.
+.SH BESTURING
+Het spel wordt enkel met het toetsenbord gespeeld. Standaardbesturingsknoppen:
+.TP
+\fBPijltoetsen\fR
+Bewegen
+.TP
+\fBZ\fR/\fBX\fR
+Schieten links / rechts
+.TP
+\fB\-\fR/\fB+\fR
+Volume luider / stiller
+.TP
+\fBP\fR
+Pauze / spel hervatten
+.TP
+Deze besturingsknoppen kunnen volledig aangepast worden
+.SH BESTANDSMAPPEN
+Spelgegevensbestanden zijn te vinden in \fB/usr/share/suve/colorful\fR.
+Het spel slaat de instellingen en opgeslagen spelen op in fB~/.suve/colorful/\fR.
+.SH AUTHOR
+suve (veg@svgames.pl)
