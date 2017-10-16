@@ -1,6 +1,6 @@
 .\" Manpage for colorful
 .\" Contact veg@svgames.pl to correct errors or typos.
-.TH man 6 "2014-03-16" "1.2" "Інструкція"
+.TH man 6 "2017-10-14" "1.2" "Інструкція"
 .SH НАЗВА
 colorful - проста 2D-стрілялка
 .SH СИНОПСИС
