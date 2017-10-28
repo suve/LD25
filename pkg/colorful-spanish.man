@@ -1,0 +1,31 @@
+.\" Manpage para colorful
+.\" Escriba a veg@svgames.pl para corregir bugs o errores de digitación.
+.TH man 6 "2017-10-28" "1.2" "Manual de Juego"
+.SH NOMBRE
+colorful - un simple juego de tiro 2D
+.SH SINOPSIS
+\fBcolorful\fR
+.SH DESCRIPCIÓN
+Colorful es un juego de tiro simple en visión lateral, donde el protagonista 
+viaja por un laberinto de cavernas y pasajes para recolectar objetos de colores.
+.SH CONTROLES
+El único control para el juego es el teclado. Combinaciones de teclas:
+.TP
+\fBTeclas de dirección\fR
+Movimiento
+.TP
+\fBZ\fR/\fBX\fR
+Disparo izquierda / derecha
+.TP
+\fB\-\fR/\fB+\fR
+Volumen bajar / subir
+.TP
+\fBP\fR
+Pausar / reanudar
+.TP
+Estas combinaciones pueden ser redefinidas.
+.SH DIRECTÓRIOS
+Los ficheros de juego se encuentran en \fB/usr/share/suve/colorful\fR. 
+Las configuraciones del juego y partidas pasadas se guardan en \fB~/.suve/colorful/\fR.
+.SH AUTOR
+suve (veg@svgames.pl)
