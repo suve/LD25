@@ -6,17 +6,17 @@ colorful - un jeu de tir 2D en vue de côté
 .SH SYNOPSIS
 \fBcolorful\fR
 .SH DESCRIPTION
-Colorful est un jeu de tir en vue de côté, ou le protagoniste
-travcerse un labyrinthe de grottes et de couloirs afin de récupérer
+Colorful est un jeu de tir en vue de côté, où le protagoniste
+traverse un labyrinthe de grottes et de couloirs afin de récupérer
 des artefacts de couleur.
 .SH CONTRÔLES
 Ce jeu se joue uniquement avec le clavier. Les touches par défaut sont :
 .TP
-\fBles touches fléchées\fR
+\fBLes touches fléchées\fR
 Mouvement
 .TP
 \fBZ\fR/\fBX\fR
-tirer à gauche ou à droite
+Tirer à gauche ou à droite
 .TP
 \fB\-\fR/\fB+\fR
 Augmenter / diminuer le volume
