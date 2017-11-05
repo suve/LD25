@@ -1,6 +1,6 @@
 .\" Manpage for colorful
 .\" Contact veg@svgames.pl to correct errors or typos.
-.TH man 6 "2017-10-07" "1.2" "Руководство по игре"
+.TH COLORFUL 6 "2017-10-07" "1.2" "Руководство по игре"
 .SH НАЗВАНИЕ
 colorful - простой 2D шутер
 .SH ОБЗОР

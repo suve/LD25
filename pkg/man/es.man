@@ -1,6 +1,6 @@
 .\" Manpage para colorful
 .\" Escriba a veg@svgames.pl para corregir bugs o errores de digitación.
-.TH man 6 "2017-10-28" "1.2" "Manual de Juego"
+.TH COLORFUL 6 "2017-10-28" "1.2" "Manual de Juego"
 .SH NOMBRE
 colorful - un simple juego de tiro 2D
 .SH SINOPSIS
