@@ -19,56 +19,73 @@ unit floatingtext;
 {$INCLUDE defines.inc}
 
 interface
-   uses Shared, Sour;
+	uses Shared, SDL2;
 
-Type PFloatTxt = ^TFloatTxt;
-     TFloatTxt = Object
-     X, Y : sInt;
-     Col : Sour.PColour;
-     Text : AnsiString;
+Type
+	PFloatTxt = ^TFloatTxt;
+	TFloatTxt = Object
+		X, Y: sInt;
+		Colour: PSDL_Colour;
+		Text: AnsiString;
 
-     Constructor Create();
-     Destructor Destroy();
-     end;
+		Constructor Create();
+		Destructor Destroy();
+	end;
 
-Var FloatTxt:Array of PFloatTxt;
+Var
+	FloatTxt:Array of PFloatTxt;
 
-Procedure AddFloatTxt(X,Y,ColID:sInt;Text:AnsiString);
+Procedure AddFloatTxt(Const X, Y, ColID: sInt; Const Text:AnsiString);
 Procedure FlushFloatTxt();
 
 implementation
-   uses SysUtils;
+	uses SysUtils;
 
 Procedure AddFloatTxt(X,Y,ColID:sInt;Text:AnsiString);
-   Var FT:PFloatTxt;
-   begin
-   SetLength(FloatTxt,Length(FloatTxt)+1);
-   New(FT,Create());
-   FT^.X:=X; FT^.Y:=Y; FT^.Text:=UpperCase(Text);
-   If (ColID < 0) then FT^.Col:=NIL else
-   If (ColID < 8) then FT^.Col:=@PaletteColour[ColID] else
-   If (ColID = 8) then FT^.Col:=@GreyColour {else}
-                  else FT^.Col:=NIL;
-   FloatTxt[High(FloatTxt)]:=FT
-   end;
+Var
+	FT: PFloatTxt;
+	Idx: sInt;
+Begin
+	New(FT,Create());
+	FT^.X:=X; FT^.Y:=Y;
+	FT^.Text:=UpperCase(Text);
+	
+	If (ColID < 0) then
+		FT^.Col:=NIL
+	else If (ColID < 8) then
+		FT^.Col:=@PaletteColour[ColID]
+	else If (ColID = 8) then
+		FT^.Col:=@GreyColour
+	else
+		FT^.Col:=NIL;
+	
+	Idx := Length(FloatTxt);
+	SetLength(FloatTxt, Idx+1);
+	FloatTxt[Idx]:=FT
+End;
 
 Procedure FlushFloatTxt();
-   Var C:uInt;
-   begin
-   If (Length(FloatTxt)=0) then Exit;
-   For C:=Low(FloatTxt) to High(FloatTxt) do
-       If (FloatTxt[C]<>NIL) then Dispose(FloatTxt[C],Destroy());
-   SetLength(FloatTxt,0)
-   end;
+Var
+	C:uInt;
+Begin
+	If (Length(FloatTxt)=0) then Exit;
+	
+	For C:=Low(FloatTxt) to High(FloatTxt) do
+		If (FloatTxt[C]<>NIL) then 
+			Dispose(FloatTxt[C],Destroy());
+	
+	SetLength(FloatTxt,0)
+End;
 
 Constructor TFloatTxt.Create();
-   begin
-   X:=0; Y:=0; Col:=NIL;
-   Text:=''
-   end;
+Begin
+	X:=0; Y:=0;
+	Colour:=NIL;
+	Text:=''
+End;
 
 Destructor TFloatTxt.Destroy();
-   begin end;
+Begin End;
 
 end.
 
