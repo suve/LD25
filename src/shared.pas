@@ -172,7 +172,6 @@ Function GetMSecs:Comp;
 
 // Resize window, doh
 Procedure ResizeWindow(W,H:uInt;Full:Boolean=FALSE);
-Procedure SetResolution();
 
 // Some functions for calculating distances
 Function  Hypotenuse(X,Y:Double):Double;
@@ -257,37 +256,20 @@ Begin
 End;
 
 Procedure ResizeWindow(W,H:uInt;Full:Boolean=FALSE);
-Var Flag : uInt;
 Begin
 	If (Full) then begin
-		Flag:=SDL_FullScreen; W:=0; H:=0 
-	end else
-		Flag:=SDL_Resizable;
-	
-	(* If the fullscreen flag is set, we set W and H to 0. This will make SDL
-	  create a window with the user's desktop size, thus saving the video
-	  drivers the crazy work of changing the display resolution. *)
-	Screen:=Sour.ResizeWindow(W,H,Flag);
-	SetResolution()
+		SDL_SetWindowSize(Window, RESOL_W, RESOL_H);
+		SDL_SetWindowFullscreen(Window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+		Wnd_F := True
+	end else begin
+		SDL_SetWindowFullscreen(Window, 0);
+		SDL_SetWindowSize(Window, W, H);
+		SDL_SetWindowPosition(Window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+		
+		Wnd_W := W; Wnd_H := H;
+		Wnd_F := False
+	end
 End;
-
-Procedure SetResolution();
-
-   Function FlagSet(Const Flag,Val:uInt):Boolean;
-      begin Exit((Val and Flag) = Flag) end;
-   (* Fuck yeah, Pascal allows creating sub-routines. Beat that, C! *)
-
-   Var X, Y : sInt;
-   begin
-   Wnd_W:=Screen^.W; Wnd_H:=Screen^.H; Wnd_F:=FlagSet(SDL_FullScreen, Screen^.Flags);
-   If (Wnd_H < Wnd_W)
-      then begin X:=Trunc((Wnd_W - Wnd_H)/(Wnd_H*2)*RESOL_W); Y:=0 end
-      else begin X:=0; Y:=Trunc((Wnd_H - Wnd_W)/(Wnd_W*2)*RESOL_H) end;
-   (* Since we want to keep the aspect ratio of the game screen, we have to
-      calculate the resolution accordingly. The game area should be centered
-      on the screen, with unused bars left at the sides. *)
-   Sour.SetVisibleArea(-X,-Y,RESOL_W+(X*2),RESOL_H+(Y*2))
-   end;
 
 Function Hypotenuse(X,Y:Double):Double;
    begin Exit(Sqrt(Sqr(X)+Sqr(Y))) end;
@@ -763,7 +745,7 @@ Begin
 		end
 	end;
 	
-	SDL_WM_SetIcon(IconSurf, NIL)
+	SDL_SetWindowIcon(Window, IconSurf)
 End;
 
 Procedure Free;
