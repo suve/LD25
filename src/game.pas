@@ -27,8 +27,8 @@ Function PlayGame():Boolean;
 
 Implementation
 Uses
-	SDL,
-	ConfigFiles, FloatingText, Objects, Rooms, Shared, Sour;
+	SDL2,
+	ConfigFiles, FloatingText, Fonts, Images, Objects, Rooms, Shared;
 
 Type
 	TRoomChange = (
@@ -46,7 +46,7 @@ Const
 Var
 	Frames, FrameTime, AniFra: uInt;
 	FrameStr: ShortString;
-	PauseTxt: Sour.TCrd;
+	PauseTxt: TSDL_Point;
 	Paused, WantToQuit: Boolean;
 	RoomChange: TRoomChange;
 {$IFDEF DEVELOPER} 
@@ -88,12 +88,17 @@ Begin
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_ShootLeft] ) then Key[KEY_ShootLeft] :=False else
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_ShootRight]) then Key[KEY_ShootRight]:=False else
 		end else
-		If (Ev.Type_ = SDL_VideoResize) then begin
-			Shared.ResizeWindow(Ev.Resize.W,Ev.Resize.H,False);
-			Paused:=True
-		end else
-		If (Ev.Type_ = SDL_ActiveEvent) then begin
-			If (Ev.Active.State <> SDL_APPMOUSEFOCUS) and (Ev.Active.Gain = 0) then Paused:=True
+		If (Ev.Type_ = SDL_WindowEvent) then begin
+			If (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then begin
+				Shared.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False);
+				Paused:=True
+			end else
+			If (Ev.Window.Event = SDL_WINDOWEVENT_FOCUS_LOST) then begin
+				Paused:=True
+			end else
+			If (Ev.Window.Event = SDL_WINDOWEVENT_CLOSE) then begin
+				Shutdown:=True; WantToQuit:=True
+			end
 		end
 	end
 End;
@@ -429,7 +434,7 @@ End;
 Procedure DrawRoom();
 Var
 	X, Y: sInt;
-	Src, Dst: Sour.TRect;
+	Src, Dst: TSDL_Rect;
 Begin
 	// All tiles have the same size, no need to set this in the loop 
 	Src.W:=TILE_W; Src.H:=TILE_H; 
@@ -440,83 +445,88 @@ Begin
 		If (Room^.Tile[X][Y]=TILE_NONE) then Continue;
 		Dst.X:=X*TILE_W; Dst.Y:=Y*TILE_H;
 		Src.Y:=Room^.Tile[X][Y]*TILE_H;
-		Sour.DrawImage(TileGfx,@Src,@Dst,Room^.TCol[X][Y])
+		DrawImage(TileGfx,@Src,@Dst,Room^.TCol[X][Y])
 	end
 End;
 
 Procedure DrawGibs();
 Var
 	G: sInt;
-	Rect: Sour.TRect;
+	Rect: TSDL_Rect;
 Begin
 	For G:=Low(Gib) to High(Gib) do
 		If (Gib[G]<>NIL) then begin
-			Sour.SetRect(Rect,Gib[G]^.iX,Gib[G]^.iY,Gib[G]^.Rect.W,Gib[G]^.Rect.H);
-			Sour.DrawImage(Gib[G]^.Gfx,@Gib[G]^.Rect,@Rect,Gib[G]^.Col)
+			Rect.X := Gib[G]^.iX;
+			Rect.Y := Gib[G]^.iY;
+			Rect.W := Gib[G]^.Rect.W;
+			Rect.H := Gib[G]^.Rect.H;
+			
+			DrawImage(Gib[G]^.Gfx,@Gib[G]^.Rect,@Rect,Gib[G]^.Col)
 		end
 End;
+
+Procedure SetEntityDrawRects(Const E:PEntity; Out Src, Dst: TSDL_Rect);
+Begin
+	Src.X := AniFra * E^.W;
+	Src.Y := E^.Face * E^.H;
+	Src.W := E^.W;
+	Src.H := E^.H;
+	
+	Dst.X := E^.iX;
+	Dst.Y := E^.iY;
+	Dst.W := E^.W;
+	Dst.H := E^.H;
+End;
+
+Procedure DrawEntity(Const E:PEntity);
+Var
+	Src, Dst: TSDL_Rect;
+Begin
+	SetEntityDrawRects(E, Src, Dst);
+	DrawImage(E^.Gfx, @Src, @Dst, E^.Col)
+End;
+
 
 Procedure DrawMonsters();
 Var
 	M: sInt;
-	E: PEntity;
-	Crd: Sour.TCrd;
-	Rect: Sour.TRect;
 Begin
 	For M:=Low(Mob) to High(Mob) do
-		If (Mob[M]<>NIL) then begin
-			E:=Mob[M]; Crd:=E^.GetCrd;
-			Rect:=Sour.MakeRect(AniFra*E^.W,E^.Face*E^.H,E^.W,E^.H);
-			Sour.DrawImage(E^.Gfx,@Rect,@Crd,E^.Col)
-		end
+		If (Mob[M]<>NIL) then
+			DrawEntity(Mob[M])
 End;
 
 Procedure DrawPlayerBullets();
 Var
 	B: sInt;
-	E: PEntity;
-	Crd: Sour.TCrd;
-	Rect: Sour.TRect;
 Begin
 	For B:=Low(PBul) to High(PBul) do
-		If (PBul[B]<>NIL) then begin
-			E:=PBul[B]; Crd:=E^.GetCrd;
-			Rect:=Sour.MakeRect(AniFra*E^.W,E^.Face*E^.H,E^.W,E^.H);
-			Sour.DrawImage(E^.Gfx,@Rect,@Crd,E^.Col)
-		end
+		If (PBul[B]<>NIL) then
+			DrawEntity(PBul[B])
 End;
 
 Procedure DrawEnemyBullets();
 Var
 	B: sInt;
-	E: PEntity;
-	Crd: Sour.TCrd;
-	Rect: Sour.TRect;
 Begin
 	For B:=Low(EBul) to High(EBul) do
-		If (EBul[B]<>NIL) then begin
-			E:=EBul[B]; Crd:=E^.GetCrd;
-			Rect:=Sour.MakeRect(AniFra*E^.W,E^.Face*E^.H,E^.W,E^.H);
-			Sour.DrawImage(E^.Gfx,@Rect,@Crd,E^.Col)
-		end
+		If (EBul[B]<>NIL) then
+			DrawEntity(EBul[B])
 End;
 
 Procedure DrawHero();
 Var
-	Crd: Sour.TCrd;
-	Rect: Sour.TRect;
 	C, X: sInt;
-	Col: Sour.TColour;
+	Src, Dst: TSDL_Rect;
+	Col: TSDL_Colour;
 Begin
 	If (Hero^.HP <= 0.0) then Exit;
 	
-	// Set target drawing coord and source rect
-	Sour.SetCrd(Crd, Hero^.iX, Hero^.iY);
-	Sour.SetRect(Rect, AniFra*Hero^.W, Hero^.Face*Hero^.H, Hero^.W, Hero^.H);
-	
+	SetEntityDrawRects(Hero, Src, Dst);
 	// If hero has taken damage recently, randomly move target position to make a "damage shake" effect
 	If (Hero^.InvTimer > 0) then begin
-		Crd.X+=Random(-1,1); Crd.Y+=Random(-1,1) 
+		Dst.X += Random(-1, +1);
+		Dst.Y += Random(-1, +1) 
 	end;
 	
 	// If hero is carrying a colour, randomly colourise the bastard
@@ -534,22 +544,29 @@ Begin
 	end else
 		Col:=GreyColour;
 	
-	Sour.DrawImage(Hero^.Gfx, @Rect, @Crd, @Col)
+	DrawImage(Hero^.Gfx, @Src, @Dst, @Col)
 End;
 
 Procedure DrawCrystal();
 Var
-	Crd: Sour.TCrd;
-	Src: Sour.TRect;
+	Src, Dst: TSDL_Rect;
 Begin
 	If(Not Crystal.IsSet) then Exit;
 	
-	Sour.SetRect(Src,AniFra*TILE_W,Crystal.Col*TILE_H,TILE_W,TILE_H);
-	Sour.SetCrd(Crd,Crystal.mX*TILE_W,Crystal.mY*TILE_H);
+	Src.X := AniFra * TILE_W;
+	Src.Y := Crystal.Col * TILE_H;
+	Src.W := TILE_W;
+	Src.H := TILE_H;
 	
-	If (Crystal.Col <> WOMAN)
-		then Sour.DrawImage(ColGfx,@Src,@Crd)
-		else Sour.DrawImage(ColGfx,@Src,@Crd,@CentralPalette[FrameTime div (1000 div 8)])
+	Dst.X := Crystal.mX * TILE_W;
+	Dst.Y := Crystal.mY * TILE_H;
+	Dst.W := TILE_W;
+	Dst.H := TILE_H;
+	
+	If (Crystal.Col <> WOMAN) then
+		DrawImage(ColGfx, @Src, @Dst, @WhiteColour)
+	else
+		DrawImage(ColGfx, @Src, @Dst, @CentralPalette[FrameTime div (1000 div 8)])
 End;
 
 Procedure DrawFloatingTexts();
@@ -558,90 +575,116 @@ Var
 Begin
 	For ft:=Low(FloatTxt) to High(FloatTxt) do
 		If (FloatTxt[ft]<>NIL) then
-			Sour.PrintText(FloatTxt[ft]^.Text,Font,FloatTxt[ft]^.X,FloatTxt[ft]^.Y,FloatTxt[ft]^.Col)
+			PrintText(FloatTxt[ft]^.Text, Font, FloatTxt[ft]^.X, FloatTxt[ft]^.Y, ALIGN_LEFT, ALIGN_TOP, FloatTxt[ft]^.Colour)
+End;
+
+Procedure DrawColouredRect(Const Rect: PSDL_Rect; Const Colour: PSDL_Colour);
+Begin
+	SDL_SetRenderDrawColor(Shared.Renderer, Colour^.R, Colour^.G, Colour^.B, Colour^.A);
+	SDL_RenderFillRect(Shared.Renderer, Rect)
+End;
+
+Procedure DrawColouredRect(Const Rect: PSDL_Rect; Const RGB: LongWord);
+Var
+	Colour: TSDL_Colour;
+Begin
+	Colour := RGBToColour(RGB);
+	DrawColouredRect(Rect, @Colour)
 End;
 
 Procedure DrawUI();
 Const
-	HPrect: Sour.TRect = (X: 0; Y:0; W:16; H:16);
-	ColRect: Sour.TRect = (X: 16; Y:0; W:16; H:16);
-	FPSRect: Sour.TRect = (X: 32; Y:0; W:16; H:16);
-	VolRect: Sour.TRect = (X: 48; Y:0; W:16; H:16);
+	HP_src: TSDL_Rect = (X: 0; Y:0; W:16; H:16);
+	HP_dst: TSDL_Rect = (X: 0; Y:0; W:16; H:16);
+	
+	Col_src: TSDL_Rect = (X: 16; Y:0; W:16; H:16);
+	Col_dst: TSDL_Rect = (X: RESOL_W-16; Y:0; W:16; H:16);
+	
+	FPS_src: TSDL_Rect = (X: 32; Y:0; W:16; H:16);
+	FPS_dst: TSDL_Rect = (X: RESOL_W-16; Y:RESOL_H-16; W:16; H:16);
+	
+	Vol_src: TSDL_Rect = (X: 48; Y:0; W:16; H:16);
+	Vol_dst: TSDL_Rect = (X: 0; Y:RESOL_H-16; W:16; H:16);
+	
+	PauseRect: TSDL_Rect = (X: (RESOL_W - 64) div 2; Y: (RESOL_H - 32) div 2; W: 64; H: 32);
 Var
-	Crd: Sour.TCrd;
-	Rect, PauseRect: Sour.TRect;
-	C: sInt;
+	Dst, DstCpy: TSDL_Rect;
+	C, d: sInt;
 Begin
 	// Health indicator
-	Crd:=Sour.MakeCrd(0,0);
-	Sour.DrawImage(UIgfx,@HPrect,@Crd);
+	DrawImage(UIgfx, @HP_src, @HP_dst, NIL);
 	If (Hero^.HP > 0) then begin
-		Sour.SetRect(Rect,3,9,1+Trunc(9*Hero^.HP/Hero^.MaxHP),4);
-		If (Hero^.InvTimer <= 0)
-			then Sour.FillRect(@Rect,@WhiteColour)
-			else Sour.FillRect(@Rect,@GreyColour)
+		Dst.X := 3;
+		Dst.Y := 9;
+		Dst.W := 1+Trunc(9*Hero^.HP/Hero^.MaxHP);
+		Dst.H := 4;
+		If (Hero^.InvTimer <= 0) then
+			DrawColouredRect(@Dst, @WhiteColour)
+		else
+			DrawColouredRect(@Dst, @GreyColour)
 	end;
 
 	// Colour indicator
-	Crd:=Sour.MakeCrd(RESOL_W-16,0);
-	Sour.DrawImage(UIgfx,@ColRect,@Crd);
+	DrawImage(UIgfx, @Col_src, @Col_dst, NIL);
 	For C:=0 to 7 do begin
 		If (ColState[C]=STATE_NONE) then Continue;
 		
-		Rect.X:=RESOL_W-14+((C mod 4)*3); 
-		If ((C mod 4)>1) then Rect.X+=1;
+		Dst.X:=RESOL_W-14+((C mod 4)*3); 
+		If ((C mod 4)>1) then Dst.X+=1;
 		
-		Rect.Y:=09; 
-		If (C>=4) then Rect.Y+=3;
+		Dst.Y:=9; 
+		If (C>=4) then Dst.Y+=3;
 		
 		// For given colours, draw a 2x2 rectangle.
 		// For carried colours, draw two (randomly selected) pixels in the 2x2 rectangle area.
 		If (ColState[C]=STATE_GIVEN) then begin
-			Rect.W:=2; Rect.H:=2;
-			Sour.FillRect(@Rect,UIcolour[C])
+			Dst.W:=2; Dst.H:=2;
+			DrawColouredRect(@Dst, UIcolour[C])
 		end else begin
-			Rect.W:=1; Rect.H:=1;
-			Crd.X:=Rect.X; Crd.Y:=Rect.Y;
-			Rect.X+=Random(2); Rect.Y+=Random(2);
-			Sour.FillRect(@Rect,UIcolour[C]);
-			Rect.X:=Crd.X+1-Random(2); Rect.Y:=Crd.Y+1-Random(2);
-			Sour.FillRect(@Rect,UIcolour[C])
+			Dst.W:=1; Dst.H:=1;
+			For d:=0 to 1 do begin
+				dstcpy := Dst;
+				dstcpy.X += Random(0, 1);
+				dstcpy.Y += Random(0, 1);
+				DrawColouredRect(@dstcpy, UIcolour[C])
+			end
 		end
 	end;
 
 	// Volume indicator
-	Crd:=Sour.MakeCrd(0,RESOL_H-16);
-	Sour.DrawImage(UIgfx,@VolRect,@Crd);
+	DrawImage(UIgfx, @Vol_src, @Vol_dst, NIL);
 	For C:=GetVol() downto 1 do begin
-		Rect.X:=(C*2); Rect.Y:=RESOL_H-2-C;
-		Rect.W:=2; Rect.H:=C;
-		Sour.FillRect(@Rect,@WhiteColour)
+		Dst.X := C*2;              Dst.W := 2;
+		Dst.Y := RESOL_H - 2 - C;  Dst.H := C;
+		DrawColouredRect(@Dst, @WhiteColour)
 	end;
 
 	// Frames per second indicator
-	Crd:=Sour.MakeCrd(RESOL_W-16,RESOL_H-16);
-	Sour.DrawImage(UIgfx,@FPSrect,@Crd);
-	Sour.PrintText(FrameStr,NumFont,(RESOL_W-8),(RESOL_H-7),ALIGN_CENTER);
+	DrawImage(UIgfx, @FPS_src, @FPS_dst, NIL);
+	PrintText(FrameStr, NumFont, (RESOL_W-8), (RESOL_H-7), ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
 
 	// If paused, draw frame with "PAUSED" bouncing
 	If (Paused) then begin
-		PauseRect.X := ((RESOL_W - 64) div 2); 
-		PauseRect.Y := ((RESOL_H - 32) div 2); 
-		PauseRect.W := 64; 
-		PauseRect.H := 32;
+		Dst := PauseRect;
+		DrawColouredRect(@Dst, @WhiteColour);
 		
-		Sour.FillRect(@PauseRect,@WhiteColour);
+		With Dst do begin X+=1; Y+=1; W-=2; H-=2 end;
+		DrawColouredRect(@Dst, @BlackColour);
 		
-		With PauseRect do begin X+=1; Y+=1; W-=2; H-=2 end;
-		Sour.FillRect(@PauseRect,@BlackColour);
-		
-		Sour.PrintText('PAUSED',Font,PauseRect.X+PauseTxt.X,PauseRect.Y+PauseTxt.Y);
+		PrintText('PAUSED', Font, Dst.X+PauseTxt.X, Dst.Y+PauseTxt.Y, ALIGN_LEFT, ALIGN_TOP, @WhiteColour)
 	end
 End;
 
 Procedure DrawFrame();
+Var
+	WindowTex: PSDL_Texture;
 begin
-	Sour.BeginFrame();
+	WindowTex := SDL_GetRenderTarget(Shared.Renderer);
+	SDL_SetRenderTarget(Shared.Renderer, Shared.Display);
+
+	SDL_SetRenderDrawBlendMode(Shared.Renderer, SDL_BLENDMODE_BLEND);
+	SDL_SetRenderDrawColor(Shared.Renderer, 0, 0, 0, 255);
+	SDL_RenderClear(Shared.Renderer);
 
 	DrawRoom();
 
@@ -657,8 +700,8 @@ begin
 
 	{$IFDEF DEVELOPER} If Not (debugU) then {$ENDIF} DrawUI();
 
-	// Swap OGL buffers, sending the current frame to video display.
-	Sour.FinishFrame()
+	SDL_SetRenderTarget(Shared.Renderer, WindowTex);
+	SDL_RenderCopy(Shared.Renderer, Shared.Display, NIL, NIL)
 end;
 
 Procedure CountFrames(Const Time:uInt);
@@ -739,7 +782,7 @@ Begin
 	Frames:=0; FrameTime:=0; FrameStr:='???';
 	
 	PauseTxt.X:=PAUSETXT_W div 2; PauseTxt.Y:=PAUSETXT_H div 2;
-	Sour.SetFontScaling(Font,1); 
+	Font^.Scale := 1;
 	
 	{$IFDEF DEVELOPER} debugY:=False; debugU:=False; debugI:=False; {$ENDIF}
 	Repeat

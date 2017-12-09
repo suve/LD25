@@ -192,6 +192,8 @@ Function Overlap(A,B:PEntity):Boolean;
 Function IntToStr(Num:uInt;Digits:uInt=0;Chr:Char='0'):AnsiString; Overload;
 Function StrToInt(S:AnsiString):Int64;
 
+Function RGBToColour(RGB: LongWord):TSDL_Colour;
+
 // Volume functions
 Procedure ChgVol(Change:sInt;ChgChanVol:Boolean = TRUE);
 Procedure SetVol(NewVol:TVolLevel;ChgChanVol:Boolean = TRUE);

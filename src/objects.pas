@@ -211,7 +211,7 @@ Begin
 	Exit(Val*(1+Random(-1000,+1000)/1000*Dif))
 End;
 
-Function TEntity.GetCoords:TSDL_Point
+Function TEntity.GetCoords:TSDL_Point;
 Begin
 	Result.X := Self.intX;
 	Result.Y := Self.intY

@@ -31,6 +31,8 @@ Type
 Function LoadImage(Const Path: AnsiString; Const TransparentColour: PSDL_Colour):PImage;
 Procedure FreeImage(Image: PImage);
 
+Procedure DrawImage(Const Image: PImage; Const Src, Dst: PSDL_Rect; Const Colour: PSDL_Colour);
+
 Function ImageError():AnsiString;
 
 
@@ -153,6 +155,12 @@ Begin
 	Image := ImageFromSurface(Converted, TransparentColour);
 	SDL_FreeSurface(Converted);
 	Exit(Image)
+End;
+
+Procedure DrawImage(Const Image: PImage; Const Src, Dst: PSDL_Rect; Const Colour: PSDL_Colour);
+Begin
+	If(Colour <> NIL) then SDL_SetTextureColorMod(Image^.Tex, Colour^.R, Colour^.G, Colour^.B);
+	SDL_RenderCopy(Shared.Renderer, Image^.Tex, Src, Dst)
 End;
 
 Function ImageError():AnsiString;

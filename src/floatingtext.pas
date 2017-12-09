@@ -35,13 +35,13 @@ Type
 Var
 	FloatTxt:Array of PFloatTxt;
 
-Procedure AddFloatTxt(Const X, Y, ColID: sInt; Const Text:AnsiString);
+Procedure AddFloatTxt(Const X, Y, ColID: sInt; Const Text: AnsiString);
 Procedure FlushFloatTxt();
 
 implementation
 	uses SysUtils;
 
-Procedure AddFloatTxt(X,Y,ColID:sInt;Text:AnsiString);
+Procedure AddFloatTxt(Const X, Y, ColID: sInt; Const Text: AnsiString);
 Var
 	FT: PFloatTxt;
 	Idx: sInt;
@@ -51,13 +51,13 @@ Begin
 	FT^.Text:=UpperCase(Text);
 	
 	If (ColID < 0) then
-		FT^.Col:=NIL
+		FT^.Colour:=NIL
 	else If (ColID < 8) then
-		FT^.Col:=@PaletteColour[ColID]
+		FT^.Colour:=@PaletteColour[ColID]
 	else If (ColID = 8) then
-		FT^.Col:=@GreyColour
+		FT^.Colour:=@GreyColour
 	else
-		FT^.Col:=NIL;
+		FT^.Colour:=NIL;
 	
 	Idx := Length(FloatTxt);
 	SetLength(FloatTxt, Idx+1);
