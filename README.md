@@ -38,30 +38,39 @@ the game quite eagerly.
 
 Libraries used
 ----------------------
-The game uses SDL (along with SDL\_Image and SDL\_Mixer) libraries
-for event handling, gfx and sfx; and the Sour lib.
+The game uses SDL2 (along with SDL2\_Image and SDL2\_Mixer) libraries
+for event handling, gfx and sfx.
 
 Simple DirectMedia Layer
-http://libsdl.org
+https://libsdl.org
 
-Sour is my own handiwork and can be downloaded from my site. A copy is also bundled with those GitHub sources.
+
+Getting the SDL2 headers
+-----------------
+Before you can build, you need to get a copy of Pascal SDL2 headers.
+The recommended version to use are the [ev1313](https://github.com/ev1313/Pascal-SDL-2-Headers) headers,
+although you're free to try compiling the game using any others.
+
+The repo links to aforementioned headers by the means of a git submodule;
+that means, if you don't wish to experiment and just want to get this compiled, simply do:
+
+    $ git submodule init
+    $ git submodule update
+
+This should fetch the SDL2 headers for you.
 
 
 Building instructions
 -----------------
-Since version 2.2.2, FPC comes with most of the SDL units included.
-You could, alternatively, get a copy from http://delphi-jedi.org.
+To build, use the standard make call.
 
-Sour is bundled with the Colorful source.
-You could, alternatively, get a copy from my homepage.
+    $ make \[debug|release|package\]
 
-To build, just compile the main source.
-    
+You can, alternatively, just point the compiler at the main source, although that's not
+recommended, since the Makefile sets up some compiler options and compile-time symbols.
+
     $ fpc ld25.pas
 
-You can also use the makefile, which sets up some additional compile flags.
-    
-    $ make
 
 Note that the configfiles.pas file holds some game constants (mostly
 file paths) used to determine where to place config files. These
@@ -70,24 +79,6 @@ for Win32 and Linux. If you want to compile for another platform,
 you'll have to meddle with the code a bit and add these constants for
 your new platform. Or just remove the compiler directives and hard-code
 them for your OS - whatever you find suitable.
-
-
-Bundled SDL_Mixer
------------------
-By default, on Linux, SDL_mixer links and depends on smpeg for MP3 support.
-Since Colorful does not use MP3s, and less dependencies is better 
-(not to mention that until quite recently, MP3 was patent-encumbered), 
-we want to avoid dragging smpeg into the picture.
- 
-Since FPC 3.0.0, the compiler comes with an smpeg-disabled version of SDL_Mixer
-by default. However, for older versions of the compiler, it was necessary
-to bundle a copy of SDL_Mixer and modify it appropriately.
-
-There are macros in the source code that detect whether you're using
-FPC >= 3.0.0 and switch to using the compiler-provided library, instead
-of relying on the bundled one. In this case, it's safe to competely remove
-the `src/sdl_mixer_bundled.pas` and `src/jedi.inc` files 
-without affecting the build.
 
 
 Author's rambling
