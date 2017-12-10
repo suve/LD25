@@ -81,9 +81,12 @@ Begin
 End;
 
 Procedure ColorkeyToTransparent(Const Surface: PSDL_Surface; Const TransparentColour: PSDL_Colour);
+Type
+	uInt32 = LongWord;
 Var
-	Colorkey, Offset: QWord;
-	Pixel: PQWord;
+	Offset: QWord;
+	Colorkey: uInt32;
+	Pixel: ^uInt32;
 	X, Y: sInt;
 Begin
 	Colorkey := (TransparentColour^.a * $1000000) + (TransparentColour^.r * $10000) + (TransparentColour^.g * $100) + (TransparentColour^.b);
@@ -93,7 +96,7 @@ Begin
 		For X:=0 to Surface^.w - 1 do begin
 			Offset := (Y * Surface^.pitch) + (X * Surface^.Format^.BytesPerPixel);
 			
-			Pixel := PQWord(@( PByte(Surface^.pixels)[Offset] ));
+			Pixel := PLongWord(@( PByte(Surface^.pixels)[Offset] ));
 			If(Pixel^ = Colorkey) then Pixel^ := TRANSPARENT
 		end
 	end;

@@ -468,9 +468,17 @@ End;
 Procedure SetEntityDrawRects(Const E:PEntity; Out Src, Dst: TSDL_Rect);
 Begin
 	Src.X := AniFra * E^.W;
-	Src.Y := E^.Face * E^.H;
 	Src.W := E^.W;
 	Src.H := E^.H;
+	
+	// Some entities' looks does not change when they switch facing.
+	// Their files contain only one facing.
+	// Thus, we have to check if there actually is a second gfx
+	// before setting the Y coordinate.
+	If(E^.Face > 0) and (E^.Gfx^.H > E^.H * E^.Face) then
+		Src.Y := E^.Face * E^.H
+	else
+		Src.Y := 0;
 	
 	Dst.X := E^.iX;
 	Dst.Y := E^.iY;

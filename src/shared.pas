@@ -73,7 +73,7 @@ Const
 
 Const
 	UIcolour: Array[0..7] of LongWord = (
-		$585858FF,$0000FFFF,$00FF00FF,$00FFFFFF,$FF0000FF,$FF00FFFF,$FFFF00FF,$FFFFFFFF
+		$585858,$0000FF,$00FF00,$00FFFF,$FF0000,$FF00FF,$FFFF00,$FFFFFF
 	);
 	MapColour: Array[0..7] of LongWord = (
 		$323232, $10186A, $299C00, $009A9A, $7A0818, $94188B, $FFDE5A, $DADADA
@@ -305,7 +305,7 @@ End;
 
 Procedure DrawColouredRect(Const Rect: PSDL_Rect; Const RGB: LongWord);
 Var
-	Colour: TSDL_Colour;
+	Colour, ColourFixed: TSDL_Colour;
 Begin
 	Colour := RGBToColour(RGB);
 	DrawColouredRect(Rect, @Colour)
@@ -491,11 +491,11 @@ Procedure DestroyEntities(KillHero:Boolean=FALSE);
 
 Function RGBToColour(RGB: LongWord):TSDL_Colour;
 Begin
-	Result.R := RGB mod 256;
+	Result.B := RGB mod 256;
 	RGB := RGB div 256;
 	Result.G := RGB mod 256;
 	RGB := RGB div 256;
-	Result.B := RGB mod 256;
+	Result.R := RGB mod 256;
 	
 	Result.A := 255
 End;
