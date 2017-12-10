@@ -19,7 +19,7 @@ unit rooms;
 {$INCLUDE defines.inc}
 
 interface
-   uses Sour, Shared;
+   uses SDL2, Shared;
 
 Type  TTile = 0..16;
 Const TILE_WALL  = 00; TILE_VBAR = 01; TILE_VBUP = 02; TILE_VBDO = 03;
@@ -35,7 +35,7 @@ Type PRoom = ^TRoom;
      Public
        X, Y : uInt;
        Tile : Array[0..(ROOM_W-1), 0..(ROOM_H-1)] of TTile;
-       TCol : Array[0..(ROOM_W-1), 0..(ROOM_H-1)] of Sour.PColour;
+       TCol : Array[0..(ROOM_W-1), 0..(ROOM_H-1)] of PSDL_Colour;
        Scri : Array of AnsiString;
 
        Function  CollidesOrOutside(Const cX,cY:Double):Boolean;

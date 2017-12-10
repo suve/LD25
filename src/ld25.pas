@@ -19,7 +19,7 @@ program ld25;
 {$INCLUDE defines.inc}
 
 uses
-	SysUtils, SDL2,
+	SysUtils, SDL2, SDL2_image,
 
 	{$IF FPC_FULLVERSION >= 30000}
 		SDL_Mixer_nosmpeg,
@@ -398,14 +398,21 @@ Begin
 
 	For GM:=Low(GM) to High(GM) do SaveExists[GM]:=IHasGame(GM);
 	
-	Write('Initializing SDL video... ');
+	Write('Initializing SDL2 video... ');
 	If (SDL_Init(SDL_Init_Video or SDL_Init_Timer)<>0) then begin
 		Writeln('Failed!');
 		Halt(1)
 	end else
 		Writeln('Success!');
 
-	Write('Initializing SDL audio... ');
+	Write('Initializing SDL2_image... ');
+	if(IMG_Init(IMG_INIT_PNG) <> IMG_INIT_PNG) then begin
+		Writeln('Failed!');
+		Halt(1)
+	end else
+		Writeln('Success!');
+
+	Write('Initializing SDL2 audio... ');
 	If (SDL_InitSubSystem(SDL_Init_Audio)<>0) then begin
 		Writeln('Failed!');
 		NoSound:=True
@@ -413,7 +420,7 @@ Begin
 		Writeln('Success!');
 
 	If (Not NoSound) then begin
-		Write('Initializing SDL_mixer... ');
+		Write('Initializing SDL2_mixer... ');
 		If (Mix_OpenAudio(AUDIO_FREQ, AUDIO_TYPE, AUDIO_CHAN, AUDIO_CSIZ)<>0) then begin
 			Writeln('Failed!');
 			NoSound:=True 
@@ -448,7 +455,15 @@ Begin
 		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, 'nearest');
 		SDL_RenderSetLogicalSize(Shared.Renderer, RESOL_W, RESOL_H)
 	end;
-
+	
+	Write('Creating render target texture... ');
+	Shared.Display := SDL_CreateTexture(Shared.Renderer, SDL_GetWindowPixelFormat(Shared.Window), SDL_TEXTUREACCESS_TARGET, RESOL_W, RESOL_H);
+	if(Shared.Display = NIL) then begin
+		Writeln('Failed!');
+		Halt(1)
+	end else
+		Writeln('Success!');
+	
 	Write('Loading basic resources... ');
 	If Not Shared.LoadBasics(S) then begin
 		Writeln('ERROR'); Writeln(S); Exit(False)

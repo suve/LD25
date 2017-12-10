@@ -121,6 +121,7 @@ Begin
 	Img := AllocateImage();
 	If(Img = NIL) then begin
 		SDL_DestroyTexture(Tex);
+		ErrorCode := 4;
 		Exit(NIL)
 	end;
 	

@@ -561,12 +561,12 @@ const
 Function LoadBasics(Out Status:AnsiString):Boolean;
 begin
 	TitleGfx:=LoadImage(DataPath+GFX_TITLE, @COLOUR_BLACK);
-	If (TitleGfx=NIL) then begin Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}GFX_TITLE); Exit(False) end;
+	If (TitleGfx=NIL) then begin Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}GFX_TITLE+' ('+ImageError()+')'); Exit(False) end;
 	
 	IGNORE_EVENTS;
 
 	FontImg:=LoadImage(DataPath+FILE_FONT, @COLOUR_BLACK);
-	If (Font=NIL) then begin Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}FILE_FONT); Exit(False) end;
+	If (FontImg=NIL) then begin Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}FILE_FONT+' ('+ImageError()+')'); Exit(False) end;
 	Font:=FontFromImage(FontImg,#32,5,7);
 	Font^.SpacingX := 1;
 	Font^.SpacingY := 1;
