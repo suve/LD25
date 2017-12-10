@@ -578,20 +578,6 @@ Begin
 			PrintText(FloatTxt[ft]^.Text, Font, FloatTxt[ft]^.X, FloatTxt[ft]^.Y, ALIGN_LEFT, ALIGN_TOP, FloatTxt[ft]^.Colour)
 End;
 
-Procedure DrawColouredRect(Const Rect: PSDL_Rect; Const Colour: PSDL_Colour);
-Begin
-	SDL_SetRenderDrawColor(Shared.Renderer, Colour^.R, Colour^.G, Colour^.B, Colour^.A);
-	SDL_RenderFillRect(Shared.Renderer, Rect)
-End;
-
-Procedure DrawColouredRect(Const Rect: PSDL_Rect; Const RGB: LongWord);
-Var
-	Colour: TSDL_Colour;
-Begin
-	Colour := RGBToColour(RGB);
-	DrawColouredRect(Rect, @Colour)
-End;
-
 Procedure DrawUI();
 Const
 	HP_src: TSDL_Rect = (X: 0; Y:0; W:16; H:16);
@@ -676,16 +662,8 @@ Begin
 End;
 
 Procedure DrawFrame();
-Var
-	WindowTex: PSDL_Texture;
-begin
-	WindowTex := SDL_GetRenderTarget(Shared.Renderer);
-	SDL_SetRenderTarget(Shared.Renderer, Shared.Display);
-
-	SDL_SetRenderDrawBlendMode(Shared.Renderer, SDL_BLENDMODE_BLEND);
-	SDL_SetRenderDrawColor(Shared.Renderer, 0, 0, 0, 255);
-	SDL_RenderClear(Shared.Renderer);
-
+Begin
+	Shared.BeginFrame();
 	DrawRoom();
 
 	If (Length(Gib)>0) then DrawGibs();
@@ -700,8 +678,7 @@ begin
 
 	{$IFDEF DEVELOPER} If Not (debugU) then {$ENDIF} DrawUI();
 
-	SDL_SetRenderTarget(Shared.Renderer, WindowTex);
-	SDL_RenderCopy(Shared.Renderer, Shared.Display, NIL, NIL)
+	Shared.FinishFrame()
 end;
 
 Procedure CountFrames(Const Time:uInt);

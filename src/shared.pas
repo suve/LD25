@@ -173,6 +173,15 @@ Function GetMSecs:Comp;
 // Resize window, doh
 Procedure ResizeWindow(W,H:uInt;Full:Boolean=FALSE);
 
+// Set up buffers for drawing frame, send frame to display
+Procedure BeginFrame();
+Procedure FinishFrame();
+
+// Draw primitives using SDL
+Procedure DrawColouredRect(Const Rect: PSDL_Rect; Const Colour: PSDL_Colour);
+Procedure DrawColouredRect(Const Rect: PSDL_Rect; Const RGB: LongWord);
+Function  RGBToColour(RGB: LongWord):TSDL_Colour;
+
 // Some functions for calculating distances
 Function  Hypotenuse(X,Y:Double):Double;
 Function  Hypotenuse(aX,aY,bX,bY:Double):Double;
@@ -191,8 +200,6 @@ Function Overlap(A,B:PEntity):Boolean;
 // Some simple converstions from and to strings
 Function IntToStr(Num:uInt;Digits:uInt=0;Chr:Char='0'):AnsiString; Overload;
 Function StrToInt(S:AnsiString):Int64;
-
-Function RGBToColour(RGB: LongWord):TSDL_Colour;
 
 // Volume functions
 Procedure ChgVol(Change:sInt;ChgChanVol:Boolean = TRUE);
@@ -234,6 +241,7 @@ Var
 	Tikku : uInt;
 	VolLevel : TVolLevel;
 	Volume : uInt;
+	WindowTex: PSDL_Texture;
 
 Procedure GetDeltaTime(Out Time:uInt);
 Begin
@@ -271,6 +279,42 @@ Begin
 		Wnd_W := W; Wnd_H := H;
 		Wnd_F := False
 	end
+End;
+
+Procedure BeginFrame();
+Begin
+	WindowTex := SDL_GetRenderTarget(Renderer);
+	SDL_SetRenderTarget(Renderer, Display);
+
+	SDL_SetRenderDrawBlendMode(Renderer, SDL_BLENDMODE_BLEND);
+	SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 255);
+	SDL_RenderClear(Renderer)
+End;
+
+Procedure FinishFrame();
+Begin
+	SDL_SetRenderTarget(Renderer, WindowTex);
+	
+	SDL_SetRenderDrawBlendMode(Renderer, SDL_BLENDMODE_BLEND);
+	SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 255);
+	SDL_RenderClear(Renderer);
+	
+	SDL_RenderCopy(Renderer, Display, NIL, NIL);
+	SDL_RenderPresent(Renderer)
+End;
+
+Procedure DrawColouredRect(Const Rect: PSDL_Rect; Const Colour: PSDL_Colour);
+Begin
+	SDL_SetRenderDrawColor(Renderer, Colour^.R, Colour^.G, Colour^.B, Colour^.A);
+	SDL_RenderFillRect(Renderer, Rect)
+End;
+
+Procedure DrawColouredRect(Const Rect: PSDL_Rect; Const RGB: LongWord);
+Var
+	Colour: TSDL_Colour;
+Begin
+	Colour := RGBToColour(RGB);
+	DrawColouredRect(Rect, @Colour)
 End;
 
 Function Hypotenuse(X,Y:Double):Double;
