@@ -19,14 +19,7 @@ program ld25;
 {$INCLUDE defines.inc}
 
 uses
-	SysUtils, SDL2, SDL2_image,
-
-	{$IF FPC_FULLVERSION >= 30000}
-		SDL_Mixer_nosmpeg,
-	{$ELSE}
-		SDL_Mixer_bundled,
-	{$ENDIF}
-
+	SysUtils, SDL2, SDL2_image, SDL2_mixer,
 	Images, Fonts, Shared, Objects, FloatingText, configfiles, Game
 ;
 

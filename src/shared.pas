@@ -21,16 +21,10 @@ unit shared;
 
 interface
 
-uses SDL2, Fonts, Images, Objects, SysUtils,
-	{$IF FPC_FULLVERSION >= 30000}
-		SDL_Mixer_nosmpeg
-	{$ELSE}
-		SDL_Mixer_bundled
-	{$ENDIF}
-;
+uses SDL2, SDL2_mixer, Fonts, Images, Objects, SysUtils;
+
 
 // A shitload of constants - but hey, this is the 'shared' unit, isn't it?
-
 const 
 	GAMENAME = 'Colorful'; GAMEAUTH = 'suve';
 	MAJORNUM = '2'; MINORNUM = '0'; GAMEVERS = MAJORNUM+'.'+MINORNUM;
