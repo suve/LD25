@@ -108,7 +108,7 @@ Begin
 	Result.X := X * Font^.CharW;
 	Result.Y := Y * Font^.CharH;
 	Result.W := Font^.CharW;
-	Result.H := Font^.CharH;
+	Result.H := Font^.CharH
 End;
 
 Procedure PrintText(
@@ -196,6 +196,7 @@ Begin
 	If(Fnt = NIL) then Exit(NIL);
 	
 	Fnt^.Image := Image;
+	Fnt^.StartChar := StartChar;
 	Fnt^.CharW := CharW;
 	Fnt^.CharH := CharH;
 	Fnt^.SpacingX := 0;

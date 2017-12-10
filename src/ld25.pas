@@ -35,8 +35,12 @@ Var
     MenuChoice:Char;
 
 Procedure DrawTitle();
+Var
+	Dst: TSDL_Rect;
 Begin
-	DrawImage(TitleGfx, NIL, NIL, NIL);
+	Dst.X := 0; Dst.Y := 0;
+	Dst.W := TitleGfx^.W; Dst.H := TitleGfx^.H;
+	DrawImage(TitleGfx, NIL, @Dst, NIL);
 	
 	Font^.Scale := 1;
 	PrintText(
@@ -260,8 +264,8 @@ Var
 	
 	IntroRect, ContinueRect, NewGameRect, LoadGameRect, BindRect, QuitRect: TSDL_Rect;
 Begin
-	XPos:=Length('I - INTRODUCTION');
-	XPos:=((Font^.SpacingX*(XPos-1))+Font^.CharW)*2;
+	Font^.Scale := 2;
+	XPos:=GetTextWidth('I - INTRODUCTION', Font);
 	XPos:=(RESOL_W - XPos) div 2;
    
 	IHasSaves:=False;
