@@ -18,7 +18,7 @@ GNU General Public License, version 3, as published by the Free Software Foundat
 The full text of this licence is available in the LICENCE-CODE.txt file.
 
 - Anything not covered by the point above is made available under the terms
-of the "zlib with acknowledgement" license. The full text of this licence
+of the "zlib with acknowledgement" licence. The full text of this licence
 is available in the LICENCE-ASSETS.txt file.
 
 

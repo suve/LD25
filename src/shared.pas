@@ -268,7 +268,11 @@ Begin
 	end else begin
 		SDL_SetWindowFullscreen(Window, 0);
 		SDL_SetWindowSize(Window, W, H);
-		SDL_SetWindowPosition(Window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+		
+		// Centre window on the screen when coming back from fullscreen mode.
+		// We need the If() becuase otherwise, when dragging the window size, it keeps jumping back-and-forth
+		// as the WM fights the game over setting the window position.
+		If(Wnd_F) then SDL_SetWindowPosition(Window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 		
 		Wnd_W := W; Wnd_H := H;
 		Wnd_F := False
@@ -789,39 +793,44 @@ Begin
 End;
 
 Procedure Free;
-   Var C:uInt;
-   begin
-   (* Since this is called only on program exit, it doesn't
-      really matter if we forget anything. It will all be freed
-      by the OS when the program dies, afterall. *)
-   If (IconSurf<>NIL) then SDL_FreeSurface(IconSurf);
-   If (TitleGfx<>NIL) then FreeImage(TitleGfx);
-   If (Font<>NIL) then FreeFont(Font);
-   If (FontImg<>NIL) then FreeImage(FontImg);
-   If (NumFont<>NIL) then FreeFont(NumFont);
-   If (NumFontImg<>NIL) then FreeImage(NumFontImg);
-   If (UIgfx<>NIL) then FreeImage(UIgfx);
-   If (TileGfx<>NIL) then FreeImage(TileGfx);
-   If (ColGfx<>NIL) then FreeImage(ColGfx);
-   For C:=Low(SlideOut) to High(SlideOut) do
-       If (SlideOut[C]<>NIL) then FreeImage(SlideOut[C]);
-   For C:=Low(SlideIn) to High(SlideIn) do
-       If (SlideIn[C]<>NIL) then FreeImage(SlideIn[C]);
-   For C:=0 to CHARAS-1 do
-       If (CharaGfx[C]<>NIL) then FreeImage(CharaGfx[C]);
-   For C:=0 to BULLETS-1 do
-       If (ShotGfx[C]<>NIL) then FreeImage(ShotGfx[C]);
-   If (Not NoSound) then begin
-      Mix_HaltChannel(-1);     //Halt all playing sounds
-      Mix_AllocateChannels(0); //Free all sfx channels
-      (* We do the two above to make sure no sound is being played.
-         Freeing a sample (Chunk) that is being played is a bad idea. *)
-      For C:=0 to (SOUNDS-1) do
-          If (Sfx[C] <> NIL) then Mix_FreeChunk(Sfx[C])
-      end;
-   DestroyEntities(True);
-   FreeRooms();
-   end;
+Var C:uInt;
+Begin
+	(* Since this is called only on program exit, it doesn't
+	 * really matter if we forget anything. It will all be freed
+	 * by the OS when the program dies, afterall. *)
+
+	If (IconSurf<>NIL) then begin
+		SDL_SetWindowIcon(Window, NIL);
+		SDL_FreeSurface(IconSurf);
+	end;
+
+	If (TitleGfx<>NIL) then FreeImage(TitleGfx);
+	If (Font<>NIL) then FreeFont(Font);
+	If (FontImg<>NIL) then FreeImage(FontImg);
+	If (NumFont<>NIL) then FreeFont(NumFont);
+	If (NumFontImg<>NIL) then FreeImage(NumFontImg);
+	If (UIgfx<>NIL) then FreeImage(UIgfx);
+	If (TileGfx<>NIL) then FreeImage(TileGfx);
+	If (ColGfx<>NIL) then FreeImage(ColGfx);
+	For C:=Low(SlideOut) to High(SlideOut) do
+		If (SlideOut[C]<>NIL) then FreeImage(SlideOut[C]);
+	For C:=Low(SlideIn) to High(SlideIn) do
+		If (SlideIn[C]<>NIL) then FreeImage(SlideIn[C]);
+	For C:=0 to CHARAS-1 do
+		If (CharaGfx[C]<>NIL) then FreeImage(CharaGfx[C]);
+	For C:=0 to BULLETS-1 do
+		If (ShotGfx[C]<>NIL) then FreeImage(ShotGfx[C]);
+	If (Not NoSound) then begin
+		Mix_HaltChannel(-1);     //Halt all playing sounds
+		Mix_AllocateChannels(0); //Free all sfx channels
+		(* We do the two above to make sure no sound is being played.
+		 * Freeing a sample (Chunk) that is being played is a bad idea. *)
+		For C:=0 to (SOUNDS-1) do
+			If (Sfx[C] <> NIL) then Mix_FreeChunk(Sfx[C])
+	end;
+	DestroyEntities(True);
+	FreeRooms();
+End;
 
 initialization
    Shutdown:=False; GameOn:=False; NoSound:=False;

@@ -56,7 +56,7 @@ Function IHasGame(Const GM:TGameMode):Boolean;
 
 
 Implementation
-	uses SysUtils, IniFiles, Classes, SDL;
+	uses SysUtils, IniFiles, Classes, SDL2;
 
 Const
 	ConfFile = 'settings.ini';

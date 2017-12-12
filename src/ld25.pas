@@ -25,7 +25,7 @@ uses
 
 
 Var
-    MenuChoice:Char;
+	MenuChoice:Char;
 
 Procedure DrawTitle();
 Var
@@ -214,11 +214,16 @@ End;
 Function ShowSlide(Const Img:PImage):Boolean;
 Var
 	Q:sInt; dt:uInt;
+	Dst: TSDL_Rect;
 Begin
 	Q:=0;
 	While (Q = 0) do begin
 		Shared.BeginFrame();
-		DrawImage(Img,NIL,NIL,NIL);
+		Dst.X := (RESOL_W - Img^.W) div 2;
+		Dst.Y := 0;
+		Dst.W := Img^.W;
+		Dst.H := Img^.H;
+		DrawImage(Img,NIL,@Dst,NIL);
 		Shared.FinishFrame();
 		
 		GetDeltaTime(dt);
@@ -418,6 +423,10 @@ Begin
 
 	If (Not NoSound) then begin
 		Write('Initializing SDL2_mixer... ');
+		If(Mix_Init(0) <> 0) then begin
+			Writeln('Failed!');
+			NoSound:=True
+		end else
 		If (Mix_OpenAudio(AUDIO_FREQ, AUDIO_TYPE, AUDIO_CHAN, AUDIO_CSIZ)<>0) then begin
 			Writeln('Failed!');
 			NoSound:=True 
@@ -493,20 +502,48 @@ Procedure NewGame_Original();
    end;
 
 Procedure QuitProg();
-   Var Timu:Comp;
-   begin
-   Timu:=GetMSecs();
-   Write('Freeing resouces... '); Shared.Free(); Writeln('Done.');
-   Write('Closing SDL_mixer... '); Mix_CloseAudio(); Writeln('Done.');
-   Write('Closing SDL... '); SDL_Quit(); Writeln('Done.');
-   If (GameOn) then begin
-      Write('Saving current game...');
-      If (SaveGame(GameMode)) then Writeln('Done.') end;
-   Write('Saving configuration file... ');
-   If (SaveIni()) then Writeln('Done.');
-   Writeln('Finalization finished in ',((GetMSecs-Timu)/1000):0:2,' second(s).');
-   Writeln('Thanks for playing and have a nice day!');
-   end;
+Var Timu:Comp;
+Begin
+	Timu:=GetMSecs();
+	SDL_HideWindow(Shared.Window);
+	
+	Write('Freeing resouces... ');
+		Shared.Free();
+	Writeln('Done.');
+	
+	Write('Closing SDL2_Mixer... ');
+		Mix_CloseAudio();
+		Mix_Quit();
+	Writeln('Done.');
+	
+	Write('Closing SDL2_Image... ');
+		IMG_Quit();
+	Writeln('Done.');
+	
+	Write('Closing SDL2... ');
+		SDL_DestroyTexture(Shared.Display);
+		SDL_DestroyRenderer(Shared.Renderer);
+		SDL_DestroyWindow(Shared.Window);
+		SDL_Quit();
+	Writeln('Done.');
+	
+	If (GameOn) then begin
+		Write('Saving current game... ');
+		If (SaveGame(GameMode)) then
+			Writeln('Success.')
+		else
+			Writeln('Failed!')
+	end;
+	
+	Write('Saving configuration file... ');
+	If (SaveIni()) then
+		Writeln('Success.')
+	else
+		Writeln('Failed!');
+	
+	Writeln('Finalization finished in ',((GetMSecs-Timu)/1000):0:2,' second(s).');
+	Writeln('Thanks for playing and have a nice day!');
+End;
 
 begin
 Writeln(GAMENAME,' by ',GAMEAUTH);
@@ -550,4 +587,3 @@ Repeat
    Until (MenuChoice = 'Q') or (Shutdown);
 QuitProg()
 end.
-

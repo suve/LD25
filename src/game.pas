@@ -743,7 +743,8 @@ End;
 
 Procedure DamagePlayer(Const Power:Double);
 Begin
-	Hero^.HP-=Power;
+	PlaySfx(SFX_HIT);
+	Hero^.HP -= Power;
 	Hero^.InvTimer := Hero^.InvLength;
 	
 	If (Hero^.HP <= 0) then begin
@@ -751,8 +752,7 @@ Begin
 		PlaceGibs(Hero);
 		
 		PlaySfx(SFX_EXTRA+2)
-	end else
-		PlaySfx(SFX_HIT)
+	end
 End;
 
 Function PlayGame():Boolean;
