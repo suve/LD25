@@ -41,12 +41,17 @@ Var
 	ConfPath, DataPath : AnsiString; //Configuration and data paths
 
 Procedure SetPaths();
-
 Function CheckConfPath():Boolean;
 
+Type
+	TIniVersion = (
+		INIVER_1_0,
+		INIVER_2_0
+	);
+
 Function SaveIni():Boolean;
-Function LoadIni():Boolean;
-Function IHasIni():Boolean;
+Function LoadIni(Const Version: TIniVersion):Boolean;
+Function IHasIni(Const Version: TIniVersion):Boolean;
 
 Procedure DefaultSettings();
 
@@ -56,10 +61,13 @@ Function IHasGame(Const GM:TGameMode):Boolean;
 
 
 Implementation
-	uses SysUtils, IniFiles, Classes, SDL2;
+	uses SysUtils, IniFiles, Classes, SDL1Keys, SDL2;
 
 Const
-	ConfFile = 'settings.ini';
+	ConfFile: Array[TIniVersion] of ShortString = (
+		'settings.ini',
+		'settings-2.0.ini'
+	);
 
 // Check if ConfPath exists. If not, try to create it.
 Function CheckConfPath():Boolean;
@@ -168,7 +176,7 @@ Var
 Begin
 	If (Not CheckConfPath()) then Exit(False);
 	
-	Assign(F,ConfPath+ConfFile);
+	Assign(F,ConfPath+ConfFile[INIVER_2_0]);
 	{$I-} Rewrite(F); {$I+}
 	If (IOResult <> 0) then Exit(False);
 	
@@ -189,14 +197,16 @@ Begin
 	Close(F); Exit(True);
 End;
 
-Function LoadIni():Boolean;
+Function ParseIni(Const Ini:TIniFile;Const GuessedVersion: sInt):Boolean;
 Var
-	Ini:TIniFile; Str:TStringList; Name:AnsiString; K:TPlayerKey;
+	Str:TStringList; 
+	Version: sInt;
+	KeyBindName:AnsiString; K:TPlayerKey;
 Begin
-	Ini:=TIniFile.Create(ConfPath+ConfFile);
-	If (Ini = NIL) then Exit(False);
-	
 	Str:=TStringList.Create();
+	
+	Ini.ReadSectionValues('Info',Str);
+	Version:=Trunc(StrToFloatDef(Str.Values['Version'], GuessedVersion));
 	
 	Ini.ReadSectionValues('Window',Str);
 	Wnd_W:=StrToIntDef(Str.Values['Width'],WINDOW_W);
@@ -208,17 +218,29 @@ Begin
 	
 	Ini.ReadSectionValues('Keybind',Str);
 	For K:=Low(K) to High(K) do begin
-		WriteStr(Name,K);
-		KeyBind[K]:=StrToIntDef(Str.Values[Name],SDLK_Escape)
+		WriteStr(KeyBindName,K);
+		KeyBind[K]:=StrToIntDef(Str.Values[KeyBindName], SDLK_Escape);
+		
+		If(Version = 1) then KeyBind[K]:=TranslateSDL1KeyToSDL2LKeycode(KeyBind[K]) 
 	end;
 	
 	Ini.Destroy(); Str.Destroy();
 	Exit(True)
 End;
 
-Function IHasIni():Boolean;
+Function LoadIni(Const Version: TIniVersion):Boolean;
+Var
+	Ini: TIniFile;
 Begin
-	Exit(FileExists(ConfPath+ConfFile))
+	Ini:=TIniFile.Create(ConfPath+ConfFile[Version]);
+	If(Ini <> NIL) then Exit(ParseIni(Ini, Ord(Version)+1));
+	
+	Exit(False)
+End;
+
+Function IHasIni(Const Version: TIniVersion):Boolean;
+Begin
+	Exit(FileExists(ConfPath+ConfFile[Version]))
 End;
 
 Procedure DefaultSettings();

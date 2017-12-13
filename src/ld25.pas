@@ -378,6 +378,32 @@ Begin
 	end
 End;
 
+Procedure LoadConfig();
+Begin
+	If (IHasIni(INIVER_2_0)) then begin
+		Write('Loading 2.0 configuration file... ');
+		If (LoadIni(INIVER_2_0)) then begin
+			Writeln('Success!');
+			Exit()
+		end else
+			Writeln('Failed!');
+	end else
+		Writeln('Configuration file not found.');
+	
+	If (IHasIni(INIVER_1_0)) then begin
+		Write('Loading 1.0 configuration file... ');
+		If (LoadIni(INIVER_1_0)) then begin
+			Writeln('Success!');
+			Exit()
+		end else
+			Writeln('Failed!');
+	end else
+		Writeln('Old configuration file not found.');
+	
+	Writeln('Using default settings.');
+	Configfiles.DefaultSettings()
+End;
+
 Function Startup():Boolean;
 Var
 	Title, S:AnsiString; Timu:Comp; GM:TGameMode;
@@ -385,19 +411,7 @@ Begin
 	Timu:=GetMSecs(); Randomize();
 	
 	SetPaths(); 
-	If (IHasIni()) then begin
-		Write('Loading configuration file... ');
-		If (LoadIni()) then
-			Writeln('Success!')
-		else begin
-			Writeln('Failed! Using default settings.');
-			DefaultSettings()
-		end;
-	end else begin
-		ConfigFiles.DefaultSettings();
-		Writeln('Configuration file not found. Using default settings.')
-	end;
-
+	LoadConfig();
 	For GM:=Low(GM) to High(GM) do SaveExists[GM]:=IHasGame(GM);
 	
 	Write('Initializing SDL2 video... ');
