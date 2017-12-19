@@ -29,7 +29,8 @@ Type
 		TILE_CBAR,                       // Metal box
 		TILE_VDOOR, TILE_HDOOR,          // Doors - vertical & horizontal 
 		TILE_GENUP, TILE_GENDO,          // Generator "chassis"
-		TILE_ZONE = 14, TILE_ROOM,            // Room borders (transfer zones)
+		TILE_UNUSED1, TILE_UNUSED2,      // Maybe something in the future
+		TILE_ZONE, TILE_ROOM,            // Room borders (transfer zones)
 		TILE_NONE                        // Empty tile
 	);
 Const
@@ -40,6 +41,12 @@ Type
 	TRoom = Object
 		Private
 			Function CollisionCheck(Const cX, cY:Double; Const OutsideVal:Boolean):Boolean;
+			
+			Procedure Script_Colour(Const LineNo: sInt; Const Tokens:Array of AnsiString);
+			Procedure Script_Palette(Const LineNo: sInt; Const Tokens:Array of AnsiString);
+			Procedure Script_Spawn(Const LineNo: sInt; Const Tokens:Array of AnsiString);
+			Procedure Script_Text(Const LineNo: sInt; Const Tokens:Array of AnsiString);
+			Procedure Script_Tile(Const LineNo: sInt; Const Tokens:Array of AnsiString);
 			
 		Public
 			X, Y : uInt;
@@ -54,22 +61,216 @@ Type
 			Procedure RunScript();
 			Procedure SetTile(Const tX,tY:sInt; Const tT:Char);
 
-			Constructor Create();
+			Constructor Create(Var Stream:Text);
 			Destructor Destroy;
 	end;
 
-Var OrgRoom:Array[0..(ORG_MAP_W-1), 0..(ORG_MAP_H-1)] of PRoom;
-    TutRoom:Array[0..(TUT_MAP_W-1), 0..(TUT_MAP_H-1)] of PRoom;
-    Room : PRoom;
+Var
+	OrgRoom:Array[0..(ORG_MAP_W-1), 0..(ORG_MAP_H-1)] of PRoom;
+	TutRoom:Array[0..(TUT_MAP_W-1), 0..(TUT_MAP_H-1)] of PRoom;
+	Room : PRoom;
 
-Function LoadRoom(Name:AnsiString):PRoom;
+Function LoadRoom(Const Name:AnsiString):PRoom;
 Procedure FreeRooms();
 
 
 Implementation
 	uses FloatingText, SysUtils, StrUtils;
 
+Procedure TRoom.Script_Colour(Const LineNo: sInt; Const Tokens: Array of AnsiString);
+Begin
+	If (Length(Tokens)<4) then begin
+		Writeln(
+			'Error in room ',X,':',Y,' at line ',LineNo,
+			': "colour" command requires three arguments.'
+		);
+		Exit()
+	end;
+
+	Case(Tokens[1]) of
+		'black':  Crystal.Col:=0;
+		'navy':   Crystal.Col:=1;
+		'green':  Crystal.Col:=2;
+		'blue':   Crystal.Col:=3;
+		'red':    Crystal.Col:=4;
+		'purple': Crystal.Col:=5;
+		'yellow': Crystal.Col:=6;
+		'white':  Crystal.Col:=7;
+		'woman':  Crystal.Col:=8;
+		
+		otherwise begin
+			Writeln(
+				'Error in room ',X,':',Y,' at line ',LineNo,
+				': unknown crystal "',Tokens[1],'".'
+			);
+			Exit()
+		end
+	end;
+
+	// Do not set crystal on the map if we're currently carrying it
+	// or have already given it to the woman
+	If (ColState[Crystal.Col]=STATE_NONE) then begin
+		// Crystal spawn coords are 1-20 instead of 0-19, so we have to subtract 1
+		Crystal.mX:=StrToInt(Tokens[2])-1; Crystal.mY:=StrToInt(Tokens[3])-1;
+		Crystal.IsSet:=True
+	end
+End;
+
+Procedure TRoom.Script_Palette(Const LineNo: sInt; Const Tokens: Array of AnsiString);
+Var
+	Colour, tX, tY: sInt;
+Begin
+	If (Length(Tokens)<2) then begin
+		Writeln(
+			'Error in room ',X,':',Y,' at line ',LineNo,
+			': "palette" command requires an argument.'
+		);
+		Exit()
+	end;
+	
+	Case(Tokens[1]) of
+		'black':   Colour := 0;
+		'navy':    Colour := 1;
+		'green':   Colour := 2;
+		'blue':    Colour := 3;
+		'red':     Colour := 4;
+		'purple':  Colour := 5;
+		'yellow':  Colour := 6;
+		'white':   Colour := 7;
+		'central': Colour := 8;
+		
+		otherwise begin
+			Writeln(
+				'Error in room ',X,':',Y,' at line ',LineNo,
+				': unknown colour "',Tokens[1],'".'
+			);
+			Exit()
+		end
+	end;
+	
+	// The "Central zone" palette is special as it randomizes the tile colours.
+	If (Colour <> 8) then
+		For tY:=0 to (ROOM_H-1) do For tX:=0 to (ROOM_W-1) do
+			TCol[tX][tY]:=@PaletteColour[Colour]
+	else
+		For tY:=0 to (ROOM_H-1) do For tX:=0 to (ROOM_W-1) do
+			TCol[tX][tY]:=@CentralPalette[Random(8)];
+	
+	Shared.RoomPalette := Colour
+End;
+
+Procedure TRoom.Script_Spawn(Const LineNo: sInt; Const Tokens: Array of AnsiString);
+Var
+	SpawnX, SpawnY: sInt;
+	EnemType: TEnemyType;
+Begin
+	If (Length(Tokens)<4) then begin
+		Writeln(
+			'Error in room ',X,':',Y,' at line ',LineNo,
+			': "spawn" command requires three arguments.'
+		);
+		Exit()
+	end;
+
+	Case(Tokens[1]) of
+		'drone':     EnemType:=ENEM_DRONE;
+		'basher':    EnemType:=ENEM_BASHER;
+		'ball':      EnemType:=ENEM_BALL;
+		'spitter':   EnemType:=ENEM_SPITTER;
+		'spammer':   EnemType:=ENEM_SPAMMER;
+		'generator': EnemType:=ENEM_GENERATOR;
+		'turret':    EnemType:=ENEM_TURRET;
+		
+		otherwise begin
+			Writeln(
+				'Error in room ',X,':',Y,' at line ',LineNo,
+				': unknown spawn type "',Tokens[1],'"'
+			);
+			Exit()
+		end
+	end;
+	
+	// Enemy spawn coords are 1-20 rather than 0-19, so we have to subtract 1
+	SpawnX := StrToInt(Tokens[2]) - 1;
+	SpawnY := StrToInt(Tokens[3]) - 1;
+	
+	// If there is a fifth token, use that as "flick this switch when enemy dies"
+	If (Length(Tokens)>=5) and (InRange(StrToInt(Tokens[4]),Low(Switch),High(Switch))) then
+		Shared.SpawnEnemy(EnemType, SpawnX, SpawnY, StrToInt(Tokens[4]))
+	else
+		Shared.SpawnEnemy(EnemType, SpawnX, SpawnY);
+End;
+
+Procedure TRoom.Script_Text(Const LineNo: sInt; Const Tokens: Array of AnsiString);
+Var
+	Colour, tk: sInt;
+	Text: AnsiString;
+Begin
+	If (Length(Tokens)<5) then begin
+		Writeln(
+			'Error in room ',X,':',Y,' at line ',LineNo,
+			': "text" command at least four arguments.'
+		);
+		Exit()
+	end;
+	
+	Case(Tokens[1]) of
+		'black':  Colour := 0;
+		'navy':   Colour := 1;
+		'green':  Colour := 2;
+		'blue':   Colour := 3;
+		'red':    Colour := 4;
+		'purple': Colour := 5;
+		'yellow': Colour := 6;
+		'white':  Colour := 7;
+		'grey':   Colour := 8;
+		
+		otherwise begin
+			Writeln(
+				'Error in room ',X,':',Y,' at line ',LineNo,
+				': unknown colour "',Tokens[1],'".'
+			);
+			Exit()
+		end
+	end;
+	
+	Text := Tokens[4];
+	If (Length(Tokens)>5) then
+		For tk:=5 to High(Tokens) do Text += ' ' + Tokens[tk];
+	
+	AddFloatTxt(StrToInt(Tokens[2]), StrToInt(Tokens[3]), Colour, Text)
+End;
+
+Procedure TRoom.Script_Tile(Const LineNo: sInt; Const Tokens: Array of AnsiString);
+Var
+	TileX, TileY: sInt;
+	TileChar: Char;
+Begin
+	If (Length(Tokens)<3) then begin
+		Writeln(
+			'Error in room ',X,':',Y,' at line ',LineNo,
+			': "tile" command requires at least two arguments.'
+		);
+		Exit()
+	end;
+	
+	// Tile coords in script are 1-20 rather than 0-19, so we have to subtract 1
+	TileX := StrToInt(Tokens[1]) - 1;
+	TileY := StrToInt(Tokens[2]) - 1;
+	
+	// A command setting a tile to an empty tile will have less tokens than the others,
+	// as the space (representing the empty tile) gets consumed during parsing. 
+	If (Length(Tokens)>=4) then
+		TileChar := Tokens[3][1]
+	else
+		TileChar := ' ';
+	
+	Self.SetTile(TileX, TileY, TileChar)
+End;
+
 Procedure TRoom.RunScript();
+Const
+	SCRIPT_OFFSET = 21;
 Var
 	C,P,tX,tY,Col:uInt; L:AnsiString; T:Array of AnsiString;
 	EnemType : TEnemyType; ElseSrch,FiSrch:Boolean;
@@ -96,129 +297,28 @@ Begin
 			If (T[0]='else') or (T[0]='fi') then ElseSrch:=False;
 		end else begin
 			If (T[0]='spawn') then begin
-				If (Length(T)<4) then begin
-					Writeln('Error in room ',X,':',Y,' at line ',C+21,
-					': "spawn" command requires three arguments.');
-					Continue
-				end;
-			
-				If (T[1]='drone'    ) then EnemType:=ENEM_DRONE     else
-				If (T[1]='basher'   ) then EnemType:=ENEM_basher    else
-				If (T[1]='ball'     ) then EnemType:=ENEM_ball      else
-				If (T[1]='spitter'  ) then EnemType:=ENEM_spitter   else
-				If (T[1]='spammer'  ) then EnemType:=ENEM_spammer   else
-				If (T[1]='generator') then EnemType:=ENEM_generator else
-				If (T[1]='turret'   ) then EnemType:=ENEM_TURRET    else begin
-					Writeln('Error in room ',X,':',Y,' at line ',C+21,
-					': unknown spawn type "',T[1],'"');
-					Continue
-				end;
-				
-				If (Length(T)>=5) and (InRange(StrToInt(T[4]),Low(Switch),High(Switch)))
-					then Shared.SpawnEnemy(EnemType,StrToInt(T[2])-1,StrToInt(T[3])-1,StrToInt(T[4]))
-					else Shared.SpawnEnemy(EnemType,StrToInt(T[2])-1,StrToInt(T[3])-1);
+				Self.Script_Spawn(SCRIPT_OFFSET + C, T)
 			end else
 			If (T[0]='tile') then begin
-				If (Length(T)<3) then begin
-					Writeln('Error in room ',X,':',Y,' at line ',C+21,
-					': "tile" command requires at least two arguments.');
-					Continue
-				end;
-				
-				If (Length(T)>=4)
-				then SetTile(StrToInt(T[1])-1,StrToInt(T[2])-1,T[3][1])
-				else SetTile(StrToInt(T[1])-1,StrToInt(T[2])-1,#$20)
+				Self.Script_Tile(SCRIPT_OFFSET + C, T)
 			end else
 			If (T[0]='colour') then begin
-				If (Length(T)<4) then begin
-					Writeln('Error in room ',X,':',Y,' at line ',C+21,
-					': "colour" command requires three arguments.');
-					Continue
-				end;
-
-				If (T[1]='black' ) then Crystal.Col:=0 else
-				If (T[1]='navy'  ) then Crystal.Col:=1 else
-				If (T[1]='green' ) then Crystal.Col:=2 else
-				If (T[1]='blue'  ) then Crystal.Col:=3 else
-				If (T[1]='red'   ) then Crystal.Col:=4 else
-				If (T[1]='purple') then Crystal.Col:=5 else
-				If (T[1]='yellow') then Crystal.Col:=6 else
-				If (T[1]='white' ) then Crystal.Col:=7 else
-				If (T[1]='woman' ) then Crystal.Col:=8 else
-				{else} begin
-					Writeln('Error in room ',X,':',Y,' at line ',C+21,
-					': unknown crystal "',T[1],'".');
-					Continue
-				end;
-			
-				If (ColState[Crystal.Col]=STATE_NONE) then begin
-					Crystal.mX:=StrToInt(T[2])-1; Crystal.mY:=StrToInt(T[3])-1;
-					Crystal.IsSet:=True
-				end
+				Self.Script_Colour(SCRIPT_OFFSET + C, T)
 			end else
 			If (T[0]='palette') then begin
-				If (Length(T)<2) then begin
-					Writeln('Error in room ',X,':',Y,' at line ',C+21,
-					': "palette" command requires an argument.');
-					Continue
-				end;
-				
-				If (T[1]='black'  ) then Col:=0 else
-				If (T[1]='navy'   ) then Col:=1 else
-				If (T[1]='green'  ) then Col:=2 else
-				If (T[1]='blue'   ) then Col:=3 else
-				If (T[1]='red'    ) then Col:=4 else
-				If (T[1]='purple' ) then Col:=5 else
-				If (T[1]='yellow' ) then Col:=6 else
-				If (T[1]='white'  ) then Col:=7 else
-				If (T[1]='central') then Col:=8 else
-				{else} begin
-					Writeln('Error in room ',X,':',Y,' at line ',C+21,
-					': unknown colour "',T[1],'".');
-					Continue
-				end;
-				
-				If (Col<>8) then
-					For tY:=0 to (ROOM_H-1) do For tX:=0 to (ROOM_W-1) do
-						TCol[tX][tY]:=@PaletteColour[Col]
-				else
-					For tY:=0 to (ROOM_H-1) do For tX:=0 to (ROOM_W-1) do
-						TCol[tX][tY]:=@CentralPalette[Random(8)];
-				RoomPalette:=Col
+				Self.Script_Palette(SCRIPT_OFFSET + C, T)
 			end else
 			If (T[0]='text') then begin
-				If (Length(T)<5) then begin
-					Writeln('Error in room ',X,':',Y,' at line ',C+21,
-					': "text" command at least four arguments.');
-					Continue
-				end;
-				If (T[1]='black'  ) then Col:=0 else
-				If (T[1]='navy'   ) then Col:=1 else
-				If (T[1]='green'  ) then Col:=2 else
-				If (T[1]='blue'   ) then Col:=3 else
-				If (T[1]='red'    ) then Col:=4 else
-				If (T[1]='purple' ) then Col:=5 else
-				If (T[1]='yellow' ) then Col:=6 else
-				If (T[1]='white'  ) then Col:=7 else
-				If (T[1]='grey'   ) then Col:=8 else
-				{else} begin
-					Writeln('Error in room ',X,':',Y,' at line ',C+21,
-					': unknown colour "',T[1],'".');
-					Continue
-				end;
-				
-				If (Length(T)>5) then
-					For tX:=5 to High(T) do T[4]+=#$20+T[tX];
-				AddFloatTxt(StrToInt(T[2]),StrToInt(T[3]),Col,T[4])
+				Self.Script_Text(SCRIPT_OFFSET + C, T)
 			end else
 			If (T[0]='if') then begin
 				If (Length(T)<2) then begin
-					Writeln('Error in room ',X,':',Y,' at line ',C+21,
+					Writeln('Error in room ',X,':',Y,' at line ',(SCRIPT_OFFSET + C),
 					': "if" with missing condition');
 					FiSrch:=True; Continue
 				end;
 				If (Not InRange(StrToInt(T[1]),Low(Switch),High(Switch))) then begin
-					Writeln('Error in room ',X,':',Y,' at line ',C+21,
+					Writeln('Error in room ',X,':',Y,' at line ',(SCRIPT_OFFSET + C),
 					': switch of our range (',T[1],')');
 					FiSrch:=True; Continue
 				end;
@@ -227,7 +327,7 @@ Begin
 			end else
 			If (T[0]='else') then FiSrch:=True else
 			If (T[0]='fi') then else
-			{else} Writeln('Error in room ',X,':',Y,' at line ',C+21,
+			{else} Writeln('Error in room ',X,':',Y,' at line ',(SCRIPT_OFFSET + C),
 				': unknown command "',T[0],'"');
 		end // not else nor fi
 	end // for every line (Scri)
@@ -293,9 +393,30 @@ Begin
 		PlaySfx(SFX_METAL+Random(METAL_SFX))
 end;
 
-Constructor TRoom.Create();
+Constructor TRoom.Create(Var Stream:Text);
+Var
+	rx, ry, LineCount: sInt;
+	TileChar: Char;
+	Line: AnsiString;
 Begin
-	SetLength(Scri,0)
+	For rY:=0 to (ROOM_H-1) do begin
+		For rX:=0 to (ROOM_W-1) do begin
+			Read(Stream, TileChar);
+			Self.SetTile(rX, rY, TileChar);
+			Self.TCol[rX][rY] := @WhiteColour;
+		end;
+		Readln(Stream)
+	end;
+	
+	LineCount := 0;
+	While Not Eof(Stream) do begin
+		Readln(Stream, Line); Line:=Trim(Line);
+		If (Length(Line)>0) then begin
+			SetLength(Self.Scri, LineCount+1);
+			Self.Scri[LineCount]:=DelSpace1(Line); // Compress multiple spaces to single space
+			LineCount += 1
+		end
+	end
 end;
 
 Destructor TRoom.Destroy();
@@ -304,7 +425,8 @@ Begin
 End;
 
 Procedure FreeRooms();
-Var X,Y:uInt;
+Var
+	X,Y:uInt;
 Begin
 	For Y:=0 to (ORG_MAP_H-1) do For X:=0 to (ORG_MAP_W-1) do
 		If (OrgRoom[X][Y]<>NIL) then Dispose(OrgRoom[X][Y],Destroy());
@@ -312,35 +434,16 @@ Begin
 		If (TutRoom[X][Y]<>NIL) then Dispose(TutRoom[X][Y],Destroy());
 End;
 
-Function LoadRoom(Name:AnsiString):PRoom;
+Function LoadRoom(Const Name:AnsiString):PRoom;
 Var
-	X,Y,C:uInt; R:PRoom; F:Text; L:AnsiString; T:Char;
+	F:Text;
 Begin
 	// Open file safely, bail out if failed to open
 	Assign(F,Name); {$I-} Reset(F); {$I+}
 	If (IOResult <> 0) then Exit(NIL);
 	
-	New(R,Create()); 
-	For Y:=0 to (ROOM_H-1) do begin
-		For X:=0 to (ROOM_W-1) do begin
-			Read(F,T); R^.SetTile(X,Y,T);
-			R^.TCol[X][Y]:=@WhiteColour;
-		end;
-		Readln(F)
-	end;
-	
-	C:=0;
-	While Not Eof(F) do begin
-		Readln(F,L); L:=Trim(L);
-		If (Length(L)>0) then begin
-			SetLength(R^.Scri,C+1);
-			R^.Scri[C]:=DelSpace1(L);
-			C:=C+1
-		end
-	end;
-	
-	Close(F);
-	Exit(R)
+	New(Result, Create(F));
+	Close(F)
 End;
 
 End.
