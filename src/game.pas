@@ -444,7 +444,7 @@ Begin
 	For Y:=0 to (ROOM_H-1) do For X:=0 to (ROOM_W-1) do begin
 		If (Room^.Tile[X][Y]=TILE_NONE) then Continue;
 		Dst.X:=X*TILE_W; Dst.Y:=Y*TILE_H;
-		Src.Y:=Room^.Tile[X][Y]*TILE_H;
+		Src.Y:=Ord(Room^.Tile[X][Y])*TILE_H;
 		DrawImage(TileGfx,@Src,@Dst,Room^.TCol[X][Y])
 	end
 End;
