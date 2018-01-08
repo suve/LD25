@@ -39,29 +39,97 @@ Const
 Type
 	PRoom = ^TRoom;
 	TRoom = Object
+		Private Const
+			MAX_TEXT_SIZE = 128 - 3 * SizeOf(sInt);
+		Private Type
+			TRoomScriptOpcode = (
+				RSOP_IF,
+				RSOP_ELSE,
+				RSOP_COLOUR,
+				RSOP_PALETTE,
+				RSOP_SPAWN,
+				RSOP_TEXT,
+				RSOP_TILE
+			);
+			
+			TRoomScriptInstruction = record
+				Case Opcode:TRoomScriptOpcode of
+					RSOP_IF: (If_: record
+						Negative: Boolean;
+						SwitchNo: sInt;
+						ElseJumpTo: sInt;
+					end);
+					
+					RSOP_ELSE: (Else_: record
+						JumpTo: sInt;
+					end);
+					
+					RSOP_COLOUR: (Colour: record
+						X, Y, Colour: sInt;
+					end);
+					
+					RSOP_PALETTE: (Palette: record
+						Colour: sInt;
+					end);
+					
+					RSOP_SPAWN: (Spawn: record
+						X, Y: sInt;
+						EnemType: TEnemyType;
+						SwitchNo: sInt
+					end);
+					
+					RSOP_TEXT: (Text: record
+						X, Y, Colour: sInt;
+						Text: String[MAX_TEXT_SIZE];
+					end);
+					
+					RSOP_TILE: (Tile: record
+						X, Y: sInt;
+						Tile: TTile;
+					end);
+				end;
+			
+			TAnsiStringArray = Array of AnsiString;
+			PAnsiStringArray = ^TAnsiStringArray;
+			
 		Private
+			Scri: Array of TRoomScriptInstruction;
+			
 			Function CollisionCheck(Const cX, cY:Double; Const OutsideVal:Boolean):Boolean;
 			
-			Procedure Script_Colour(Const LineNo: sInt; Const Tokens:Array of AnsiString);
-			Procedure Script_Palette(Const LineNo: sInt; Const Tokens:Array of AnsiString);
-			Procedure Script_Spawn(Const LineNo: sInt; Const Tokens:Array of AnsiString);
-			Procedure Script_Text(Const LineNo: sInt; Const Tokens:Array of AnsiString);
-			Procedure Script_Tile(Const LineNo: sInt; Const Tokens:Array of AnsiString);
+			Function  CharToTile(Const tT:Char):TTile;
+			Procedure SetTile(Const tX,tY:sInt; Const tT:TTile);
+			Procedure SetTile(Const tX,tY:sInt; Const tChr:Char);
+			
+			Function ParseScript_If(Const LineNo: sInt; Const Tokens:Array of AnsiString; Out rsi:TRoomScriptInstruction):Boolean;
+			Function ParseScript_Colour(Const LineNo: sInt; Const Tokens:Array of AnsiString; Out rsi:TRoomScriptInstruction):Boolean;
+			Function ParseScript_Palette(Const LineNo: sInt; Const Tokens:Array of AnsiString; Out rsi:TRoomScriptInstruction):Boolean;
+			Function ParseScript_Spawn(Const LineNo: sInt; Const Tokens:Array of AnsiString; Out rsi:TRoomScriptInstruction):Boolean;
+			Function ParseScript_Text(Const LineNo: sInt; Const Tokens:Array of AnsiString; Out rsi:TRoomScriptInstruction):Boolean;
+			Function ParseScript_Tile(Const LineNo: sInt; Const Tokens:Array of AnsiString; Out rsi:TRoomScriptInstruction):Boolean;
+			Procedure ParseScript(Var Stream:Text);
+			
+			Procedure RunScript_Colour(Const rsi: TRoomScriptInstruction);
+			Procedure RunScript_Palette(Const rsi: TRoomScriptInstruction);
+			Procedure RunScript_Spawn(Const rsi: TRoomScriptInstruction);
+			Procedure RunScript_Text(Const rsi: TRoomScriptInstruction);
+			Procedure RunScript_Tile(Const rsi: TRoomScriptInstruction);
+			
+			Procedure ParseTiles(Var Stream:Text);
+			Procedure Tokenize(Const Line: AnsiString; Const Tokens:PAnsiStringArray);
 			
 		Public
 			X, Y : uInt;
 			Tile : Array[0..(ROOM_W-1), 0..(ROOM_H-1)] of TTile;
 			TCol : Array[0..(ROOM_W-1), 0..(ROOM_H-1)] of PSDL_Colour;
-			Scri : Array of AnsiString;
 
 			Function  CollidesOrOutside(Const cX,cY:Double):Boolean;
 			Function  Collides(Const cX,cY:Double):Boolean;
 			Procedure HitSfx(Const cX,cY:Double);
 
 			Procedure RunScript();
-			Procedure SetTile(Const tX,tY:sInt; Const tT:Char);
 
-			Constructor Create(Var Stream:Text);
+			Constructor Create(Const rX, rY: sInt; Var Stream:Text);
 			Destructor Destroy;
 	end;
 
@@ -70,62 +138,106 @@ Var
 	TutRoom:Array[0..(TUT_MAP_W-1), 0..(TUT_MAP_H-1)] of PRoom;
 	Room : PRoom;
 
-Function LoadRoom(Const Name:AnsiString):PRoom;
+Function LoadRoom(Const rX, rY: sInt; Const Name:AnsiString):PRoom;
 Procedure FreeRooms();
 
 
 Implementation
 	uses FloatingText, SysUtils, StrUtils;
 
-Procedure TRoom.Script_Colour(Const LineNo: sInt; Const Tokens: Array of AnsiString);
+Function TRoom.ParseScript_If(Const LineNo: sInt; Const Tokens:Array of AnsiString; Out rsi:TRoomScriptInstruction):Boolean;
+Var
+	SwitchNo: sInt;
+	Negative: Boolean;
 Begin
-	If (Length(Tokens)<4) then begin
+	If(Length(Tokens)<2) then begin
 		Writeln(
 			'Error in room ',X,':',Y,' at line ',LineNo,
-			': "colour" command requires three arguments.'
+			': "if" command requires at least one argument.'
 		);
-		Exit()
+		Exit(False)
+	end;
+	
+	SwitchNo := StrToInt(Tokens[1]);
+	If(Not InRange(SwitchNo, 0, SWITCHES-1)) then begin
+		Writeln(
+			'Error in room ',X,':',Y,' at line ',LineNo,
+			': switch number passed to "if" command is out of range ',
+			'(expected 0 - ',(SWITCHES-1),', got ',SwitchNo,').'
+		);
+		Exit(False)
+	end;
+	
+	Negative := False;
+	If(Length(Tokens)>=3) then begin
+		If(Tokens[2] <> 'not') then begin
+			Writeln(
+			'Error in room ',X,':',Y,' at line ',LineNo,
+			': second argument to "if" command must be either "not" or omitted.'
+		);
+		Exit(False)
+		end;
+		
+		Negative := True
+	end;
+	
+	rsi.Opcode := RSOP_IF;
+	rsi.If_.SwitchNo := SwitchNo;
+	rsi.If_.Negative := Negative;
+	rsi.If_.ElseJumpTo := -1;
+	Exit(True)
+End;
+
+Function TRoom.ParseScript_Colour(Const LineNo: sInt; Const Tokens: Array of AnsiString; Out rsi:TRoomScriptInstruction):Boolean;
+Var
+	CrystalColour: sInt;
+Begin
+	If (Length(Tokens)<>4) then begin
+		Writeln(
+			'Error in room ',X,':',Y,' at line ',LineNo,
+			': "colour" command requires exactly three arguments.'
+		);
+		Exit(False)
 	end;
 
 	Case(Tokens[1]) of
-		'black':  Crystal.Col:=0;
-		'navy':   Crystal.Col:=1;
-		'green':  Crystal.Col:=2;
-		'blue':   Crystal.Col:=3;
-		'red':    Crystal.Col:=4;
-		'purple': Crystal.Col:=5;
-		'yellow': Crystal.Col:=6;
-		'white':  Crystal.Col:=7;
-		'woman':  Crystal.Col:=8;
+		'black':  CrystalColour:=0;
+		'navy':   CrystalColour:=1;
+		'green':  CrystalColour:=2;
+		'blue':   CrystalColour:=3;
+		'red':    CrystalColour:=4;
+		'purple': CrystalColour:=5;
+		'yellow': CrystalColour:=6;
+		'white':  CrystalColour:=7;
+		'woman':  CrystalColour:=8;
 		
 		otherwise begin
 			Writeln(
 				'Error in room ',X,':',Y,' at line ',LineNo,
 				': unknown crystal "',Tokens[1],'".'
 			);
-			Exit()
+			Exit(False)
 		end
 	end;
 
-	// Do not set crystal on the map if we're currently carrying it
-	// or have already given it to the woman
-	If (ColState[Crystal.Col]=STATE_NONE) then begin
-		// Crystal spawn coords are 1-20 instead of 0-19, so we have to subtract 1
-		Crystal.mX:=StrToInt(Tokens[2])-1; Crystal.mY:=StrToInt(Tokens[3])-1;
-		Crystal.IsSet:=True
-	end
+	// Crystal spawn coords are 1-20 instead of 0-19, so we'll have to subtract 1
+	rsi.Opcode := RSOP_COLOUR;
+	rsi.Colour.X := StrToInt(Tokens[2])-1;
+	rsi.Colour.Y := StrToInt(Tokens[3])-1;
+	rsi.Colour.Colour := CrystalColour;
+	Exit(True)
 End;
 
-Procedure TRoom.Script_Palette(Const LineNo: sInt; Const Tokens: Array of AnsiString);
+Function TRoom.ParseScript_Palette(Const LineNo: sInt; Const Tokens: Array of AnsiString; Out rsi:TRoomScriptInstruction):Boolean;
 Var
-	Colour, tX, tY: sInt;
+	Colour: sInt;
 Begin
 	If (Length(Tokens)<2) then begin
 		Writeln(
 			'Error in room ',X,':',Y,' at line ',LineNo,
 			': "palette" command requires an argument.'
 		);
-		Exit()
+		Exit(False)
 	end;
 	
 	Case(Tokens[1]) of
@@ -144,32 +256,26 @@ Begin
 				'Error in room ',X,':',Y,' at line ',LineNo,
 				': unknown colour "',Tokens[1],'".'
 			);
-			Exit()
+			Exit(False)
 		end
 	end;
 	
-	// The "Central zone" palette is special as it randomizes the tile colours.
-	If (Colour <> 8) then
-		For tY:=0 to (ROOM_H-1) do For tX:=0 to (ROOM_W-1) do
-			TCol[tX][tY]:=@PaletteColour[Colour]
-	else
-		For tY:=0 to (ROOM_H-1) do For tX:=0 to (ROOM_W-1) do
-			TCol[tX][tY]:=@CentralPalette[Random(8)];
-	
-	Shared.RoomPalette := Colour
+	rsi.Opcode := RSOP_PALETTE;
+	rsi.Palette.Colour := Colour;
+	Exit(True)
 End;
 
-Procedure TRoom.Script_Spawn(Const LineNo: sInt; Const Tokens: Array of AnsiString);
+Function TRoom.ParseScript_Spawn(Const LineNo: sInt; Const Tokens: Array of AnsiString; Out rsi:TRoomScriptInstruction):Boolean;
 Var
-	SpawnX, SpawnY: sInt;
+	SwitchNo: sInt;
 	EnemType: TEnemyType;
 Begin
 	If (Length(Tokens)<4) then begin
 		Writeln(
 			'Error in room ',X,':',Y,' at line ',LineNo,
-			': "spawn" command requires three arguments.'
+			': "spawn" command requires at least three arguments.'
 		);
-		Exit()
+		Exit(False)
 	end;
 
 	Case(Tokens[1]) of
@@ -186,32 +292,44 @@ Begin
 				'Error in room ',X,':',Y,' at line ',LineNo,
 				': unknown spawn type "',Tokens[1],'"'
 			);
-			Exit()
+			Exit(False)
 		end
 	end;
 	
-	// Enemy spawn coords are 1-20 rather than 0-19, so we have to subtract 1
-	SpawnX := StrToInt(Tokens[2]) - 1;
-	SpawnY := StrToInt(Tokens[3]) - 1;
-	
 	// If there is a fifth token, use that as "flick this switch when enemy dies"
-	If (Length(Tokens)>=5) and (InRange(StrToInt(Tokens[4]),Low(Switch),High(Switch))) then
-		Shared.SpawnEnemy(EnemType, SpawnX, SpawnY, StrToInt(Tokens[4]))
-	else
-		Shared.SpawnEnemy(EnemType, SpawnX, SpawnY);
+	If (Length(Tokens)>=5) then begin
+		SwitchNo := StrToInt(Tokens[4]);
+		If(Not InRange(SwitchNo, 0, SWITCHES-1)) then begin
+			Writeln(
+				'Error in room ',X,':',Y,' at line ',LineNo,
+				': switch number passed to "spawn" command is out of range ',
+				'(expected 0 - ',(SWITCHES-1),', got ',SwitchNo,').'
+			);
+			Exit(False)
+		end
+	end else
+		SwitchNo := -1;
+	
+	// Enemy spawn coords are 1-20 rather than 0-19, so we'll have to subtract 1
+	rsi.Opcode := RSOP_SPAWN;
+	rsi.Spawn.X := StrToInt(Tokens[2]) - 1;
+	rsi.Spawn.Y := StrToInt(Tokens[3]) - 1;
+	rsi.Spawn.EnemType := EnemType;
+	rsi.Spawn.SwitchNo := SwitchNo;
+	Exit(True)
 End;
 
-Procedure TRoom.Script_Text(Const LineNo: sInt; Const Tokens: Array of AnsiString);
+Function TRoom.ParseScript_Text(Const LineNo: sInt; Const Tokens: Array of AnsiString; Out rsi:TRoomScriptInstruction):Boolean;
 Var
-	Colour, tk: sInt;
+	Colour, tk, TextLen: sInt;
 	Text: AnsiString;
 Begin
 	If (Length(Tokens)<5) then begin
 		Writeln(
 			'Error in room ',X,':',Y,' at line ',LineNo,
-			': "text" command at least four arguments.'
+			': "text" command requires at least four arguments.'
 		);
-		Exit()
+		Exit(False)
 	end;
 	
 	Case(Tokens[1]) of
@@ -230,7 +348,7 @@ Begin
 				'Error in room ',X,':',Y,' at line ',LineNo,
 				': unknown colour "',Tokens[1],'".'
 			);
-			Exit()
+			Exit(False)
 		end
 	end;
 	
@@ -238,12 +356,23 @@ Begin
 	If (Length(Tokens)>5) then
 		For tk:=5 to High(Tokens) do Text += ' ' + Tokens[tk];
 	
-	AddFloatTxt(StrToInt(Tokens[2]), StrToInt(Tokens[3]), Colour, Text)
+	TextLen := Length(Text);
+	If(TextLen > (MAX_TEXT_SIZE-1)) then 
+		TextLen := (MAX_TEXT_SIZE-1);
+	
+	
+	// FloatText position is given in pixels, no need to convert from 1-20 to 0-19
+	rsi.Opcode := RSOP_TEXT;
+	rsi.Text.X := StrToInt(Tokens[2]);
+	rsi.Text.Y := StrToInt(Tokens[3]);
+	rsi.Text.Colour := Colour;
+	rsi.Text.Text := Copy(Text, 1, 63);
+	rsi.Text.Text[TextLen+1] := #0;
+	Exit(True)
 End;
 
-Procedure TRoom.Script_Tile(Const LineNo: sInt; Const Tokens: Array of AnsiString);
+Function TRoom.ParseScript_Tile(Const LineNo: sInt; Const Tokens: Array of AnsiString; Out rsi:TRoomScriptInstruction):Boolean;
 Var
-	TileX, TileY: sInt;
 	TileChar: Char;
 Begin
 	If (Length(Tokens)<3) then begin
@@ -251,12 +380,8 @@ Begin
 			'Error in room ',X,':',Y,' at line ',LineNo,
 			': "tile" command requires at least two arguments.'
 		);
-		Exit()
+		Exit(False)
 	end;
-	
-	// Tile coords in script are 1-20 rather than 0-19, so we have to subtract 1
-	TileX := StrToInt(Tokens[1]) - 1;
-	TileY := StrToInt(Tokens[2]) - 1;
 	
 	// A command setting a tile to an empty tile will have less tokens than the others,
 	// as the space (representing the empty tile) gets consumed during parsing. 
@@ -265,95 +390,125 @@ Begin
 	else
 		TileChar := ' ';
 	
-	Self.SetTile(TileX, TileY, TileChar)
+	
+	// Tile coords in script are 1-20 rather than 0-19, so we'll have to subtract 1
+	rsi.Opcode := RSOP_TILE;
+	rsi.Tile.X := StrToInt(Tokens[1]) - 1;
+	rsi.Tile.Y := StrToInt(Tokens[2]) - 1;
+	rsi.Tile.Tile := CharToTile(TileChar);
+	Exit(True)
+End;
+
+Procedure TRoom.RunScript_Colour(Const rsi: TRoomScriptInstruction);
+Begin
+	// Do not set crystal on the map if we're currently carrying it
+	// or have already given it to the woman
+	If (ColState[rsi.Colour.Colour] <> STATE_NONE) then Exit();
+	
+	Crystal.mX := rsi.Colour.X; Crystal.mY := rsi.Colour.Y;
+	Crystal.Col := rsi.Colour.Colour;
+	Crystal.IsSet := True
+End;
+
+Procedure TRoom.RunScript_Palette(Const rsi: TRoomScriptInstruction);
+Var
+	tX, tY: sInt;
+Begin
+	// The "Central zone" palette is special as it randomizes the tile colours.
+	If (rsi.Palette.Colour <> 8) then begin
+		For tY:=0 to (ROOM_H-1) do For tX:=0 to (ROOM_W-1) do
+			TCol[tX][tY]:=@PaletteColour[rsi.Palette.Colour]
+	end else begin
+		For tY:=0 to (ROOM_H-1) do For tX:=0 to (ROOM_W-1) do
+			TCol[tX][tY]:=@CentralPalette[Random(8)];
+	end;
+	
+	Shared.RoomPalette := rsi.Palette.Colour
+End;
+
+Procedure TRoom.RunScript_Spawn(Const rsi: TRoomScriptInstruction);
+Begin
+	If(rsi.Spawn.SwitchNo >= 0) then
+		Shared.SpawnEnemy(rsi.Spawn.EnemType, rsi.Spawn.X, rsi.Spawn.Y, rsi.Spawn.SwitchNo)
+	else
+		Shared.SpawnEnemy(rsi.Spawn.EnemType, rsi.Spawn.X, rsi.Spawn.Y)
+End;
+
+Procedure TRoom.RunScript_Text(Const rsi: TRoomScriptInstruction);
+Begin
+	AddFloatTxt(rsi.Text.X, rsi.Text.Y, rsi.Text.Colour, rsi.Text.Text)
+End;
+
+Procedure TRoom.RunScript_Tile(Const rsi: TRoomScriptInstruction);
+Begin
+	Self.SetTile(rsi.Tile.X, rsi.Tile.Y, rsi.Tile.Tile)
 End;
 
 Procedure TRoom.RunScript();
-Const
-	SCRIPT_OFFSET = 21;
 Var
-	C,P,tX,tY,Col:uInt; L:AnsiString; T:Array of AnsiString;
-	EnemType : TEnemyType; ElseSrch,FiSrch:Boolean;
+	Idx, Count: sInt;
+	rsi: TRoomScriptInstruction;
+	Condition: Boolean;
 Begin
-	If (Length(Scri) = 0) then Exit;
+	If(Length(Scri) = 0) then Exit;
 	
-	ElseSrch:=False; FiSrch:=False;
-	For C:=Low(Scri) to High(Scri) do begin
-	
-		// Tokenize the string
-		SetLength(T,1); L:=Scri[C]; P:=Pos(#32,L);
-		While (P<>0) do begin
-			T[High(T)]:=LeftStr(L,P-1);
-			SetLength(T,Length(T)+1);
-			Delete(L,1,P); P:=Pos(#32,L)
-		end;
-		// Put the last part of the string (after last space) as last token
-		T[High(T)]:=L;
+	Idx := 0;
+	Count := Length(Scri);
+	While((Idx >= 0) and (Idx < Count)) do begin
+		rsi := Scri[Idx];
+		Writeln('rsi: ', rsi.Opcode);
+		Idx += 1;
 		
-		If (FiSrch) then begin
-			If (T[0]='fi') then begin FiSrch:=False; ElseSrch:=False end
-		end else
-		If (ElseSrch) then begin
-			If (T[0]='else') or (T[0]='fi') then ElseSrch:=False;
-		end else begin
-			If (T[0]='spawn') then begin
-				Self.Script_Spawn(SCRIPT_OFFSET + C, T)
-			end else
-			If (T[0]='tile') then begin
-				Self.Script_Tile(SCRIPT_OFFSET + C, T)
-			end else
-			If (T[0]='colour') then begin
-				Self.Script_Colour(SCRIPT_OFFSET + C, T)
-			end else
-			If (T[0]='palette') then begin
-				Self.Script_Palette(SCRIPT_OFFSET + C, T)
-			end else
-			If (T[0]='text') then begin
-				Self.Script_Text(SCRIPT_OFFSET + C, T)
-			end else
-			If (T[0]='if') then begin
-				If (Length(T)<2) then begin
-					Writeln('Error in room ',X,':',Y,' at line ',(SCRIPT_OFFSET + C),
-					': "if" with missing condition');
-					FiSrch:=True; Continue
-				end;
-				If (Not InRange(StrToInt(T[1]),Low(Switch),High(Switch))) then begin
-					Writeln('Error in room ',X,':',Y,' at line ',(SCRIPT_OFFSET + C),
-					': switch of our range (',T[1],')');
-					FiSrch:=True; Continue
-				end;
-				If Not ((Switch[StrToInt(T[1])]) xor ((Length(T)>=3) and (T[2]='not')))
-				then ElseSrch:=True;
-			end else
-			If (T[0]='else') then FiSrch:=True else
-			If (T[0]='fi') then else
-			{else} Writeln('Error in room ',X,':',Y,' at line ',(SCRIPT_OFFSET + C),
-				': unknown command "',T[0],'"');
-		end // not else nor fi
-	end // for every line (Scri)
+		Case(rsi.Opcode) of
+			RSOP_IF: begin
+				Condition := Shared.Switch[rsi.If_.SwitchNo];
+				If(rsi.If_.Negative) then Condition := Not Condition;
+				
+				If(Not Condition) then Idx := rsi.If_.ElseJumpTo
+			end;
+			
+			RSOP_ELSE: Idx := rsi.Else_.JumpTo;
+			
+			RSOP_COLOUR:  RunScript_Colour(rsi);
+			RSOP_PALETTE: RunScript_Palette(rsi);
+			RSOP_SPAWN:   RunScript_Spawn(rsi);
+			RSOP_TEXT:    RunScript_Text(rsi);
+			RSOP_TILE:    RunScript_Tile(rsi);
+		end
+	end 
 End;
 
-Procedure TRoom.SetTile(Const tX,tY:sInt; Const tT:Char);
+Function TRoom.CharToTile(Const tT:Char):TTile;
+Begin
+	Case tT of
+		' ': Result:=TILE_NONE;
+		'X': Result:=TILE_WALL;
+		'|': Result:=TILE_VBAR;
+		'-': Result:=TILE_HBAR;
+		'+': Result:=TILE_CBAR;
+		'D': Result:=TILE_VDOOR;
+		'=': Result:=TILE_HDOOR;
+		'{': Result:=TILE_GENUP;
+		'}': Result:=TILE_GENDO;
+		'#': Result:=TILE_ZONE;
+		':': Result:=TILE_ROOM;
+		'^': Result:=TILE_VBUP;
+		'v': Result:=TILE_VBDO;
+		'<': Result:=TILE_HBLE;
+		'>': Result:=TILE_HBRI;
+		else Result:=TILE_NONE;
+	end
+End;
+
+Procedure TRoom.SetTile(Const tX,tY:sInt; Const tT:TTile);
 Begin
 	If (tX<0) or (tY<0) or (tX>=ROOM_W) or (tY>=ROOM_H) then Exit;
-	Case tT of
-		' ': Tile[tX][tY]:=TILE_NONE;
-		'X': Tile[tX][tY]:=TILE_WALL;
-		'|': Tile[tX][tY]:=TILE_VBAR;
-		'-': Tile[tX][tY]:=TILE_HBAR;
-		'+': Tile[tX][tY]:=TILE_CBAR;
-		'D': Tile[tX][tY]:=TILE_VDOOR;
-		'=': Tile[tX][tY]:=TILE_HDOOR;
-		'{': Tile[tX][tY]:=TILE_GENUP;
-		'}': Tile[tX][tY]:=TILE_GENDO;
-		'#': Tile[tX][tY]:=TILE_ZONE;
-		':': Tile[tX][tY]:=TILE_ROOM;
-		'^': Tile[tX][tY]:=TILE_VBUP;
-		'v': Tile[tX][tY]:=TILE_VBDO;
-		'<': Tile[tX][tY]:=TILE_HBLE;
-		'>': Tile[tX][tY]:=TILE_HBRI;
-		else Tile[tX][tY]:=TILE_NONE;
-	end
+	Tile[tX][tY] := tT
+End;
+
+Procedure TRoom.SetTile(Const tX,tY:sInt; Const tChr:Char);
+Begin
+	Self.SetTile(tX, tY, Self.CharToTile(tChr))
 End;
 
 Function TRoom.CollisionCheck(Const cX, cY:Double; Const OutsideVal:Boolean):Boolean;
@@ -393,30 +548,165 @@ Begin
 		PlaySfx(SFX_METAL+Random(METAL_SFX))
 end;
 
-Constructor TRoom.Create(Var Stream:Text);
+Procedure TRoom.ParseTiles(Var Stream:Text);
 Var
-	rx, ry, LineCount: sInt;
-	TileChar: Char;
+	rx, ry: sInt;
 	Line: AnsiString;
 Begin
 	For rY:=0 to (ROOM_H-1) do begin
+		Readln(Stream, Line);
 		For rX:=0 to (ROOM_W-1) do begin
-			Read(Stream, TileChar);
-			Self.SetTile(rX, rY, TileChar);
+			Self.SetTile(rX, rY, Line[rX+1]);
 			Self.TCol[rX][rY] := @WhiteColour;
-		end;
-		Readln(Stream)
-	end;
+		end
+	end
+End;
+
+Procedure TRoom.Tokenize(Const Line: AnsiString; Const Tokens:PAnsiStringArray);
+Var
+	np, sp, tk: sInt;
+Begin
+	tk := 0;
+	SetLength(Tokens^, 0);
 	
+	np := 1;
+	While True do begin
+		sp := PosEx(#32, Line, np);
+		If(sp = 0) then Break;
+		
+		SetLength(Tokens^, tk+1);
+		Tokens^[tk] := Copy(Line, np, sp-np);
+		tk := tk + 1;
+		
+		np := sp+1
+	end;
+	If(np <= Length(Line)) then begin
+		SetLength(Tokens^, tk+1);
+		Tokens^[tk] := Copy(Line, np, Length(Line));
+		tk := tk + 1
+	end;
+End;
+
+Procedure TRoom.ParseScript(Var Stream:Text);
+Const
+	SCRIPT_OFFSET = 21;
+	MAX_IF_NEST = 8;
+Type
+	TIfInfo = record
+		IfLine, IfInstr: sInt;
+		ElseLine, ElseInstr: sInt;
+	end;
+Var
+	LineNo, LineCount: sInt;
+	Line: AnsiString;
+	Tokens: Array of AnsiString;
+	
+	IfStack: Array[1..MAX_IF_NEST] of TIfInfo;
+	IfNest: sInt;
+	
+	Instruction: TRoomScriptInstruction;
+	InstrOK: Boolean;
+Begin
+	IfNest := 0;
+	LineNo := SCRIPT_OFFSET - 1;
 	LineCount := 0;
 	While Not Eof(Stream) do begin
+		LineNo += 1;
+		
 		Readln(Stream, Line); Line:=Trim(Line);
-		If (Length(Line)>0) then begin
+		If (Length(Line) = 0) then Continue;
+		
+		// Oddly named function. Replaces multiple spaces with single spaces.
+		Line := DelSpace1(Line);
+		Tokenize(Line, @Tokens);
+		
+		Case(Tokens[0]) of
+			'if': begin
+				If(IfNest = MAX_IF_NEST) then begin
+					Writeln(
+						'Error in room ',X,':',Y,' at line ',LineNo,
+						': conditionals ("if") can be nested up to ',MAX_IF_NEST,' times.'
+					);
+					InstrOK := False
+				end else begin
+					InstrOK := ParseScript_If(LineNo, Tokens, Instruction);
+					If(InstrOK) then begin
+						IfNest += 1;
+						IfStack[IfNest].IfLine := LineNo;
+						IfStack[IfNest].IfInstr := LineCount;
+						IfStack[IfNest].ElseLine := -1;
+						IfStack[IfNest].ElseInstr := -1;
+					end
+				end
+			end;
+			
+			'else': begin
+				If(IfNest = 0) then begin
+					Writeln(
+						'Error in room ',X,':',Y,' at line ',LineNo,
+						': "else" without matching "if".'
+					);
+					InstrOK := False
+				end else begin
+					If(IfStack[IfNest].ElseLine >= 0) then begin
+						Writeln(
+							'Error in room ',X,':',Y,' at line ',LineNo,
+							': a second "else" for "if".'
+						);
+						InstrOK := False
+					end else begin
+						InstrOK := True;
+						Instruction.Opcode := RSOP_ELSE;
+						
+						IfStack[IfNest].ElseLine := LineNo;
+						IfStack[IfNest].ElseInstr := LineCount;
+					end
+				end
+			end;
+			
+			'fi': begin
+				InstrOK := False;
+				If(IfNest = 0) then begin
+					Writeln(
+						'Error in room ',X,':',Y,' at line ',LineNo,
+						': "fi" outside of "if".'
+					);
+				end else begin
+					If(IfStack[IfNest].ElseInstr >= 0) then begin
+						Self.Scri[IfStack[IfNest].IfInstr].If_.ElseJumpTo := IfStack[IfNest].ElseInstr + 1;
+						Self.Scri[IfStack[IfNest].ElseInstr].Else_.JumpTo := LineCount + 1;
+					end else
+						Self.Scri[IfStack[IfNest].IfInstr].If_.ElseJumpTo := LineCount + 1;
+					
+					IfNest -= 1
+				end
+			end;
+			
+			'colour': InstrOK := Self.ParseScript_Colour(LineNo, Tokens, Instruction);
+			'palette': InstrOK := Self.ParseScript_Palette(LineNo, Tokens, Instruction);
+			'spawn': InstrOK := Self.ParseScript_Spawn(LineNo, Tokens, Instruction);
+			'text': InstrOK := Self.ParseScript_Text(LineNo, Tokens, Instruction);
+			'tile': InstrOK := Self.ParseScript_Tile(LineNo, Tokens, Instruction);
+			
+			otherwise Writeln(
+				'Error in room ', Self.X, ':' , Self.Y,' at line ', LineNo,
+				': unknown command "', Tokens[0], '"'
+			);
+		end;
+		
+		If(InstrOK) then begin
 			SetLength(Self.Scri, LineCount+1);
-			Self.Scri[LineCount]:=DelSpace1(Line); // Compress multiple spaces to single space
+			Self.Scri[LineCount] := Instruction;
 			LineCount += 1
 		end
 	end
+end;
+
+Constructor TRoom.Create(Const rX, rY: sInt; Var Stream:Text);
+Begin
+	Self.X := rX; Self.Y := rY;
+	Self.ParseTiles(Stream);
+	Self.ParseScript(Stream);
 end;
 
 Destructor TRoom.Destroy();
@@ -434,7 +724,7 @@ Begin
 		If (TutRoom[X][Y]<>NIL) then Dispose(TutRoom[X][Y],Destroy());
 End;
 
-Function LoadRoom(Const Name:AnsiString):PRoom;
+Function LoadRoom(Const rX, rY: sInt; Const Name:AnsiString):PRoom;
 Var
 	F:Text;
 Begin
@@ -442,7 +732,7 @@ Begin
 	Assign(F,Name); {$I-} Reset(F); {$I+}
 	If (IOResult <> 0) then Exit(NIL);
 	
-	New(Result, Create(F));
+	New(Result, Create(rX, rY, F));
 	Close(F)
 End;
 

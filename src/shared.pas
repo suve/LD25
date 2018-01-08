@@ -28,7 +28,10 @@ uses SDL2, SDL2_mixer, Fonts, Images, Objects, SysUtils;
 const 
 	GAMENAME = 'Colorful'; GAMEAUTH = 'suve';
 	MAJORNUM = '2'; MINORNUM = '0'; GAMEVERS = MAJORNUM+'.'+MINORNUM;
+
+{$IFNDEF PACKAGE}
 	GAMEDATE = {$INCLUDE %DATE%}+', '+{$INCLUDE %TIME%};
+{$ENDIF}
 
 	FPS_LIMIT = 120; TICKS_MINIMUM = 1000 div FPS_LIMIT;
 
@@ -37,6 +40,7 @@ const
 
 	TILE_W = 16; TILE_H = 16; TILE_S = ((TILE_W + TILE_H) div 2);
 	ROOM_W = 20; ROOM_H = 20;
+	SWITCHES = 100;
 
 Type
 	TGameMode = (GM_TUTORIAL, GM_ORIGINAL);
@@ -144,7 +148,7 @@ Var
 
 	GameOn : Boolean; // Is a game in progress?
 	GameMode : TGameMode; // Current game mode
-	Switch : Array[0..99] of Boolean;
+	Switch : Array[0..SWITCHES-1] of Boolean;
 	ColState : Array[0..7] of TColState;
 	Crystal : TCrystal;
 	PaletteColour : Array[0..7] of TSDL_Colour;
@@ -309,7 +313,7 @@ End;
 
 Procedure DrawColouredRect(Const Rect: PSDL_Rect; Const RGB: LongWord);
 Var
-	Colour, ColourFixed: TSDL_Colour;
+	Colour: TSDL_Colour;
 Begin
 	Colour := RGBToColour(RGB);
 	DrawColouredRect(Rect, @Colour)
@@ -753,7 +757,7 @@ Begin
 	For Y:=0 to (ORG_MAP_H-1) do For X:=0 to (ORG_MAP_W-1) do begin
 		WriteStr(Filename, PATH_ORG,X,'-',Y,'.txt');
 		
-		Room:=LoadRoom(DataPath+Filename);
+		Room:=LoadRoom(X, Y, DataPath+Filename);
 		If (Room = NIL) then begin
 			Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}Filename;
 			Exit(False) 
@@ -765,7 +769,7 @@ Begin
 	For Y:=0 to (TUT_MAP_H-1) do For X:=0 to (TUT_MAP_W-1) do begin
 		WriteStr(Filename, PATH_TUT,X,'-',Y,'.txt');
 		
-		Room:=LoadRoom(DataPath+Filename);
+		Room:=LoadRoom(X, Y, DataPath+Filename);
 		If (Room = NIL) then begin
 			Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}Filename;
 			Exit(False)
