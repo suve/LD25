@@ -49,7 +49,6 @@ Type
 			XCol, YCol : Boolean; // X,Y collision
 			W, H : uInt;          // Width and height
 			HP  : Double;         // Health points
-			Enemy : Boolean;      // Team indicator
 			Face : TFacing;       // Facing
 			SfxID : sInt;         // Death SFX ID. <0 means none.
 			SwitchNum : sInt;     // Switch to trigger on death
@@ -350,8 +349,7 @@ Begin
 	Gfx:=CharaGfx[GFX_HERO];
 	Col:=@GreyColour;
 	
-	Self.SetLevel(0);
-	Enemy:=False
+	Self.SetLevel(0)
 End;
 
 Destructor TPlayer.Destroy();
@@ -391,7 +389,7 @@ Begin
 	Gfx:=CharaGfx[GFX_ENEM]; SfxID:=SFX_DIE+3;
 	ChaseTime:=RndInt(800,0.2); IdleTime:=RndInt(200,0.2);
 	Chase:=False; Timer:=IdleTime div 2;
-	HP:=5.75; Enemy:=True
+	HP:=5.75
 End;
 
 Destructor TDrone.Destroy();
@@ -450,7 +448,7 @@ Begin
 	BashTime:=RndInt(1500,0.2); IdleTime:=RndInt(100,0.2);
 	AccelTime:=(BashTime div 10);
 	Bash:=False; Timer:=IdleTime;
-	HP:=16; Enemy:=True
+	HP:=16
 End;
 
 Destructor TBasher.Destroy();
@@ -475,7 +473,7 @@ Constructor TBall.Create();
 Begin
 	Inherited Create();
 	Gfx:=CharaGfx[GFX_ENEM+2]; SfxID:=SFX_DIE+2;
-	HP:=9.75; Enemy:=True
+	HP:=9.75
 End;
 
 Destructor TBall.Destroy();
@@ -522,7 +520,7 @@ Begin
 	Gfx:=CharaGfx[GFX_ENEM+1]; SfxID:=SFX_DIE+4;
 	MoveTime:=RndInt(444,0.2); IdleTime:=RndInt(100,0.2); FireInterval:=RndInt(1200,0.2);
 	Move:=False; MoveTimer:=IdleTime; FireTimer:=(FireInterval * 5) div 6;
-	HP:=12; Enemy:=True
+	HP:=12
 End;
 
 Destructor TSpitter.Destroy();
@@ -563,7 +561,7 @@ Begin
 	FireInterval:=RndInt(800,0.2);
 	MoveTimer:=Random(100,333); FireTimer:=(FireInterval*10) div 8;
 	Angle:=Random(2000)*Pi/1000;
-	HP:=18; Enemy:=True
+	HP:=18
 End;
 
 Destructor TSpammer.Destroy();
@@ -612,7 +610,7 @@ Begin
 	Inherited Create();
 	Gfx:=CharaGfx[GFX_ENEM+5]; SfxID:=SFX_DIE+0;
 	BigTimer:=2000; SmallTimer:=2000;
-	HP:=64; Enemy:=True
+	HP:=64
 End;
 
 Destructor TGenerator.Destroy();
@@ -656,7 +654,7 @@ Begin
 	Inherited Create();
 	Gfx:=CharaGfx[GFX_ENEM+6]; SfxID:=SFX_DIE+5;
 	NorTime:=1000; SpamTime:=1800;
-	HP:=27; Enemy:=True
+	HP:=27
 End;
 
 Destructor TTurret.Destroy();

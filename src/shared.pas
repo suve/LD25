@@ -401,18 +401,24 @@ Procedure PlaySfx(ID:uInt);
    end;
 
 Procedure PlaceBullet(Owner:PEntity;XV,YV,Pow:Double;Tp:uInt);
-   Var B:PBullet;
-   begin
-   New(B,Create(Tp));
-   If (Owner^.Enemy) then SetLength(EBul,Length(EBul)+1)
-                     else SetLength(PBul,Length(PBul)+1);
-   B^.X:=Owner^.X+(Owner^.W / 2);
-   B^.Y:=Owner^.Y+(Owner^.H / 2);
-   B^.Enemy:=Owner^.Enemy; B^.Col:=Owner^.Col;
-   B^.XVel:=XV; B^.YVel:=YV; B^.Power:=Pow; B^.HP:=Pow;
-   If (Owner^.Enemy) then EBul[High(EBul)]:=B
-                     else PBul[High(PBul)]:=B
-   end;
+Var
+	B:PBullet;
+Begin
+	New(B,Create(Tp));
+	B^.X:=Owner^.X+(Owner^.W / 2);
+	B^.Y:=Owner^.Y+(Owner^.H / 2);
+	B^.XVel:=XV; B^.YVel:=YV;
+	B^.Power:=Pow; B^.HP:=Pow;
+	B^.Col:=Owner^.Col;
+	
+	If (Owner <> PEntity(Hero)) then begin
+		SetLength(EBul,Length(EBul)+1);
+		EBul[High(EBul)]:=B
+	end else begin
+		SetLength(PBul,Length(PBul)+1);
+		PBul[High(PBul)]:=B
+	end
+End;
 
 Procedure SpawnEnemy(Tp:TEnemyType;mapX,mapY:sInt;SwitchNum:sInt=-1);
    Var Dron:PDrone;     Bash:PBasher; Ball:PBall; Spit:PSpitter; Spam:PSpammer;
