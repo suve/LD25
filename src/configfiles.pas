@@ -154,9 +154,7 @@ Begin
 	Ini.Destroy(); Str.Destroy();
 
 	New(Hero,Create());
-	Hero^.MaxHP:=HERO_HEALTH*(1+(Given/14)); Hero^.HP:=Hero^.MaxHP;
-	Hero^.FirePower:=HERO_FIREPOWER*(1+(Given/14));
-	Hero^.InvLength:=Trunc(HERO_INVUL*(1+(Given/14)));
+	Hero^.Level := Given;
 
 	ChangeRoom(RespRoom[GM].X,RespRoom[GM].Y);
 	Exit(True)

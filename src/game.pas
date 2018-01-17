@@ -188,17 +188,14 @@ Begin
 	end else If (Carried>0) then begin
 		PlaySfx(SFX_EXTRA+1);
 		Given+=Carried; Carried:=0;
+		Hero^.Level := Given;
 		
 		For C:=0 to 7 do begin
 			If (ColState[C]=STATE_PICKED) then begin
 				CentralPalette[C]:=PaletteColour[C];
 				PaletteColour[C]:=GreyColour;
 				ColState[C]:=STATE_GIVEN
-			end;
-			
-			Hero^.MaxHP:=HERO_HEALTH*(1+(Given/14)); Hero^.HP:=Hero^.MaxHP;
-			Hero^.FirePower:=HERO_FIREPOWER*(1+(Given/14));
-			Hero^.InvLength:=Trunc(HERO_INVUL*(1+(Given/14)));
+			end
 		end;
 		
 		// If this is the last crystal, switch the quit-flag so we exit to outro after this game cycle.

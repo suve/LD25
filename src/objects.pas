@@ -91,12 +91,19 @@ Type
 	// Player Object
 	PPlayer = ^TPlayer;
 	TPlayer = Object(TEntity)
+		Protected
+			_level: sInt;
+			
+			Procedure SetLevel(NewLevel: sInt);
+			
 		Public
 			FireTimer : sInt;
 			InvTimer  : sInt;
 			MaxHP     : Double;
 			FirePower : Double;
 			InvLength : uInt;
+
+			Property Level:sInt read _level write SetLevel;
 
 			Procedure Calculate(dt:uInt); Virtual;
 
@@ -317,14 +324,33 @@ Begin
 	If (InvTimer > 0) then InvTimer-=dt
 End;
 
+Procedure TPlayer.SetLevel(NewLevel: sInt);
+Const
+	LEVEL_MIN = 0;
+	LEVEL_MAX = 7;
+Begin
+	If(NewLevel < LEVEL_MIN) then
+		NewLevel := LEVEL_MIN
+	else If(NewLevel > LEVEL_MAX) then
+		NewLevel := LEVEL_MAX;
+	
+	Self.MaxHP:= HERO_HEALTH * (1.0 + (NewLevel / (LEVEL_MAX*2) ));
+	Self.HP := Self.MaxHP;
+	
+	Self.FirePower := HERO_FIREPOWER * (1.0 + (NewLevel / (LEVEL_MAX*2) ));
+	Self.InvLength := Trunc(HERO_INVUL * (1.0 + (NewLevel / (LEVEL_MAX*2) )));
+	
+	Self._level := NewLevel
+End;
+
 Constructor TPlayer.Create();
 Begin
 	Inherited Create();
 	mX:=RespPos[GameMode].X; mY:=RespPos[GameMode].Y;
 	Gfx:=CharaGfx[GFX_HERO];
 	Col:=@GreyColour;
-	MaxHP:=HERO_HEALTH; HP:=MaxHP;
-	FirePower:=HERO_FIREPOWER; InvLength := HERO_INVUL;
+	
+	Self.SetLevel(0);
 	Enemy:=False
 End;
 
