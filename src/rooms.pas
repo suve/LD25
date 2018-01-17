@@ -456,7 +456,6 @@ Begin
 	Count := Length(Scri);
 	While((Idx >= 0) and (Idx < Count)) do begin
 		rsi := Scri[Idx];
-		Writeln('rsi: ', rsi.Opcode);
 		Idx += 1;
 		
 		Case(rsi.Opcode) of
