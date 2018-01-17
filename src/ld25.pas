@@ -63,15 +63,8 @@ Begin
 End;
 
 Function MouseInRect(Const Rect: TSDL_Rect):Boolean;
-Var
-	MouseX, MouseY: Double;
 Begin
-	// The mouse coordinates inside SDL_Event are given in window-size terms.
-	// We need to convert them to game-resolution terms first.
-	MouseX := Ev.Button.X; // * (RESOL_W / Screen^.W);
-	MouseY := Ev.Button.Y; // * (RESOL_H / Screen^.H);
-	
-	Exit(Overlap(Rect.X, Rect.Y, Rect.W, Rect.H, MouseX, MouseY, 1, 1))
+	Result := Overlap(Rect.X, Rect.Y, Rect.W, Rect.H, Ev.Button.X, Ev.Button.Y, 1, 1)
 End;
 
 Procedure LoadUpdate(Name:AnsiString;Perc:Double);

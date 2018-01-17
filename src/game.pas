@@ -697,8 +697,7 @@ Begin
 		
 		WriteStr(FrameStr,Frames);
 		FrameTime-=1000; Frames:=0
-	end;
-	// Count frames, duh
+	end
 End;
 
 Procedure PerformRoomChange();

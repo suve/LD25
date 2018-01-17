@@ -36,7 +36,7 @@ const
 	FPS_LIMIT = 120; TICKS_MINIMUM = 1000 div FPS_LIMIT;
 
 	WINDOW_W = 640; WINDOW_H = 640; // Default window size
-	RESOL_W = 320; RESOL_H = 320;   // Game resolution (set in OpenGL)
+	RESOL_W = 320; RESOL_H = 320;   // Game resolution (SDL renderer logical size)
 
 	TILE_W = 16; TILE_H = 16; TILE_S = ((TILE_W + TILE_H) div 2);
 	ROOM_W = 20; ROOM_H = 20;
@@ -274,8 +274,8 @@ Begin
 		SDL_SetWindowSize(Window, W, H);
 		
 		// Centre window on the screen when coming back from fullscreen mode.
-		// We need the If() becuase otherwise, when dragging the window size, it keeps jumping back-and-forth
-		// as the WM fights the game over setting the window position.
+		// We need the If() because otherwise, when dragging the window size,
+		// it keeps jumping back-and-forth as the WM fights the game over setting the window position.
 		If(Wnd_F) then SDL_SetWindowPosition(Window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 		
 		Wnd_W := W; Wnd_H := H;
