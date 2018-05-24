@@ -30,17 +30,6 @@ Const
 		'black', 'navy', 'green', 'blue', 'red', 'purple', 'yellow', 'white'
 	);
 
-	MapColour: Array[0..7] of TSDL_Colour = (
-		(R: $32; G: $32; B: $32; A: $FF),
-		(R: $10; G: $18; B: $6A; A: $FF),
-		(R: $29; G: $9C; B: $00; A: $FF),
-		(R: $00; G: $9A; B: $9A; A: $FF),
-		(R: $7A; G: $08; B: $18; A: $FF),
-		(R: $94; G: $18; B: $8B; A: $FF),
-		(R: $FF; G: $DE; B: $5A; A: $FF),
-		(R: $DA; G: $DA; B: $DA; A: $FF)
-	);
-	
 	UIcolour: Array[0..7] of TSDL_Colour = (
 		(R: $58; G: $58; B: $58; A: $FF),
 		(R: $00; G: $00; B: $FF; A: $FF),
@@ -52,10 +41,37 @@ Const
 		(R: $FF; G: $FF; B: $FF; A: $FF)
 	);
 
+Var
+	MapColour: Array[0..7] of TSDL_Colour;
+
+Function ColourToStr(Const Colour:TSDL_Colour):AnsiString;
+
 Function RGBToColour(RGB: LongWord):TSDL_Colour;
+Function StrToColour(Str: AnsiString):TSDL_Colour;
+
+Procedure ResetMapColoursToDefault();
 
 
 Implementation
+Uses
+	StrUtils;
+
+Const
+	DefaultMapColour: Array[0..7] of TSDL_Colour = (
+		(R: $32; G: $32; B: $32; A: $FF),
+		(R: $10; G: $18; B: $6A; A: $FF),
+		(R: $29; G: $9C; B: $00; A: $FF),
+		(R: $00; G: $9A; B: $9A; A: $FF),
+		(R: $7A; G: $08; B: $18; A: $FF),
+		(R: $94; G: $18; B: $8B; A: $FF),
+		(R: $FF; G: $DE; B: $5A; A: $FF),
+		(R: $DA; G: $DA; B: $DA; A: $FF)
+	);
+
+Function ColourToStr(Const Colour:TSDL_Colour):AnsiString;
+Begin
+	Result := '#' + HexStr(Colour.R, 2) + HexStr(Colour.G, 2) + HexStr(Colour.B, 2)
+End;
 
 Function RGBToColour(RGB: LongWord):TSDL_Colour;
 Begin
@@ -67,5 +83,33 @@ Begin
 	
 	Result.A := 255
 End;
+
+Function StrToColour(Str: AnsiString):TSDL_Colour;
+Var
+	rstr, gstr, bstr: AnsiString;
+Begin
+	Str:=LowerCase(Str);
+	If(Str[1] = '#') then Delete(Str, 1, 1);
+	
+	rstr := Copy(Str, 1, 2);
+	gstr := Copy(Str, 3, 2);
+	bstr := Copy(Str, 5, 2);
+	
+	Result.R := Hex2Dec(rstr);
+	Result.G := Hex2Dec(gstr);
+	Result.B := Hex2Dec(bstr);
+	Result.A := $FF
+End;
+
+Procedure ResetMapColoursToDefault();
+Var
+	C: sInt;
+Begin
+	For C:=Low(MapColour) to High(MapColour) do MapColour[C]:=DefaultMapColour[C]
+End;
+
+
+Initialization
+	ResetMapColoursToDefault()
 
 End.

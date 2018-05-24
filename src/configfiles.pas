@@ -171,9 +171,16 @@ Begin
 	Exit(FileExists(Path))
 End;
 
+Function Capitalise(Const Str: AnsiString):AnsiString;
+Begin
+	Result := UpCase(Str[1]) + Copy(Str, 2, 256)
+End;
+
 Function SaveIni():Boolean;
 Var
-	F:Text; K:TPlayerKey;
+	F:Text;
+	C:sInt;
+	K:TPlayerKey;
 Begin
 	If (Not CheckConfPath()) then Exit(False);
 	
@@ -184,25 +191,33 @@ Begin
 	Writeln(F,'[Info]');
 	Writeln(F,'Version=',GAMEVERS);
 	Writeln(F);
+	
 	Writeln(F,'[Window]');
 	Writeln(F,'Fullscreen=',BoolToStr(Wnd_F,'True','False'));
 	Writeln(F,'Width=',Wnd_W);
 	Writeln(F,'Height=',Wnd_H);
 	Writeln(F);
+	
 	Writeln(F,'[Audio]');
 	Writeln(F,'Volume=',GetVol());
 	Writeln(F);
-	Writeln(F,'[Keybind]');
 	
+	Writeln(F,'[Keybind]');
 	For K:=Low(K) to High(K) do Writeln(F,K,'=',KeyBind[K]);
+	Writeln(F);
+	
+	Writeln(F, '[Colours]');
+	For C:=0 to 7 do Writeln(F, Capitalise(ColourName[C]),'=',ColourToStr(MapColour[C]));
+	
 	Close(F); Exit(True);
 End;
 
 Function ParseIni(Const Ini:TIniFile;Const GuessedVersion: sInt):Boolean;
 Var
 	Str:TStringList; 
-	Version: sInt;
-	KeyBindName:AnsiString; K:TPlayerKey;
+	Version, C: sInt;
+	KeyBindName, CapitalisedColourName:AnsiString;
+	K:TPlayerKey;
 Begin
 	Str:=TStringList.Create();
 	
@@ -223,6 +238,18 @@ Begin
 		KeyBind[K]:=StrToIntDef(Str.Values[KeyBindName], SDLK_Escape);
 		
 		If(Version = 1) then KeyBind[K]:=TranslateSDL1KeyToSDL2Keycode(KeyBind[K])
+	end;
+	
+	If(Version = 2) then begin
+		Ini.ReadSectionValues('Colours',Str);
+		For C:=0 to 7 do begin
+			CapitalisedColourName:=Capitalise(ColourName[C]);
+			Try
+				MapColour[C]:=StrToColour(Str.Values[CapitalisedColourName])
+			Except
+				Writeln(stderr, 'Unexpected value for colour ',ColourName[C],': "', Str.Values[CapitalisedColourName],'"')
+			end
+		end
 	end;
 	
 	Ini.Destroy(); Str.Destroy();
