@@ -61,7 +61,10 @@ Function IHasGame(Const GM:TGameMode):Boolean;
 
 
 Implementation
-	uses SysUtils, IniFiles, Classes, SDL1Keys, SDL2;
+Uses
+	Classes, IniFiles, SysUtils,
+	SDL2,
+	Colours, SDL1Keys;
 
 Const
 	ConfFile: Array[TIniVersion] of ShortString = (
@@ -219,7 +222,7 @@ Begin
 		WriteStr(KeyBindName,K);
 		KeyBind[K]:=StrToIntDef(Str.Values[KeyBindName], SDLK_Escape);
 		
-		If(Version = 1) then KeyBind[K]:=TranslateSDL1KeyToSDL2LKeycode(KeyBind[K]) 
+		If(Version = 1) then KeyBind[K]:=TranslateSDL1KeyToSDL2Keycode(KeyBind[K])
 	end;
 	
 	Ini.Destroy(); Str.Destroy();

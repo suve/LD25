@@ -143,7 +143,9 @@ Procedure FreeRooms();
 
 
 Implementation
-	uses FloatingText, SysUtils, StrUtils;
+Uses
+	StrUtils, SysUtils,
+	Colours, FloatingText;
 
 Function TRoom.ParseScript_If(Const LineNo: sInt; Const Tokens:Array of AnsiString; Out rsi:TRoomScriptInstruction):Boolean;
 Var

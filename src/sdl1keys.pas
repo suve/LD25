@@ -167,7 +167,7 @@ Const
 		(SDL1: 322; SDL2: SDLK_UNDO)  // Atari keyboard has Undo */
 	);
 
-Function TranslateSDL1KeyToSDL2LKeycode(Const OldKey: sInt):TSDL_Keycode;
+Function TranslateSDL1KeyToSDL2Keycode(Const OldKey: sInt):TSDL_Keycode;
 
 
 Implementation
@@ -194,7 +194,7 @@ Begin
 	end
 End;
 
-Function TranslateSDL1KeyToSDL2LKeycode(Const OldKey: sInt):TSDL_Keycode;
+Function TranslateSDL1KeyToSDL2Keycode(Const OldKey: sInt):TSDL_Keycode;
 Begin
 	Result := BinarySearch(0, SDL1KEYCOUNT-1, OldKey)
 End;

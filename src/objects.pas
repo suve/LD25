@@ -201,8 +201,9 @@ Type
 			Destructor Destroy; Virtual;
 	end;
 
-implementation
-	uses Shared;
+Implementation
+Uses
+	Colours, Shared;
 
 Const
 	TwoRoot = Sqrt(2);

@@ -76,21 +76,6 @@ Const
 	DeathLength = 2500; WOMAN = 8;
 
 Const
-	UIcolour: Array[0..7] of LongWord = (
-		$585858,$0000FF,$00FF00,$00FFFF,$FF0000,$FF00FF,$FFFF00,$FFFFFF
-	);
-	MapColour: Array[0..7] of LongWord = (
-		$323232, $10186A, $299C00, $009A9A, $7A0818, $94188B, $FFDE5A, $DADADA
-	);
-	WhiteColour: TSDL_Colour = (R: 255; G: 255; B: 255; A: 255);
-	GreyColour: TSDL_Colour = (R: 128; G: 128; B: 128; A: 255);
-	BlackColour: TSDL_Colour = (R: 0; G: 0; B: 0; A: 255);
-
-	ColourName : Array[0..7] of AnsiString = (
-		'black', 'navy', 'green', 'blue', 'red', 'purple', 'yellow', 'white'
-	);
-
-Const
 	VolLevel_MAX = 6;
 Type
 	TVolLevel = 0..VolLevel_MAX;
@@ -178,7 +163,6 @@ Procedure FinishFrame();
 // Draw primitives using SDL
 Procedure DrawColouredRect(Const Rect: PSDL_Rect; Const Colour: PSDL_Colour);
 Procedure DrawColouredRect(Const Rect: PSDL_Rect; Const RGB: LongWord);
-Function  RGBToColour(RGB: LongWord):TSDL_Colour;
 
 // Some functions for calculating distances
 Function  Hypotenuse(X,Y:Double):Double;
@@ -232,8 +216,10 @@ Procedure LoadAndSetWindowIcon();
 Procedure Free();
 
 
-implementation
-   uses Rooms, FloatingText, ConfigFiles, SDL2_Image;
+Implementation
+Uses
+	SDL2_Image,
+	Colours, ConfigFiles, FloatingText, Rooms;
 
 Var
 	Tikku : uInt;
@@ -503,21 +489,10 @@ Procedure DestroyEntities(KillHero:Boolean=FALSE);
       Hero:=NIL; end
    end;
 
-Function RGBToColour(RGB: LongWord):TSDL_Colour;
-Begin
-	Result.B := RGB mod 256;
-	RGB := RGB div 256;
-	Result.G := RGB mod 256;
-	RGB := RGB div 256;
-	Result.R := RGB mod 256;
-	
-	Result.A := 255
-End;
-
 Procedure ResetGamestate();
 Var C:sInt;
 Begin
-	For C:=0 to 7 do PaletteColour[C]:=RGBToColour(MapColour[C]);
+	For C:=0 to 7 do PaletteColour[C]:=MapColour[C];
 
 	For C:=0 to 7 do begin
 		CentralPalette[C].R := 127;
@@ -528,7 +503,7 @@ Begin
 	For C:=Low(ColState) to High(ColState) do ColState[C]:=STATE_NONE;
 	For C:=Low(Switch) to High(Switch) do Switch[C]:=False;
 
-Carried:=0; Given:=0;
+	Carried:=0; Given:=0;
 End;
 
 

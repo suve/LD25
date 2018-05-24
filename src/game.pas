@@ -28,7 +28,7 @@ Function PlayGame():Boolean;
 Implementation
 Uses
 	SDL2,
-	ConfigFiles, FloatingText, Fonts, Images, Objects, Rooms, Shared;
+	Colours, ConfigFiles, FloatingText, Fonts, Images, Objects, Rooms, Shared;
 
 Type
 	TRoomChange = (
@@ -630,14 +630,14 @@ Begin
 		// For carried colours, draw two (randomly selected) pixels in the 2x2 rectangle area.
 		If (ColState[C]=STATE_GIVEN) then begin
 			Dst.W:=2; Dst.H:=2;
-			DrawColouredRect(@Dst, UIcolour[C])
+			DrawColouredRect(@Dst, @UIcolour[C])
 		end else begin
 			Dst.W:=1; Dst.H:=1;
 			For d:=0 to 1 do begin
 				dstcpy := Dst;
 				dstcpy.X += Random(0, 1);
 				dstcpy.Y += Random(0, 1);
-				DrawColouredRect(@dstcpy, UIcolour[C])
+				DrawColouredRect(@dstcpy, @UIcolour[C])
 			end
 		end
 	end;

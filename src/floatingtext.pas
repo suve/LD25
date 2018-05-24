@@ -38,8 +38,10 @@ Var
 Procedure AddFloatTxt(Const X, Y, ColID: sInt; Const Text: AnsiString);
 Procedure FlushFloatTxt();
 
-implementation
-	uses SysUtils;
+Implementation
+Uses
+	SysUtils,
+	Colours;
 
 Procedure AddFloatTxt(Const X, Y, ColID: sInt; Const Text: AnsiString);
 Var
