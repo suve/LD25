@@ -553,8 +553,10 @@ Begin
 End;
 
 begin
-Writeln(GAMENAME,' by ',GAMEAUTH);
-Writeln('v.',GAMEVERS,' (build ',GAMEDATE,')');
+Writeln(GAMENAME,' v.',GAMEVERS,' by ',GAMEAUTH);
+{$IFNDEF PACKAGE}
+	Writeln('build ',GAMEDATE);
+{$ENDIF}
 Writeln(StringOfChar('-',36));
 If (Not Startup()) Then Halt(255);
 Repeat
