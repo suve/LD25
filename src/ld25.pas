@@ -141,6 +141,60 @@ Begin
 	For K:=Low(TPlayerKey) to High(TPlayerKey) do KeyBind[K]:=NewBind[K]
 End;
 
+Procedure SetSingleColour(Const idx: sInt);
+Begin End;
+
+Procedure SetColours();
+Var
+	ChoiceName: Array[0..7] of AnsiString;
+	ChoiceRect: Array[0..7] of TSDL_Rect;
+	dt, LongestName, C: uInt;
+	XPos, YPos, Sel: sInt;
+Begin
+	LongestName := 0;
+	For C:=0 to 7 do begin
+		ChoiceName[C] := IntToStr(C+1) + ' - ' + UpperCase(ColourName[C]);
+		If(Length(ChoiceName[C]) > LongestName) then LongestName := Length(ChoiceName[C])
+	end;
+
+	XPos := (LongestName * Font^.CharW) + ((LongestName - 1) * Font^.SpacingX);
+	XPos := (RESOL_W - (XPos * Font^.Scale)) div 2;
+	While True do begin
+		Shared.BeginFrame();
+		DrawTitle();
+		
+		Font^.Scale := 2; YPos:=TitleGfx^.H;
+		PrintText('COLOUR SETTINGS',Font,(RESOL_W div 2),YPos,ALIGN_CENTRE,ALIGN_TOP,NIL);
+		
+		For C:=0 to 7 do begin
+			YPos += ((Font^.CharH * Font^.Scale) * 3) div 2;
+			PrintMenuText(ChoiceName[C], XPos, YPos, ALIGN_LEFT, @WhiteColour, ChoiceRect[C])
+		end;
+		
+		Shared.FinishFrame();
+		GetDeltaTime(dt);
+		
+		Sel := -1;
+		While (SDL_PollEvent(@Ev)>0) do begin
+			If (Ev.Type_ = SDL_QuitEv) then begin
+				Shutdown:=True; Exit()
+			end else
+			If (Ev.Type_ = SDL_KeyDown) then begin
+				If (Ev.Key.Keysym.Sym = SDLK_Escape) then Exit()
+				else
+				If (Ev.Key.Keysym.Sym >= SDLK_1) and (Ev.Key.Keysym.Sym <= SDLK_8) then Sel:=Ord(Ev.Key.Keysym.Sym - SDLK_1)
+			end else
+			If (Ev.Type_ = SDL_MouseButtonDown) then begin
+				For C:=0 to 7 do If(MouseInRect(ChoiceRect[C])) then Sel:=C
+			end else
+			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
+				Shared.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False)
+		end;
+		
+		If(Sel >= 0) then SetSingleColour(Sel)
+	end
+End;
+
 Function GameworldDialog(Const Load:Boolean):Char;
 Const
 	WorldNames:Array[TGameMode] of AnsiString = (
@@ -253,15 +307,15 @@ Var
 	dt, XPos, YPos:uInt; Col:PSDL_Colour; 
 	IHasSaves:Boolean; GM:TGameMode;
 	
-	IntroRect, ContinueRect, NewGameRect, LoadGameRect, BindRect, QuitRect: TSDL_Rect;
+	IntroRect, ContinueRect, NewGameRect, LoadGameRect, BindRect, ColourRect, QuitRect: TSDL_Rect;
 Begin
 	Font^.Scale := 2;
 	XPos:=GetTextWidth('I - INTRODUCTION', Font);
 	XPos:=(RESOL_W - XPos) div 2;
-   
+
 	IHasSaves:=False;
 	For GM:=Low(GM) to High(GM) do If (SaveExists[GM]) then IHasSaves:=True;
-   
+
 	Choice:=#$20;
 	While (Choice = #32) do begin
 		Shared.BeginFrame();
@@ -280,6 +334,9 @@ Begin
 		YPos += Font^.CharH * 2 * Font^.Scale;
 		If (IHasSaves) then Col:=@WhiteColour else Col:=@GreyColour;
 		PrintMenuText('L - LOAD GAME', XPos, YPos, ALIGN_LEFT, Col, LoadGameRect);
+		
+		YPos += Font^.CharH * 2 * Font^.Scale;
+		PrintMenuText('S - SET COLOURS', XPos, YPos, ALIGN_LEFT, @WhiteColour, ColourRect);
 		
 		YPos += Font^.CharH * 2 * Font^.Scale;
 		PrintMenuText('B - BIND KEYS', XPos, YPos, ALIGN_LEFT, @WhiteColour, BindRect);
@@ -302,6 +359,7 @@ Begin
 				If (Ev.Key.Keysym.Sym = SDLK_L) then begin
 					If (IHasSaves) then Choice:='L' end else
 				If (Ev.Key.Keysym.Sym = SDLK_B) then Choice:='B' else
+				If (Ev.Key.Keysym.Sym = SDLK_S) then Choice:='S' else
 			end else
 			If (Ev.Type_ = SDL_MouseButtonDown) then begin
 				If (MouseInRect(IntroRect)) then Choice:='I' else
@@ -311,6 +369,7 @@ Begin
 				If (MouseInRect(LoadGameRect)) then begin
 					If (IHasSaves) then Choice:='L' end else
 				If (MouseInRect(BindRect)) then Choice:='B' else
+				If (MouseInRect(ColourRect)) then Choice:='S' else
 				If (MouseInRect(QuitRect)) then Choice:='Q' else
 			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then begin
@@ -590,6 +649,7 @@ Repeat
            MenuChoice:='L'
            end;
       'B': BindKeys();
+      'S': SetColours();
       end;
    If (GameOn) and (GameMode <> GM_TUTORIAL) and (Given >= 8) then begin
       GameOn:=False; Outro() end;
