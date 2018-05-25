@@ -142,7 +142,84 @@ Begin
 End;
 
 Procedure SetSingleColour(Const idx: sInt);
-Begin End;
+Const
+	RectWidth = 128;
+	RectHeight = 64;
+Var
+	idxName: AnsiString;
+	CurrentCol: TSDL_Colour;
+	TryoutRect, RedRect, BlueRect, GreenRect, DefaultRect: TSDL_Rect;
+	
+	Finished: Boolean;
+	dt, pc: uInt;
+	YPos: sInt;
+Begin
+	idxName := UpperCase(ColourName[idx]);
+	CurrentCol := MapColour[idx];
+	
+	Finished := False;
+	While Not Finished do begin
+		Shared.BeginFrame();
+		DrawTitle();
+		
+		Font^.Scale := 2; YPos:=TitleGfx^.H;
+		PrintText('COLOUR SETTINGS', Font,(RESOL_W div 2),YPos,ALIGN_CENTRE,ALIGN_TOP,NIL);
+		
+		YPos += ((Font^.CharH * Font^.Scale) * 3) div 2;
+		PrintText(idxName, Font,(RESOL_W div 2),YPos,ALIGN_CENTRE,ALIGN_TOP,NIL);
+		
+		YPos += ((Font^.CharH * Font^.Scale) * 3) div 2;
+		TryoutRect.X := (RESOL_W - RectWidth) div 2;
+		TryoutRect.Y := YPos;
+		TryoutRect.W := RectWidth;
+		TryoutRect.H := RectHeight;
+		DrawColouredRect(@TryoutRect, @CurrentCol);
+		
+		YPos += RectHeight + (Font^.CharH * Font^.Scale) div 2;
+		PrintMenuText('R - RED  ', (RESOL_W div 2), YPos, ALIGN_CENTRE, @WhiteColour, RedRect);
+		YPos += ((Font^.CharH * Font^.Scale) * 3) div 2;
+		PrintMenuText('G - GREEN', (RESOL_W div 2), YPos, ALIGN_CENTRE, @WhiteColour, GreenRect);
+		YPos += ((Font^.CharH * Font^.Scale) * 3) div 2;
+		PrintMenuText('B - BLUE ', (RESOL_W div 2), YPos, ALIGN_CENTRE, @WhiteColour, BlueRect);
+		YPos += ((Font^.CharH * Font^.Scale) * 3) div 2;
+		PrintMenuText('D - DEFAULT', (RESOL_W div 2), YPos, ALIGN_CENTRE, @WhiteColour, DefaultRect);
+		
+		
+		Shared.FinishFrame();
+		GetDeltaTime(dt);
+		While (SDL_PollEvent(@Ev)>0) do begin
+			If (Ev.Type_ = SDL_QuitEv) then begin
+				Shutdown:=True; Exit()
+			end else
+			If (Ev.Type_ = SDL_KeyDown) then begin
+				If (Ev.Key.Keysym.Sym = SDLK_Escape) then Finished:=True
+				else
+				If (Ev.Key.Keysym.Sym = SDLK_R) then CurrentCol.R:=CurrentCol.R + $10
+				else
+				If (Ev.Key.Keysym.Sym = SDLK_G) then CurrentCol.G:=CurrentCol.G + $10
+				else
+				If (Ev.Key.Keysym.Sym = SDLK_B) then CurrentCol.B:=CurrentCol.B + $10
+				else
+				If (Ev.Key.Keysym.Sym = SDLK_D) then CurrentCol:=DefaultMapColour[idx]
+			end else
+			If (Ev.Type_ = SDL_MouseButtonDown) then begin
+				If (MouseInRect(RedRect)) then CurrentCol.R:=CurrentCol.R + $10
+				else
+				If (MouseInRect(GreenRect)) then CurrentCol.G:=CurrentCol.G + $10
+				else
+				If (MouseInRect(BlueRect)) then CurrentCol.B:=CurrentCol.B + $10
+				else
+				If (MouseInRect(DefaultRect)) then CurrentCol:=DefaultMapColour[idx]
+			end else
+			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
+				Shared.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False)
+		end;
+	end;
+	
+	For pc:=0 to 7 do If(CentralPalette[pc] = MapColour[idx]) then CentralPalette[pc] := CurrentCol;
+	For pc:=0 to 7 do If(PaletteColour[pc] = MapColour[idx]) then PaletteColour[pc] := CurrentCol;
+	MapColour[idx] := CurrentCol
+End;
 
 Procedure SetColours();
 Var

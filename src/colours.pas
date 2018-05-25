@@ -41,8 +41,21 @@ Const
 		(R: $FF; G: $FF; B: $FF; A: $FF)
 	);
 
+	DefaultMapColour: Array[0..7] of TSDL_Colour = (
+		(R: $32; G: $32; B: $32; A: $FF),
+		(R: $10; G: $18; B: $6A; A: $FF),
+		(R: $29; G: $9C; B: $00; A: $FF),
+		(R: $00; G: $9A; B: $9A; A: $FF),
+		(R: $7A; G: $08; B: $18; A: $FF),
+		(R: $94; G: $18; B: $8B; A: $FF),
+		(R: $FF; G: $DE; B: $5A; A: $FF),
+		(R: $DA; G: $DA; B: $DA; A: $FF)
+	);
+
 Var
 	MapColour: Array[0..7] of TSDL_Colour;
+
+Operator = (A, B: TSDL_Colour):Boolean;
 
 Function ColourToStr(Const Colour:TSDL_Colour):AnsiString;
 
@@ -56,17 +69,10 @@ Implementation
 Uses
 	StrUtils;
 
-Const
-	DefaultMapColour: Array[0..7] of TSDL_Colour = (
-		(R: $32; G: $32; B: $32; A: $FF),
-		(R: $10; G: $18; B: $6A; A: $FF),
-		(R: $29; G: $9C; B: $00; A: $FF),
-		(R: $00; G: $9A; B: $9A; A: $FF),
-		(R: $7A; G: $08; B: $18; A: $FF),
-		(R: $94; G: $18; B: $8B; A: $FF),
-		(R: $FF; G: $DE; B: $5A; A: $FF),
-		(R: $DA; G: $DA; B: $DA; A: $FF)
-	);
+Operator = (A, B: TSDL_Colour):Boolean;
+Begin
+	Result := (A.R = B.R) and (A.G = B.G) and (A.B = B.B) and (A.A = B.A)
+End;
 
 Function ColourToStr(Const Colour:TSDL_Colour):AnsiString;
 Begin
