@@ -20,7 +20,7 @@ program ld25;
 
 uses
 	SysUtils, SDL2, SDL2_image, SDL2_mixer,
-	Colours, ConfigFiles, FloatingText, Fonts, Game, Images, Objects, Shared
+	Colours, ConfigFiles, FloatingText, Fonts, Game, Images, Objects, Rooms, Shared
 ;
 
 
@@ -141,6 +141,42 @@ Begin
 	For K:=Low(TPlayerKey) to High(TPlayerKey) do KeyBind[K]:=NewBind[K]
 End;
 
+(*
+ * TODO:
+ * The drawing code is copy-pasted from Game.DrawRoom().
+ * Think of a way to reduce duplication.
+ *)
+Procedure DrawColourPreview(Const Colour: PSDL_Colour; Const PosX, PosY: sInt);
+Const
+	PreviewW = 8;
+	PreviewH = 4;
+	PreviewMap: Array[0..(PreviewH-1), 0..(PreviewW-1)] of Char = (
+		('X', '-', '-', '-', '=', '-', '-', '+'),
+		('X', 'X', ' ', ' ', ' ', ' ', ' ', '|'),
+		(':', ' ', ' ', ' ', ' ', ' ', ' ', 'D'),
+		('X', 'X', ' ', '<', '-', '>', ' ', '|')
+	);
+Var
+	X, Y: sInt;
+	Tile: TTile;
+	Src, Dst: TSDL_Rect;
+Begin
+	// All tiles have the same size, no need to set this in the loop 
+	Src.W:=TILE_W; Src.H:=TILE_H; 
+	Dst.W:=TILE_W; Dst.H:=TILE_H;
+	
+	Src.X:=0;
+	For Y:=0 to (PreviewH-1) do For X:=0 to (PreviewW-1) do begin
+		Tile:=TRoom.CharToTile(PreviewMap[Y][X]);
+		If (Tile = TILE_NONE) then Continue;
+		
+		Dst.X := PosX + (X*TILE_W);
+		Dst.Y := PosY + (Y*TILE_H);
+		Src.Y := Ord(Tile)*TILE_H;
+		DrawImage(TileGfx,@Src,@Dst,Colour)
+	end
+End;
+
 Procedure SetSingleColour(Const idx: sInt);
 Const
 	RectWidth = 128;
@@ -148,7 +184,7 @@ Const
 Var
 	idxName: AnsiString;
 	CurrentCol: TSDL_Colour;
-	TryoutRect, RedRect, BlueRect, GreenRect, DefaultRect: TSDL_Rect;
+	RedRect, BlueRect, GreenRect, DefaultRect: TSDL_Rect;
 	
 	Finished: Boolean;
 	dt, pc: uInt;
@@ -169,11 +205,7 @@ Begin
 		PrintText(idxName, Font,(RESOL_W div 2),YPos,ALIGN_CENTRE,ALIGN_TOP,NIL);
 		
 		YPos += ((Font^.CharH * Font^.Scale) * 3) div 2;
-		TryoutRect.X := (RESOL_W - RectWidth) div 2;
-		TryoutRect.Y := YPos;
-		TryoutRect.W := RectWidth;
-		TryoutRect.H := RectHeight;
-		DrawColouredRect(@TryoutRect, @CurrentCol);
+		DrawColourPreview(@CurrentCol, (RESOL_W - RectWidth) div 2, YPos);
 		
 		YPos += RectHeight + (Font^.CharH * Font^.Scale) div 2;
 		PrintMenuText('R - RED  ', (RESOL_W div 2), YPos, ALIGN_CENTRE, @WhiteColour, RedRect);

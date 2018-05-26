@@ -97,7 +97,6 @@ Type
 			
 			Function CollisionCheck(Const cX, cY:Double; Const OutsideVal:Boolean):Boolean;
 			
-			Function  CharToTile(Const tT:Char):TTile;
 			Procedure SetTile(Const tX,tY:sInt; Const tT:TTile);
 			Procedure SetTile(Const tX,tY:sInt; Const tChr:Char);
 			
@@ -122,6 +121,8 @@ Type
 			X, Y : uInt;
 			Tile : Array[0..(ROOM_W-1), 0..(ROOM_H-1)] of TTile;
 			TCol : Array[0..(ROOM_W-1), 0..(ROOM_H-1)] of PSDL_Colour;
+			
+			Function  CharToTile(Const tT:Char):TTile; Static;
 
 			Function  CollidesOrOutside(Const cX,cY:Double):Boolean;
 			Function  Collides(Const cX,cY:Double):Boolean;
