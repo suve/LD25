@@ -208,11 +208,11 @@ Begin
 		DrawColourPreview(@CurrentCol, (RESOL_W - RectWidth) div 2, YPos);
 		
 		YPos += RectHeight + (Font^.CharH * Font^.Scale) div 2;
-		PrintMenuText('R - RED  ', (RESOL_W div 2), YPos, ALIGN_CENTRE, @WhiteColour, RedRect);
+		PrintMenuText('R - RED:   #'+HexStr(CurrentCol.R, 2), (RESOL_W div 2), YPos, ALIGN_CENTRE, @WhiteColour, RedRect);
 		YPos += ((Font^.CharH * Font^.Scale) * 3) div 2;
-		PrintMenuText('G - GREEN', (RESOL_W div 2), YPos, ALIGN_CENTRE, @WhiteColour, GreenRect);
+		PrintMenuText('G - GREEN: #'+HexStr(CurrentCol.G, 2), (RESOL_W div 2), YPos, ALIGN_CENTRE, @WhiteColour, GreenRect);
 		YPos += ((Font^.CharH * Font^.Scale) * 3) div 2;
-		PrintMenuText('B - BLUE ', (RESOL_W div 2), YPos, ALIGN_CENTRE, @WhiteColour, BlueRect);
+		PrintMenuText('B - BLUE:  #'+HexStr(CurrentCol.B, 2), (RESOL_W div 2), YPos, ALIGN_CENTRE, @WhiteColour, BlueRect);
 		YPos += ((Font^.CharH * Font^.Scale) * 3) div 2;
 		PrintMenuText('D - DEFAULT', (RESOL_W div 2), YPos, ALIGN_CENTRE, @WhiteColour, DefaultRect);
 		
