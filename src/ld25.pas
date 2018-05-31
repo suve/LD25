@@ -20,7 +20,7 @@ program ld25;
 
 uses
 	SysUtils, SDL2, SDL2_image, SDL2_mixer,
-	Colours, ConfigFiles, FloatingText, Fonts, Game, Images, Objects, Rooms, Shared
+	Assets, Colours, ConfigFiles, FloatingText, Fonts, Game, Images, Objects, Rooms, Shared
 ;
 
 
@@ -38,7 +38,7 @@ Begin
 	Font^.Scale := 1;
 	PrintText(
 		UpperCase('V.'+GAMEVERS+' (build '+GAMEDATE+')') {$IFDEF DEVELOPER}+' DEVELOPER'{$ENDIF},
-		Shared.Font,
+		Assets.Font,
 		(RESOL_W div 2), 82, 
 		ALIGN_CENTRE, ALIGN_MIDDLE,
 		@WhiteColour
@@ -49,9 +49,9 @@ Procedure PrintMenuText(Const Text:AnsiString; Const X, Y:sInt; Const AlignX: TH
 Var
 	W, H: sInt;
 Begin
-	PrintText(Text, Shared.Font, X, Y, AlignX, ALIGN_TOP, Colour);
+	PrintText(Text, Assets.Font, X, Y, AlignX, ALIGN_TOP, Colour);
 	
-	Fonts.GetTextSize(Text, Shared.Font, W, H);
+	Fonts.GetTextSize(Text, Assets.Font, W, H);
 	Rect.W := W; Rect.H := H;
 	
 	Rect.Y := Y;
@@ -74,6 +74,8 @@ Const
 Var
 	Rect:TSDL_Rect; Col:TSDL_Colour;
 Begin 
+	If(TitleGfx = NIL) or (Font = NIL) then Exit();
+	
 	Shared.BeginFrame();
 	DrawTitle();
 	
@@ -644,15 +646,10 @@ Begin
 		Halt(1)
 	end else
 		Writeln('Success!');
-	
-	Write('Loading basic resources... ');
-	If Not Shared.LoadBasics(S) then begin
-		Writeln('ERROR'); Writeln(S); Exit(False)
-	end else
-		Writeln('Success!');
 
-	Write('Loading gameworld resources... ');
-	If Not Shared.LoadRes(S,@LoadUpdate) then begin
+	Write('Loading assets... ');
+	RegisterAllAssets();
+	If Not LoadAssets(S, @LoadUpdate) then begin
 		Writeln('ERROR'); Writeln(S); Exit(False);
 	end else
 		Writeln('Success!');
@@ -682,8 +679,24 @@ Begin
 	Timu:=GetMSecs();
 	SDL_HideWindow(Shared.Window);
 	
-	Write('Freeing resouces... ');
-		Shared.Free();
+	If (GameOn) then begin
+		Write('Saving current game... ');
+		If (SaveGame(GameMode)) then
+			Writeln('Success.')
+		else
+			Writeln('Failed!');
+		
+		DestroyEntities();
+	end;
+	
+	Write('Saving configuration file... ');
+	If (SaveIni()) then
+		Writeln('Success.')
+	else
+		Writeln('Failed!');
+	
+	Write('Freeing assets... ');
+		Assets.FreeAssets();
 	Writeln('Done.');
 	
 	Write('Closing SDL2_Mixer... ');
@@ -702,22 +715,8 @@ Begin
 		SDL_Quit();
 	Writeln('Done.');
 	
-	If (GameOn) then begin
-		Write('Saving current game... ');
-		If (SaveGame(GameMode)) then
-			Writeln('Success.')
-		else
-			Writeln('Failed!')
-	end;
-	
-	Write('Saving configuration file... ');
-	If (SaveIni()) then
-		Writeln('Success.')
-	else
-		Writeln('Failed!');
-	
 	Writeln('Finalization finished in ',((GetMSecs-Timu)/1000):0:2,' second(s).');
-	Writeln('Thanks for playing and have a nice day!');
+	Writeln('Thanks for playing and have a nice day!')
 End;
 
 begin

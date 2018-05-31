@@ -135,18 +135,15 @@ Type
 	end;
 
 Var
-	OrgRoom:Array[0..(ORG_MAP_W-1), 0..(ORG_MAP_H-1)] of PRoom;
-	TutRoom:Array[0..(TUT_MAP_W-1), 0..(TUT_MAP_H-1)] of PRoom;
 	Room : PRoom;
 
 Function LoadRoom(Const rX, rY: sInt; Const Name:AnsiString):PRoom;
-Procedure FreeRooms();
 
 
 Implementation
 Uses
 	StrUtils, SysUtils,
-	Colours, FloatingText;
+	Assets, Colours, FloatingText;
 
 Function TRoom.ParseScript_If(Const LineNo: sInt; Const Tokens:Array of AnsiString; Out rsi:TRoomScriptInstruction):Boolean;
 Var
@@ -714,16 +711,6 @@ end;
 Destructor TRoom.Destroy();
 Begin
 	SetLength(Scri,0)
-End;
-
-Procedure FreeRooms();
-Var
-	X,Y:uInt;
-Begin
-	For Y:=0 to (ORG_MAP_H-1) do For X:=0 to (ORG_MAP_W-1) do
-		If (OrgRoom[X][Y]<>NIL) then Dispose(OrgRoom[X][Y],Destroy());
-	For Y:=0 to (TUT_MAP_H-1) do For X:=0 to (TUT_MAP_W-1) do
-		If (TutRoom[X][Y]<>NIL) then Dispose(TutRoom[X][Y],Destroy());
 End;
 
 Function LoadRoom(Const rX, rY: sInt; Const Name:AnsiString):PRoom;

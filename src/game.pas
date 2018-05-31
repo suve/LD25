@@ -28,7 +28,7 @@ Function PlayGame():Boolean;
 Implementation
 Uses
 	SDL2,
-	Colours, ConfigFiles, FloatingText, Fonts, Images, Objects, Rooms, Shared;
+	Assets, Colours, ConfigFiles, FloatingText, Fonts, Images, Objects, Rooms, Shared;
 
 Type
 	TRoomChange = (
@@ -569,9 +569,9 @@ Begin
 	Dst.H := TILE_H;
 	
 	If (Crystal.Col <> WOMAN) then
-		DrawImage(ColGfx, @Src, @Dst, @WhiteColour)
+		DrawImage(ColourGfx, @Src, @Dst, @WhiteColour)
 	else
-		DrawImage(ColGfx, @Src, @Dst, @CentralPalette[FrameTime div (1000 div 8)])
+		DrawImage(ColourGfx, @Src, @Dst, @CentralPalette[FrameTime div (1000 div 8)])
 End;
 
 Procedure DrawFloatingTexts();

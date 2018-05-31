@@ -14,14 +14,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *)
-unit shared; 
+Unit Shared; 
 
 {$INCLUDE defines.inc}
 
 
-interface
-
-uses SDL2, SDL2_mixer, Fonts, Images, Objects, SysUtils;
+Interface
+Uses
+	SysUtils,
+	SDL2, SDL2_mixer,
+	Objects;
 
 
 // A shitload of constants - but hey, this is the 'shared' unit, isn't it?
@@ -46,26 +48,10 @@ Type
 	TGameMode = (GM_TUTORIAL, GM_ORIGINAL);
 
 Const
-	ORG_MAP_W = 7; ORG_MAP_H = 7; ORG_ROOMNUM = ORG_MAP_W*ORG_MAP_H;
-	TUT_MAP_W = 3; TUT_MAP_H = 3; TUT_ROOMNUM = TUT_MAP_W*TUT_MAP_H;
-
 	RespRoom:Array[TGameMode] of TSDL_Point = ((X:0; Y:0), (X:3; Y:3));
 	RespPos:Array[TGameMode] of TSDL_Point = ((X:1; Y:3), (X:10; Y:6));
 
 	HERO_SPEED = TILE_S * 5; HERO_HEALTH = 50; HERO_FIREPOWER = 5; HERO_INVUL = 500;
-
-	GFX_HERO = 0; GFX_ENEM = 1;
-	CHARAS = 8; BULLETS = 5; SLIDES_IN = 6; SLIDES_OUT = 10;
-	OTHERS = 3; //tiles, ui, colours; icon gets loaded separately
-
-	WALL_SFX = 4; METAL_SFX = 3; DIE_SFX = 6; SHOT_SFX = 4; HIT_SFX = 1; EXTRA_SFX = 3;
-	SFX_WALL = 0; SFX_METAL = SFX_WALL+WALL_SFX; SFX_DIE = SFX_METAL+METAL_SFX;
-	SFX_SHOT = SFX_DIE+DIE_SFX; SFX_HIT = SFX_SHOT + SHOT_SFX; SFX_EXTRA = SFX_HIT+HIT_SFX;
-	SOUNDS = SFX_EXTRA + EXTRA_SFX;
-
-	FILES_TO_LOAD = CHARAS + BULLETS + SOUNDS + OTHERS + SLIDES_IN + SLIDES_OUT +
-				  ORG_ROOMNUM + TUT_ROOMNUM;
-	FILES_NOSOUND = FILES_TO_LOAD - SOUNDS;
 
 	AnimFPS = 16; AnimTime = 1000 div AnimFPS;
 
@@ -110,18 +96,6 @@ Var
 
 	Wnd_W, Wnd_H : uInt; // Window width, height and fullscreen flag.
 	Wnd_F : Boolean;     // These can be read from Screen, but we save the .ini after closing SDL.
-
-	IconSurf: PSDL_Surface;
-	TitleGfx, TileGfx, UIgfx, ColGfx : PImage;
-	CharaGfx : Array[0..CHARAS-1] of PImage;
-	ShotGfx  : Array[0..BULLETS-1] of PImage;
-	SlideIn  : Array[0..SLIDES_IN-1] of PImage;
-	SlideOut : Array[0..SLIDES_OUT-1] of PImage;  //Images, duh
-
-	Font, NumFont : PFont; //Fonts
-	FontImg, NumFontImg: PImage;
-
-	Sfx  : Array[0..SOUNDS-1] of PMix_Chunk; //Sfx array
 
 	Hero : PPlayer;
 	PBul, EBul : Array of PBullet;
@@ -207,19 +181,10 @@ Function ChangeRoom(NX,NY:sInt):Boolean;
 Procedure DestroyEntities(KillHero:Boolean=FALSE);
 Procedure ResetGamestate();
 
-// Load gfx and sfx, melady
-Function  LoadBasics(Out Status:AnsiString):Boolean;
-Function  LoadRes(Out Status:AnsiString; Const Update: UpdateProc = NIL):Boolean;
-Procedure LoadAndSetWindowIcon();
-
-// Free resources
-Procedure Free();
-
 
 Implementation
 Uses
-	SDL2_Image,
-	Colours, ConfigFiles, FloatingText, Rooms;
+	Assets, Colours, ConfigFiles, FloatingText, Rooms;
 
 Var
 	Tikku : uInt;
@@ -507,319 +472,9 @@ Begin
 End;
 
 
-Function CheckForExitEvent():Boolean;
-Var
-	ExitRequested: Boolean;
-Begin
-	ExitRequested := False;
-	While(SDL_PollEvent(@Ev) > 0) do Case(Ev.Type_) of
-		SDL_QuitEv:
-			ExitRequested := True;
-	end;
-	
-	Result := ExitRequested
-End;
+Initialization
+	Shutdown:=False; GameOn:=False; NoSound:=False;
+	Tikku := 0;
 
-{$DEFINE IGNORE_EVENTS := If(CheckForExitEvent()) then begin Status := 'Interrupted by user'; Exit(False) end;}
-
-const
-	GFX_TITLE = 'gfx/title.png';
-	FILE_FONT = 'gfx/font.png';
-	ICON_FILE = 'gfx/icon.png';
-	GFX_FILE : Array[0..CHARAS-1] of String = (
-		'gfx/hero.png','gfx/enem0.png','gfx/enem1.png','gfx/enem2.png','gfx/enem3.png',
-		'gfx/enem4.png','gfx/enem5.png','gfx/enem6.png'
-	);
-	FILE_TILES = 'gfx/tiles.png';
-	FILE_UI = 'gfx/ui.png';
-	FILE_COLOURS = 'gfx/colours.png';
-	NUMFONTFILE = 'gfx/numbers.png';
-	PATH_ORG = 'map/org/'; 
-	PATH_TUT = 'map/tut/';
-	
-	COLOUR_BLACK:TSDL_Colour = (R: 0; G: 0; B: 0; A: 255);
-	COLOUR_GREY:TSDL_Colour = (R: $80; G: $80; B: $80; A: 255);
-	COLOUR_LIME:TSDL_Colour = (R: 0; G: 255; B: 0; A: 255);
-
-Function LoadBasics(Out Status:AnsiString):Boolean;
-begin
-	TitleGfx:=LoadImage(DataPath+GFX_TITLE, @COLOUR_BLACK);
-	If (TitleGfx=NIL) then begin Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}GFX_TITLE+' ('+ImageError()+')'); Exit(False) end;
-	
-	IGNORE_EVENTS;
-
-	FontImg:=LoadImage(DataPath+FILE_FONT, @COLOUR_BLACK);
-	If (FontImg=NIL) then begin Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}FILE_FONT+' ('+ImageError()+')'); Exit(False) end;
-	Font:=FontFromImage(FontImg,#32,5,7);
-	Font^.SpacingX := 1;
-	Font^.SpacingY := 1;
-
-	IGNORE_EVENTS;
-	Exit(True)
-End;
-
-Function LoadRes_Sounds(Out Status: AnsiString; Var FilesLoaded, FilesTotal: sInt; Const Update: UpdateProc):Boolean;
-Var
-	i: sInt;
-	Filename: AnsiString;
-	Sample: PMix_Chunk;
-Begin
-	For i:=0 to (WALL_SFX - 1) do begin
-		WriteStr(Filename, 'sfx/wall',i,'.wav');
-		
-		Sample:=Mix_LoadWAV(PChar(DataPath+Filename));
-		If (Sample = NIL) then begin
-			Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}Filename; Exit(False)
-		end;
-		
-		Sfx[SFX_WALL+i]:=Sample;
-		FilesLoaded+=1; Update(Filename, FilesLoaded / FilesTotal); IGNORE_EVENTS
-	end;
-	For i:=0 to (METAL_SFX - 1) do begin
-		WriteStr(Filename, 'sfx/metal',i,'.wav');
-		
-		Sample:=Mix_LoadWAV(PChar(DataPath+Filename));
-		If (Sample = NIL) then begin
-			Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}Filename; Exit(False) 
-		end;
-		
-		Sfx[SFX_METAL+i]:=Sample;
-		FilesLoaded+=1; Update(Filename, FilesLoaded / FilesTotal); IGNORE_EVENTS
-	end;
-	For i:=0 to (DIE_SFX - 1) do begin
-		WriteStr(Filename, 'sfx/die',i,'.wav');
-		
-		Sample:=Mix_LoadWAV(PChar(DataPath+Filename));
-		If (Sample = NIL) then begin
-			Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}Filename; Exit(False)
-		end;
-		
-		Sfx[SFX_DIE+i]:=Sample;
-		FilesLoaded+=1; Update(Filename, FilesLoaded / FilesTotal); IGNORE_EVENTS
-	end;
-	For i:=0 to (SHOT_SFX - 1) do begin
-		WriteStr(Filename, 'sfx/shot',i,'.wav');
-		
-		Sample:=Mix_LoadWAV(PChar(DataPath+Filename));
-		If (Sample = NIL) then begin
-			Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}Filename; Exit(False)
-		end;
-		
-		Sfx[SFX_SHOT+i]:=Sample;
-		FilesLoaded+=1; Update(Filename, FilesLoaded / FilesTotal); IGNORE_EVENTS
-	end;
-	For i:=0 to (HIT_SFX - 1) do begin
-		WriteStr(Filename, 'sfx/hit',i,'.wav');
-		
-		Sample:=Mix_LoadWAV(PChar(DataPath+Filename));
-		If (Sample = NIL) then begin
-			Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}Filename; Exit(False)
-		end;
-		
-		Sfx[SFX_HIT+i]:=Sample;
-		FilesLoaded+=1; Update(Filename, FilesLoaded / FilesTotal); IGNORE_EVENTS
-	end;
-	For i:=0 to (EXTRA_SFX - 1) do begin
-		WriteStr(Filename, 'sfx/extra',i,'.wav');
-		
-		Sample:=Mix_LoadWAV(PChar(DataPath+Filename));
-		If (Sample = NIL) then begin
-			Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}Filename; Exit(False)
-		end;
-		
-		Sfx[SFX_EXTRA+i]:=Sample;
-		FilesLoaded+=1; Update(Filename, FilesLoaded / FilesTotal); IGNORE_EVENTS
-	end;
-	Exit(True)
-End;
-
-Function LoadRes(Out Status:AnsiString; Const Update: UpdateProc = NIL):Boolean;
-Var
-	FilesLoaded, FilesTotal: sInt; 
-	Filename: AnsiString;
-	X, Y, i: sInt;
-	
-	Img: PImage; 
-	Room: PRoom;
-Begin
-	FilesLoaded:=0;
-	If (Not NoSound)
-		then FilesTotal:=FILES_TO_LOAD
-		else FilesTotal:=FILES_NOSOUND;
-
-	// Numfont used for FPS display
-	NumFontImg:=LoadImage(DataPath+NUMFONTFILE, @COLOUR_BLACK);
-	If (NumFontImg = NIL) then begin
-		Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}NUMFONTFILE);
-		Exit(False)
-	end;
-	NumFont:=FontFromImage(NumFontImg, '0', 3, 5);
-	NumFont^.SpacingX := 1; NumFont^.SpacingY := 1;
-	FilesLoaded+=1; Update(NUMFONTFILE,FilesLoaded / FilesTotal); IGNORE_EVENTS;
-
-	TileGfx:=LoadImage(DataPath+FILE_TILES, @COLOUR_BLACK);
-	If (TileGfx = NIL) then begin
-		Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}FILE_TILES);
-		Exit(False)
-	end;
-	FilesLoaded+=1; Update(FILE_TILES,FilesLoaded / FilesTotal); IGNORE_EVENTS;
-
-	UIgfx:=LoadImage(DataPath+FILE_UI, @COLOUR_LIME);
-	If (UIgfx = NIL) then begin
-		Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}FILE_UI);
-		Exit(False)
-	end;
-	FilesLoaded+=1; Update(FILE_UI,FilesLoaded / FilesTotal); IGNORE_EVENTS;
-
-	ColGfx:=LoadImage(DataPath+FILE_COLOURS, @COLOUR_GREY);
-	If (ColGfx = NIL) then begin
-		Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}FILE_UI);
-		Exit(False)
-	end;
-	FilesLoaded+=1; Update(FILE_COLOURS,FilesLoaded / FilesTotal); IGNORE_EVENTS;
-   
-	// Load intro slides
-	For i:=0 to SLIDES_IN-1 do begin
-		WriteStr(Filename, 'intro/slide',i,'.png');
-		
-		Img:=LoadImage(DataPath+Filename, @COLOUR_BLACK);
-		If (Img=NIL) then begin
-			Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}Filename);
-			Exit(False)
-		end;
-		
-		SlideIn[i]:=Img;
-		FilesLoaded+=1; Update(Filename, FilesLoaded / FilesTotal); IGNORE_EVENTS
-	end;
-     
-	// Load outro slides  
-	For i:=0 to SLIDES_OUT-1 do begin
-		WriteStr(Filename, 'intro/out',i,'.png');
-		Img:=LoadImage(DataPath+Filename, @COLOUR_BLACK);
-		If (Img=NIL) then begin
-			Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}Filename);
-			Exit(False)
-		end;
-		
-		SlideOut[i]:=Img;
-		FilesLoaded+=1; Update(Filename, FilesLoaded / FilesTotal); IGNORE_EVENTS
-	end;
-
-	// Characters
-	For i:=0 to CHARAS-1 do begin
-		Img:=LoadImage(DataPath+GFX_FILE[i], @COLOUR_BLACK);
-		If (Img=NIL) then begin
-			Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}GFX_FILE[i]);
-			Exit(False)
-		end;
-		
-		CharaGfx[i]:=Img;
-		FilesLoaded+=1; Update(GFX_FILE[i],FilesLoaded / FilesTotal); IGNORE_EVENTS
-	end;
-
-	// Bullets
-	For i:=0 to BULLETS-1 do begin
-		WriteStr(Filename, 'gfx/shot',i,'.png');
-		Img:=LoadImage(DataPath+Filename, @COLOUR_BLACK);
-		If (Img=NIL) then begin
-			Status:=('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}Filename);
-			Exit(False)
-		end;
-		
-		ShotGfx[i]:=Img;
-		FilesLoaded+=1; Update(Filename, FilesLoaded / FilesTotal); IGNORE_EVENTS
-	end;
-
-	If (Not NoSound) then begin
-		If (Not LoadRes_Sounds(Status, FilesLoaded, FilesTotal, Update)) then Exit(False)
-	end;
-      
-	// Maps. Original levels first, tutorial second.
-	For Y:=0 to (ORG_MAP_H-1) do For X:=0 to (ORG_MAP_W-1) do begin
-		WriteStr(Filename, PATH_ORG,X,'-',Y,'.txt');
-		
-		Room:=LoadRoom(X, Y, DataPath+Filename);
-		If (Room = NIL) then begin
-			Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}Filename;
-			Exit(False) 
-		end;
-		
-		Room^.X:=X; Room^.Y:=Y; OrgRoom[X][Y]:=Room;
-		FilesLoaded+=1; Update(Filename, FilesLoaded / FilesTotal); IGNORE_EVENTS
-	end;
-	For Y:=0 to (TUT_MAP_H-1) do For X:=0 to (TUT_MAP_W-1) do begin
-		WriteStr(Filename, PATH_TUT,X,'-',Y,'.txt');
-		
-		Room:=LoadRoom(X, Y, DataPath+Filename);
-		If (Room = NIL) then begin
-			Status:='Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}Filename;
-			Exit(False)
-		end;
-		
-		Room^.X:=X; Room^.Y:=Y; TutRoom[X][Y]:=Room;
-		FilesLoaded+=1; Update(Filename, FilesLoaded / FilesTotal); IGNORE_EVENTS
-	end;
-       
-	Exit(True)
-End;
-
-Procedure LoadAndSetWindowIcon();
-Begin
-	If(IconSurf = NIL) then begin
-		IconSurf:=IMG_Load(PChar(DataPath+ICON_FILE));
-		
-		If (IconSurf = NIL) then begin
-			Writeln('Failed to load file: '+{$IFDEF PACKAGE}DataPath+{$ENDIF}ICON_FILE);
-			Exit()
-		end
-	end;
-	
-	SDL_SetWindowIcon(Window, IconSurf)
-End;
-
-Procedure Free;
-Var C:uInt;
-Begin
-	(* Since this is called only on program exit, it doesn't
-	 * really matter if we forget anything. It will all be freed
-	 * by the OS when the program dies, afterall. *)
-
-	If (IconSurf<>NIL) then begin
-		SDL_SetWindowIcon(Window, NIL);
-		SDL_FreeSurface(IconSurf);
-	end;
-
-	If (TitleGfx<>NIL) then FreeImage(TitleGfx);
-	If (Font<>NIL) then FreeFont(Font);
-	If (FontImg<>NIL) then FreeImage(FontImg);
-	If (NumFont<>NIL) then FreeFont(NumFont);
-	If (NumFontImg<>NIL) then FreeImage(NumFontImg);
-	If (UIgfx<>NIL) then FreeImage(UIgfx);
-	If (TileGfx<>NIL) then FreeImage(TileGfx);
-	If (ColGfx<>NIL) then FreeImage(ColGfx);
-	For C:=Low(SlideOut) to High(SlideOut) do
-		If (SlideOut[C]<>NIL) then FreeImage(SlideOut[C]);
-	For C:=Low(SlideIn) to High(SlideIn) do
-		If (SlideIn[C]<>NIL) then FreeImage(SlideIn[C]);
-	For C:=0 to CHARAS-1 do
-		If (CharaGfx[C]<>NIL) then FreeImage(CharaGfx[C]);
-	For C:=0 to BULLETS-1 do
-		If (ShotGfx[C]<>NIL) then FreeImage(ShotGfx[C]);
-	If (Not NoSound) then begin
-		Mix_HaltChannel(-1);     //Halt all playing sounds
-		Mix_AllocateChannels(0); //Free all sfx channels
-		(* We do the two above to make sure no sound is being played.
-		 * Freeing a sample (Chunk) that is being played is a bad idea. *)
-		For C:=0 to (SOUNDS-1) do
-			If (Sfx[C] <> NIL) then Mix_FreeChunk(Sfx[C])
-	end;
-	DestroyEntities(True);
-	FreeRooms();
-End;
-
-initialization
-   Shutdown:=False; GameOn:=False; NoSound:=False;
-   Tikku := 0;
-
-end.
+End.
 

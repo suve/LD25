@@ -18,8 +18,12 @@ unit objects;
 
 {$INCLUDE defines.inc}
 
-interface
-	uses SysUtils, SDL2, Images;
+Interface
+Uses
+	SysUtils,
+	SDL2, 
+	Images;
+
 
 Type
     TFacing = 0..1;
@@ -203,7 +207,7 @@ Type
 
 Implementation
 Uses
-	Colours, Shared;
+	Assets, Colours, Shared;
 
 Const
 	TwoRoot = Sqrt(2);
@@ -285,7 +289,7 @@ End;
 Constructor TBullet.Create(Index:uInt);
 Begin
 	Inherited Create();
-	Gfx:=ShotGfx[Index];
+	Gfx:=BulletGfx[Index];
 	W:=Gfx^.W div 2; H:=Gfx^.H;
 End;
 
@@ -347,7 +351,7 @@ Constructor TPlayer.Create();
 Begin
 	Inherited Create();
 	mX:=RespPos[GameMode].X; mY:=RespPos[GameMode].Y;
-	Gfx:=CharaGfx[GFX_HERO];
+	Gfx:=HeroGfx;
 	Col:=@GreyColour;
 	
 	Self.SetLevel(0)
@@ -387,7 +391,7 @@ End;
 Constructor TDrone.Create();
 Begin 
 	Inherited Create();
-	Gfx:=CharaGfx[GFX_ENEM]; SfxID:=SFX_DIE+3;
+	Gfx:=EnemyGfx[0]; SfxID:=SFX_DIE+3;
 	ChaseTime:=RndInt(800,0.2); IdleTime:=RndInt(200,0.2);
 	Chase:=False; Timer:=IdleTime div 2;
 	HP:=5.75
@@ -445,7 +449,7 @@ End;
 Constructor TBasher.Create();
 Begin
 	Inherited Create();
-	Gfx:=CharaGfx[GFX_ENEM+3]; SfxID:=SFX_DIE+3;
+	Gfx:=EnemyGfx[3]; SfxID:=SFX_DIE+3;
 	BashTime:=RndInt(1500,0.2); IdleTime:=RndInt(100,0.2);
 	AccelTime:=(BashTime div 10);
 	Bash:=False; Timer:=IdleTime;
@@ -473,7 +477,7 @@ End;
 Constructor TBall.Create();
 Begin
 	Inherited Create();
-	Gfx:=CharaGfx[GFX_ENEM+2]; SfxID:=SFX_DIE+2;
+	Gfx:=EnemyGfx[2]; SfxID:=SFX_DIE+2;
 	HP:=9.75
 End;
 
@@ -518,7 +522,7 @@ End;
 Constructor TSpitter.Create();
 Begin
 	Inherited Create();
-	Gfx:=CharaGfx[GFX_ENEM+1]; SfxID:=SFX_DIE+4;
+	Gfx:=EnemyGfx[1]; SfxID:=SFX_DIE+4;
 	MoveTime:=RndInt(444,0.2); IdleTime:=RndInt(100,0.2); FireInterval:=RndInt(1200,0.2);
 	Move:=False; MoveTimer:=IdleTime; FireTimer:=(FireInterval * 5) div 6;
 	HP:=12
@@ -558,7 +562,7 @@ End;
 Constructor TSpammer.Create();
 Begin
 	Inherited Create();
-	Gfx:=CharaGfx[GFX_ENEM+4]; SfxID:=SFX_DIE+4;
+	Gfx:=EnemyGfx[4]; SfxID:=SFX_DIE+4;
 	FireInterval:=RndInt(800,0.2);
 	MoveTimer:=Random(100,333); FireTimer:=(FireInterval*10) div 8;
 	Angle:=Random(2000)*Pi/1000;
@@ -609,7 +613,7 @@ End;
 Constructor TGenerator.Create();
 Begin
 	Inherited Create();
-	Gfx:=CharaGfx[GFX_ENEM+5]; SfxID:=SFX_DIE+0;
+	Gfx:=EnemyGfx[5]; SfxID:=SFX_DIE+0;
 	BigTimer:=2000; SmallTimer:=2000;
 	HP:=64
 End;
@@ -653,7 +657,7 @@ End;
 Constructor TTurret.Create();
 Begin
 	Inherited Create();
-	Gfx:=CharaGfx[GFX_ENEM+6]; SfxID:=SFX_DIE+5;
+	Gfx:=EnemyGfx[6]; SfxID:=SFX_DIE+5;
 	NorTime:=1000; SpamTime:=1800;
 	HP:=27
 End;

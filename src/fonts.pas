@@ -199,8 +199,8 @@ Begin
 	Fnt^.StartChar := StartChar;
 	Fnt^.CharW := CharW;
 	Fnt^.CharH := CharH;
-	Fnt^.SpacingX := 0;
-	Fnt^.SpacingY := 0;
+	Fnt^.SpacingX := 1;
+	Fnt^.SpacingY := 1;
 	Fnt^.Scale := 1;
 	
 	Result := Fnt
