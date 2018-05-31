@@ -23,7 +23,7 @@ Interface
 Uses
 	SysUtils,
 	SDL2, SDL2_mixer,
-	Objects;
+	Entities;
 
 
 // A shitload of constants - but hey, this is the 'shared' unit, isn't it?
