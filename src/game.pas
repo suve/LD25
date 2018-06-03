@@ -276,41 +276,46 @@ Begin
 	end
 End;
 
+Procedure CalculateBulletMovement(Const Bullet:PBullet; Const Time: uInt);
+Var
+	XDif, YDif, ChkX, ChkY: Double;
+Begin
+	XDif:=Bullet^.XVel*Time/1000; YDif:=Bullet^.YVel*Time/1000;
+	If (XDif<>0) then begin
+		If (XDif<0) then ChkX:=Bullet^.X else ChkX:=Bullet^.X+Bullet^.W-1;
+		
+		If (Room^.CollidesOrOutside(ChkX+XDif,Bullet^.Y)) then begin
+			Room^.HitSfx(ChkX+XDif,Bullet^.Y); Bullet^.HP:=-10 
+		end else
+		If (Room^.CollidesOrOutside(ChkX+XDif,Bullet^.Y+Bullet^.H-1)) then begin 
+			Room^.HitSfx(ChkX+XDif,Bullet^.Y+Bullet^.H-1); Bullet^.HP:=-10
+		end else
+			Bullet^.X:=Bullet^.X+XDif
+	end;
+		
+	If (YDif<>0) then begin
+		If (YDif<0) then ChkY:=Bullet^.Y else ChkY:=Bullet^.Y+Bullet^.H-1;
+		
+		If (Room^.CollidesOrOutside(Bullet^.X,ChkY+YDif)) then begin 
+			Room^.HitSfx(Bullet^.X,ChkY+YDif); Bullet^.HP:=-10 
+		end else
+		If (Room^.CollidesOrOutside(Bullet^.X+Bullet^.W-1,ChkY+YDif)) then begin 
+			Room^.HitSfx(Bullet^.X+Bullet^.W-1,ChkY+YDif); Bullet^.HP:=-10
+		end else
+			Bullet^.Y:=Bullet^.Y+YDif
+	end;
+End;
+
 Procedure CalculatePlayerBullets(Const Time:uInt);
 Var
 	B, M: sInt;
-	XDif, YDif, ChkX, ChkY: Double;
 Begin
 	If (Length(PBul)=0) then Exit;
 	
 	For B:=Low(PBul) to High(PBul) do begin
 		If (PBul[B]=NIL) then Continue;
 		
-		XDif:=PBul[B]^.XVel*Time/1000; YDif:=PBul[B]^.YVel*Time/1000;
-		If (XDif<>0) then begin
-			If (XDif<0) then ChkX:=PBul[B]^.X else ChkX:=PBul[B]^.X+PBul[B]^.W-1;
-			
-			If (Room^.CollidesOrOutside(ChkX+XDif,PBul[B]^.Y)) then begin
-				Room^.HitSfx(ChkX+XDif,PBul[B]^.Y); PBul[B]^.HP:=-10 
-			end else
-			If (Room^.CollidesOrOutside(ChkX+XDif,PBul[B]^.Y+PBul[B]^.H-1)) then begin 
-				Room^.HitSfx(ChkX+XDif,PBul[B]^.Y+PBul[B]^.H-1); PBul[B]^.HP:=-10
-			end else
-				PBul[B]^.X:=PBul[B]^.X+XDif
-		end;
-			
-		If (YDif<>0) then begin
-			If (YDif<0) then ChkY:=PBul[B]^.Y else ChkY:=PBul[B]^.Y+PBul[B]^.H-1;
-			
-			If (Room^.CollidesOrOutside(PBul[B]^.X,ChkY+YDif)) then begin 
-				Room^.HitSfx(PBul[B]^.X,ChkY+YDif); PBul[B]^.HP:=-10 
-			end else
-			If (Room^.CollidesOrOutside(PBul[B]^.X+PBul[B]^.W-1,ChkY+YDif)) then begin 
-				Room^.HitSfx(PBul[B]^.X+PBul[B]^.W-1,ChkY+YDif); PBul[B]^.HP:=-10
-			end else
-				PBul[B]^.Y:=PBul[B]^.Y+YDif
-		end;
-		
+		CalculateBulletMovement(PBul[B], Time);
 		If (PBul[B]^.HP <= 0) then begin
 			Dispose(PBul[B],Destroy()); PBul[B]:=NIL; 
 			Continue 
@@ -335,40 +340,13 @@ End;
 Procedure CalculateEnemyBullets(Const Time:uInt);
 Var
 	B: sInt;
-	XDif, YDif, ChkX, ChkY: Double;
 Begin
 	If (Length(EBul)=0) then Exit;
 	
 	For B:=Low(EBul) to High(EBul) do begin
 		If (EBul[B]=NIL) then Continue;
 		
-		XDif:=EBul[B]^.XVel*Time/1000; 
-		YDif:=EBul[B]^.YVel*Time/1000;
-		
-		If (XDif<>0) then begin
-			If (XDif<0) then ChkX:=EBul[B]^.X else ChkX:=EBul[B]^.X+EBul[B]^.W-1;
-			
-			If (Room^.CollidesOrOutside(ChkX+XDif,EBul[B]^.Y)) then begin 
-				Room^.HitSfx(ChkX+XDif,EBul[B]^.Y); EBul[B]^.HP:=-10 
-			end else
-			If (Room^.CollidesOrOutside(ChkX+XDif,EBul[B]^.Y+EBul[B]^.H-1)) then begin
-				Room^.HitSfx(ChkX+XDif,EBul[B]^.Y+EBul[B]^.H-1); EBul[B]^.HP:=-10 
-			end else
-				EBul[B]^.X:=EBul[B]^.X+XDif
-		end;
-		
-		If (YDif<>0) then begin
-			If (YDif<0) then ChkY:=EBul[B]^.Y else ChkY:=EBul[B]^.Y+EBul[B]^.H-1;
-			
-			If (Room^.CollidesOrOutside(EBul[B]^.X,ChkY+YDif)) then begin 
-				Room^.HitSfx(EBul[B]^.X,ChkY+YDif); EBul[B]^.HP:=-10 
-			end else
-			If (Room^.CollidesOrOutside(EBul[B]^.X+EBul[B]^.W-1,ChkY+YDif)) then begin 
-				Room^.HitSfx(EBul[B]^.X+EBul[B]^.W-1,ChkY+YDif); EBul[B]^.HP:=-10
-			end else
-				EBul[B]^.Y:=EBul[B]^.Y+YDif
-		end;
-		
+		CalculateBulletMovement(EBul[B], Time);
 		If (EBul[B]^.HP <= 0) then begin
 			Dispose(EBul[B],Destroy()); EBul[B]:=NIL;
 			Continue 
