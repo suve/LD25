@@ -45,11 +45,11 @@ const
 	SWITCHES = 100;
 
 Type
-	TGameMode = (GM_TUTORIAL, GM_ORIGINAL);
+	TGameMode = (GM_TUTORIAL, GM_ORIGINAL, GM_NEWWORLD);
 
 Const
-	RespRoom:Array[TGameMode] of TSDL_Point = ((X:0; Y:0), (X:3; Y:3));
-	RespPos:Array[TGameMode] of TSDL_Point = ((X:1; Y:3), (X:10; Y:6));
+	RespRoom:Array[TGameMode] of TSDL_Point = ((X:0; Y:0), (X:3; Y:3), (X:4;Y:4));
+	RespPos:Array[TGameMode] of TSDL_Point = ((X:1; Y:3), (X:10; Y:6), (X:10; Y:6));
 
 	HERO_SPEED = TILE_S * 5; HERO_HEALTH = 50; HERO_FIREPOWER = 5; HERO_INVUL = 500;
 
@@ -417,6 +417,7 @@ Function ChangeRoom(NX,NY:sInt):Boolean;
    Case GameMode of
       GM_TUTORIAL: NoRoom:=(NX<0) or (NY<0) or (NX>=TUT_MAP_W) or (NY>=TUT_MAP_H) or (TutRoom[NX][NY]=NIL);
       GM_ORIGINAL: NoRoom:=(NX<0) or (NY<0) or (NX>=ORG_MAP_W) or (NY>=ORG_MAP_H) or (OrgRoom[NX][NY]=NIL);
+      GM_NEWWORLD: NoRoom:=(NX<0) or (NY<0) or (NX>=NEW_MAP_W) or (NY>=NEW_MAP_H) or (NewRoom[NX][NY]=NIL);
       otherwise Exit(False)
       end;
    If (NoRoom) then begin
@@ -426,6 +427,7 @@ Function ChangeRoom(NX,NY:sInt):Boolean;
    Case GameMode of
       GM_TUTORIAL: Room:=TutRoom[NX][NY];
       GM_ORIGINAL: Room:=OrgRoom[NX][NY];
+      GM_NEWWORLD: Room:=NewRoom[NX][NY];
       end;
    Room^.RunScript();
    If (GameMode=GM_TUTORIAL) then Hero^.HP:=Hero^.MaxHP;

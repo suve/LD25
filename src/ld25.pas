@@ -309,8 +309,9 @@ End;
 Function GameworldDialog(Const Load:Boolean):Char;
 Const
 	WorldNames:Array[TGameMode] of AnsiString = (
-		'T - TUTORIAL',
-		'N - NORMAL  '
+		'T - TUTORIAL ',
+		'C - CLASSIC  ',
+		'N - NEW WORLD'
 	);
 Var
 	WorldRect:Array[TGameMode] of TSDL_Rect;
@@ -350,8 +351,11 @@ Begin
 				If (Ev.Key.Keysym.Sym = SDLK_T) then begin
 					If (OK[GM_TUTORIAL]) then Choice:='T' 
 				end else
+				If (Ev.Key.Keysym.sym = SDLK_C) then begin
+					If (Ok[GM_ORIGINAL]) then Choice:='C'
+				end else
 				If (Ev.Key.Keysym.sym = SDLK_N) then begin
-					If (Ok[GM_ORIGINAL]) then Choice:='N'
+					If (Ok[GM_NEWWORLD]) then Choice:='N'
 				end else
 			end else
 			If(Ev.Type_ = SDL_MouseButtonDown) then begin
@@ -359,7 +363,10 @@ Begin
 					If (OK[GM_TUTORIAL]) then Choice:='T' 
 				end else
 				If (MouseInRect(WorldRect[GM_ORIGINAL])) then begin
-					If (Ok[GM_ORIGINAL]) then Choice:='N'
+					If (Ok[GM_ORIGINAL]) then Choice:='C'
+				end else
+				If (MouseInRect(WorldRect[GM_NEWWORLD])) then begin
+					If (Ok[GM_NEWWORLD]) then Choice:='N'
 				end else
 			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
@@ -659,19 +666,31 @@ Begin
 	Exit(True)
 End;
 
-Procedure NewGame_Turotial();
-   begin
-   GameMode:=GM_Tutorial; GameOn:=True;
-   DestroyEntities(True); ResetGamestate();
-   New(Hero,Create()); ChangeRoom(RespRoom[GM_Tutorial].X,RespRoom[GM_TUTORIAL].Y);
-   end;
+Procedure NewGame(Const GM:TGameMode);
+Begin
+	GameMode:=GM;
+	DestroyEntities(True); ResetGamestate();
+	New(Hero,Create()); ChangeRoom(RespRoom[GM].X,RespRoom[GM].Y);
+	GameOn:=True
+End;
 
-Procedure NewGame_Original();
-   begin
-   GameMode:=GM_ORIGINAL; GameOn:=True;
-   DestroyEntities(True); ResetGamestate();
-   New(Hero,Create()); ChangeRoom(RespRoom[GM_Original].X,RespRoom[GM_Original].Y);
-   end;
+Function GameloadRequest(Const GM:TGameMode):Boolean;
+Begin
+	If((GameOn) and (GM <> GameMode)) then begin
+		Write('Saving current game... ');
+		If (SaveGame(GameMode)) then
+			Writeln('Done.')
+		else
+			Writeln('Failed!')
+	end;
+	
+	Write('Loading game... ');
+	Result := LoadGame(GM_TUTORIAL);
+	If(Result) then
+		Writeln('Done.')
+	else
+		Writeln('Failed!')
+End;
 
 Procedure QuitProg();
 Var Timu:Comp;
@@ -737,22 +756,18 @@ Repeat
               Write('Saving current game... ');
               If (SaveGame(GameMode)) then Writeln('Done.') end;
            Case MenuChoice of
-              'T': begin NewGame_Turotial(); PlayGame() end;
-              'N': begin NewGame_Original(); PlayGame() end;
+              'T': begin NewGame(GM_TUTORIAL); PlayGame() end;
+              'C': begin NewGame(GM_ORIGINAL); PlayGame() end;
+              'N': begin NewGame(GM_NEWWORLD); PlayGame() end;
               end;
            MenuChoice:='N'
            end;
       'L': begin
            MenuChoice:=GameworldDialog(True);
-           If (MenuChoice<>'Q') and (GameOn) and
-              ((MenuChoice='T') xor (GameMode=GM_TUTORIAL)) then begin
-              Write('Saving current game... ');
-              If (SaveGame(GameMode)) then Writeln('Done.') end;
            Case MenuChoice of
-              'T': begin Write('Loading game... '); If LoadGame(GM_TUTORIAL) then begin
-                         Writeln('Done.'); PlayGame() end end;
-              'N': begin Write('Loading game... '); If LoadGame(GM_ORIGINAL) then begin
-                         Writeln('Done.'); PlayGame() end end;
+              'T': If(GameloadRequest(GM_TUTORIAL)) then PlayGame();
+              'C': If(GameloadRequest(GM_ORIGINAL)) then PlayGame();
+              'N': If(GameloadRequest(GM_NEWWORLD)) then PlayGame();
               end;
            MenuChoice:='L'
            end;

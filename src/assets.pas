@@ -26,6 +26,7 @@ Uses
 	Fonts, Images, Rooms, Shared;
 
 Const
+	NEW_MAP_W = 10; NEW_MAP_H = 10; NEW_ROOMNUM = NEW_MAP_W*NEW_MAP_H;
 	ORG_MAP_W = 7; ORG_MAP_H = 7; ORG_ROOMNUM = ORG_MAP_W*ORG_MAP_H;
 	TUT_MAP_W = 3; TUT_MAP_H = 3; TUT_ROOMNUM = TUT_MAP_W*TUT_MAP_H;
 	
@@ -52,6 +53,7 @@ Var
 
 	Sfx: Array[0..SOUNDS-1] of PMix_Chunk;
 	
+	NEWRoom:Array[0..(NEW_MAP_W-1), 0..(NEW_MAP_H-1)] of PRoom;
 	OrgRoom:Array[0..(ORG_MAP_W-1), 0..(ORG_MAP_H-1)] of PRoom;
 	TutRoom:Array[0..(TUT_MAP_W-1), 0..(TUT_MAP_H-1)] of PRoom;
 
@@ -204,6 +206,10 @@ Begin
 	For Y:=0 to (ORG_MAP_H-1) do
 		For X:=0 to (ORG_MAP_W-1) do
 			RegisterRoom('map/org/' + IntToStr(X) + '-' + IntToStr(Y) + '.txt', @OrgRoom[X][Y], X, Y);
+	
+	For Y:=0 to (NEW_MAP_H-1) do
+		For X:=0 to (NEW_MAP_W-1) do
+			RegisterRoom('map/new/' + IntToStr(X) + '-' + IntToStr(Y) + '.txt', @NewRoom[X][Y], X, Y);
 	
 	
 	// ----- SOUNDS -----
