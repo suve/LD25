@@ -24,33 +24,39 @@ FPC ?= fpc
 FLAGS_SDL2 = -Fu./SDL2/
 
 # Compile-time warnings and hints, line info for debugging, basic optimisations
-FLAGS_DEBUG   = -vewnh -gl -OG1
+FLAGS_DEBUG   = -vewnh -gl -OG1 -dDEVELOPER
 
 # Disable compile-time hints; enable level 3 optimisations; strip symbols
 FLAGS_RELEASE = -vewn -Xs -XX -CX -OG3
 
 # Disable compile-time hints; enable level 3 optimisations; include gdb debug symbols
 # The gdb debug symbols are needed for generating a -debug package.
-FLAGS_PACKAGE = -vewn -OG3 -g
+FLAGS_PACKAGE = -vewn -OG3 -g -dPACKAGE
 
 
-.PHONY = debug release package clean
+## -- Start .PHONY targets
 
+.PHONY = clean executable executable-debug executable-release executable-package
 
-debug:
-	mkdir -p build/obj/
-	$(FPC) $(FLAGS_SDL2) $(FLAGS_DEBUG)   -dDEVELOPER -o'build/obj/colorful' src/ld25.pas
-	cp -a build/obj/colorful build/
+executable-debug:
+	FPC_FLAGS="$(FLAGS_DEBUG)" make executable
 
-release:
-	mkdir -p build/obj/
-	$(FPC) $(FLAGS_SDL2) $(FLAGS_RELEASE)             -o'build/obj/colorful' src/ld25.pas
-	cp -a build/obj/colorful build/
+executable-release:
+	FPC_FLAGS="$(FLAGS_RELEASE)" make executable
 
-package:
-	mkdir -p build/obj/
-	$(FPC) $(FLAGS_SDL2) $(FLAGS_PACKAGE) -dPACKAGE   -o'build/obj/colorful' src/ld25.pas  
-	cp -a build/obj/colorful build/
+executable-package:
+	FPC_FLAGS="$(FLAGS_PACKAGE)" make executable
+
+executable: build/colorful
 
 clean:
 	rm -rf build/
+
+# -- End .PHONY targets
+
+build/colorful: build/obj/colorful
+	cp -a "$<" "$@"
+
+build/obj/colorful: src/ld25.pas
+	mkdir -p "$(dir $@)"
+	$(FPC) $(FLAGS_SDL2) $(FPC_FLAGS) -o'$@' '$<'  
