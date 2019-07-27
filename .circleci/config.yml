@@ -13,7 +13,7 @@ jobs:
           name: Install dependencies
           command: >
             sudo dnf install --assumeyes --setopt=install_weak_deps=False
-            findutils fpc git glibc-devel make optipng vorbis-tools
+            findutils fpc git glibc-devel make
             SDL2-devel SDL2_image-devel SDL2_mixer-devel
       - checkout
       - run:
@@ -21,9 +21,9 @@ jobs:
           command: >
             git submodule init && git submodule update
       - run:
-          name: Build
+          name: make executable
           command: >
-            make -j1
+            make -j1 executable-debug
 
 workflows:
   build:
