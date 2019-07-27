@@ -42,17 +42,20 @@ SOURCES := $(filter-out '*ld25.pas', $(shell find src/ -name '*.{pas,inc}'))
 GFX_SOURCES := $(shell find gfx/ -name '*.png')
 GFX_TARGETS := $(GFX_SOURCES:gfx/%.png=build/gfx/%.png)
 
-SLIDE_SOURCES := $(shell find slides/ -name '*.png')
-SLIDE_TARGETS := $(SLIDE_SOURCES:slides/%.png=build/slides/%.png)
+MAP_SOURCES := $(shell find map/ -name '*.txt')
+MAP_TARGETS := $(MAP_SOURCES:map/%.txt=build/map/%.txt)
 
 SFX_SOURCES := $(shell find sfx/ -name '*.wav')
 SFX_TARGETS := $(SFX_SOURCES:sfx/%.wav=build/sfx/%.ogg)
+
+SLIDE_SOURCES := $(shell find slides/ -name '*.png')
+SLIDE_TARGETS := $(SLIDE_SOURCES:slides/%.png=build/slides/%.png)
 
 ## -- Start .PHONY targets
 
 .PHONY = assets clean executable executable-debug executable-release executable-package
 
-assets: $(GFX_TARGETS) $(SLIDE_TARGETS) $(SFX_TARGETS)
+assets: $(GFX_TARGETS) $(MAP_TARGETS) $(SFX_TARGETS) $(SLIDE_TARGETS)
 
 executable-debug:
 	FPC_FLAGS="$(FLAGS_DEBUG)" make executable
@@ -77,13 +80,17 @@ build/gfx/%.png: gfx/%.png
 	mkdir -p "$(dir $@)"
 	optipng -clobber -out "$@" "$<" >/dev/null 2>/dev/null
 
-build/slides/%.png: slides/%.png
+build/map/%.txt: map/%.txt
 	mkdir -p "$(dir $@)"
-	optipng -clobber -out "$@" "$<" >/dev/null 2>/dev/null
+	sed -e 's|\r$$||g' -e 's|^[\t]*||g' -e 's| 0*\([0-9][0-9]*\)| \1|g' < "$<" > "$@"
 
 build/sfx/%.ogg: sfx/%.wav
 	mkdir -p "$(dir $@)"
 	oggenc --quiet --quality=10 -o "$@" "$<"
+
+build/slides/%.png: slides/%.png
+	mkdir -p "$(dir $@)"
+	optipng -clobber -out "$@" "$<" >/dev/null 2>/dev/null
 
 build/obj/colorful: src/ld25.pas $(SOURCES)
 	mkdir -p "$(dir $@)"
