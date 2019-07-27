@@ -23,7 +23,7 @@ jobs:
       - run:
           name: Build
           command: >
-            cd src/ && make -j1
+            make -j1
 
 workflows:
   build:

@@ -1,7 +1,7 @@
 #########################################################################
 #                                                                       #
 # colorful - simple 2D sideview shooter                                 #
-# Copyright (C) 2012-2017 Artur Iwicki                                  #
+# Copyright (C) 2012-2019 Artur "suve" Iwicki                           #
 #                                                                       #
 # This program is free software: you can redistribute it and/or modify  #
 # it under the terms of the GNU General Public License, version 3,      #
@@ -38,13 +38,13 @@ FLAGS_PACKAGE = -vewn -OG3 -g
 
 
 debug:
-	$(FPC) $(FLAGS_SDL2) $(FLAGS_DEBUG)   -dDEVELOPER -o'colorful' ld25.pas
+	cd src/ && $(FPC) $(FLAGS_SDL2) $(FLAGS_DEBUG)   -dDEVELOPER -o'colorful' ld25.pas
 
 release:
-	$(FPC) $(FLAGS_SDL2) $(FLAGS_RELEASE)             -o'colorful' ld25.pas
+	cd src/ && $(FPC) $(FLAGS_SDL2) $(FLAGS_RELEASE)             -o'colorful' ld25.pas
 
 package:
-	$(FPC) $(FLAGS_SDL2) $(FLAGS_PACKAGE) -dPACKAGE   -o'colorful' ld25.pas  
+	cd src/ && $(FPC) $(FLAGS_SDL2) $(FLAGS_PACKAGE) -dPACKAGE   -o'colorful' ld25.pas  
 
 clean:
-	rm *.o *.ppu *.a || echo 'Already clean!'
+	rm src/*.o src/*.ppu src/*.a || echo 'Already clean!'
