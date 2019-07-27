@@ -9,5 +9,6 @@
 *.patch
 
 *.*~
+build/*
 var/*
 

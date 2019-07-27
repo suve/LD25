@@ -21,7 +21,7 @@
 FPC ?= fpc
 
 # We need to set up SDL2 file location flags appropriately
-FLAGS_SDL2 = -Fu../SDL2/
+FLAGS_SDL2 = -Fu./SDL2/
 
 # Compile-time warnings and hints, line info for debugging, basic optimisations
 FLAGS_DEBUG   = -vewnh -gl -OG1
@@ -38,13 +38,19 @@ FLAGS_PACKAGE = -vewn -OG3 -g
 
 
 debug:
-	cd src/ && $(FPC) $(FLAGS_SDL2) $(FLAGS_DEBUG)   -dDEVELOPER -o'colorful' ld25.pas
+	mkdir -p build/obj/
+	$(FPC) $(FLAGS_SDL2) $(FLAGS_DEBUG)   -dDEVELOPER -o'build/obj/colorful' src/ld25.pas
+	cp -a build/obj/colorful build/
 
 release:
-	cd src/ && $(FPC) $(FLAGS_SDL2) $(FLAGS_RELEASE)             -o'colorful' ld25.pas
+	mkdir -p build/obj/
+	$(FPC) $(FLAGS_SDL2) $(FLAGS_RELEASE)             -o'build/obj/colorful' src/ld25.pas
+	cp -a build/obj/colorful build/
 
 package:
-	cd src/ && $(FPC) $(FLAGS_SDL2) $(FLAGS_PACKAGE) -dPACKAGE   -o'colorful' ld25.pas  
+	mkdir -p build/obj/
+	$(FPC) $(FLAGS_SDL2) $(FLAGS_PACKAGE) -dPACKAGE   -o'build/obj/colorful' src/ld25.pas  
+	cp -a build/obj/colorful build/
 
 clean:
-	rm src/*.o src/*.ppu src/*.a || echo 'Already clean!'
+	rm -rf build/
