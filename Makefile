@@ -34,6 +34,11 @@ FLAGS_RELEASE = -vewn -Xs -XX -CX -OG3
 FLAGS_PACKAGE = -vewn -OG3 -g -dPACKAGE
 
 
+## -- End vars
+## -- Start scanning for source files
+
+SOURCES := $(filter-out '*ld25.pas', $(shell find src/ -name '*.{pas,inc}'))
+
 ## -- Start .PHONY targets
 
 .PHONY = clean executable executable-debug executable-release executable-package
@@ -57,6 +62,6 @@ clean:
 build/colorful: build/obj/colorful
 	cp -a "$<" "$@"
 
-build/obj/colorful: src/ld25.pas
+build/obj/colorful: src/ld25.pas $(SOURCES)
 	mkdir -p "$(dir $@)"
 	$(FPC) $(FLAGS_SDL2) $(FPC_FLAGS) -o'$@' '$<'  
