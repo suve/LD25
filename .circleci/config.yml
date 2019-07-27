@@ -1,0 +1,31 @@
+version: 2.1
+executors:
+  fedora:
+    docker:
+      - image: registry.fedoraproject.org/fedora
+    shell: /usr/bin/bash
+
+jobs:
+  build:
+    executor: fedora
+    steps:
+      - run:
+          name: Install dependencies
+          command: >
+            sudo dnf install --assumeyes --setopt=install_weak_deps=False
+            fpc git glibc-devel make
+            SDL2-devel SDL2_image-devel SDL2_mixer-devel
+      - checkout
+      - run:
+          name: Checkout git submodules
+          command: >
+            git submodule init && git submodule update
+      - run:
+          name: Build
+          command: >
+            cd src/ && make -j1
+
+workflows:
+  build:
+    jobs:
+      - build
