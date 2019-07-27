@@ -217,27 +217,27 @@ Begin
 	
 	Offset := 0;
 	For idx:=0 to (WALL_SFX-1) do begin
-		RegisterSound('sfx/wall' + IntToStr(idx) + '.wav', @Sfx[offset]);
+		RegisterSound('sfx/wall' + IntToStr(idx) + '.ogg', @Sfx[offset]);
 		offset += 1;
 	end;
 	For idx:=0 to (METAL_SFX-1) do begin
-		RegisterSound('sfx/metal' + IntToStr(idx) + '.wav', @Sfx[offset]);
+		RegisterSound('sfx/metal' + IntToStr(idx) + '.ogg', @Sfx[offset]);
 		offset += 1;
 	end;
 	For idx:=0 to (DIE_SFX-1) do begin
-		RegisterSound('sfx/die' + IntToStr(idx) + '.wav', @Sfx[offset]);
+		RegisterSound('sfx/die' + IntToStr(idx) + '.ogg', @Sfx[offset]);
 		offset += 1;
 	end;
 	For idx:=0 to (SHOT_SFX-1) do begin
-		RegisterSound('sfx/shot' + IntToStr(idx) + '.wav', @Sfx[offset]);
+		RegisterSound('sfx/shot' + IntToStr(idx) + '.ogg', @Sfx[offset]);
 		offset += 1;
 	end;
 	For idx:=0 to (HIT_SFX-1) do begin
-		RegisterSound('sfx/hit' + IntToStr(idx) + '.wav', @Sfx[offset]);
+		RegisterSound('sfx/hit' + IntToStr(idx) + '.ogg', @Sfx[offset]);
 		offset += 1;
 	end;
 	For idx:=0 to (EXTRA_SFX-1) do begin
-		RegisterSound('sfx/extra' + IntToStr(idx) + '.wav', @Sfx[offset]);
+		RegisterSound('sfx/extra' + IntToStr(idx) + '.ogg', @Sfx[offset]);
 		offset += 1;
 	end
 End;

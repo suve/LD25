@@ -45,11 +45,14 @@ GFX_TARGETS := $(GFX_SOURCES:gfx/%.png=build/gfx/%.png)
 SLIDE_SOURCES := $(shell find slides/ -name '*.png')
 SLIDE_TARGETS := $(SLIDE_SOURCES:slides/%.png=build/slides/%.png)
 
+SFX_SOURCES := $(shell find sfx/ -name '*.wav')
+SFX_TARGETS := $(SFX_SOURCES:sfx/%.wav=build/sfx/%.ogg)
+
 ## -- Start .PHONY targets
 
 .PHONY = assets clean executable executable-debug executable-release executable-package
 
-assets: $(GFX_TARGETS) $(SLIDE_TARGETS)
+assets: $(GFX_TARGETS) $(SLIDE_TARGETS) $(SFX_TARGETS)
 
 executable-debug:
 	FPC_FLAGS="$(FLAGS_DEBUG)" make executable
@@ -77,6 +80,10 @@ build/gfx/%.png: gfx/%.png
 build/slides/%.png: slides/%.png
 	mkdir -p "$(dir $@)"
 	optipng -clobber -out "$@" "$<" >/dev/null 2>/dev/null
+
+build/sfx/%.ogg: sfx/%.wav
+	mkdir -p "$(dir $@)"
+	oggenc --quiet --quality=10 -o "$@" "$<"
 
 build/obj/colorful: src/ld25.pas $(SOURCES)
 	mkdir -p "$(dir $@)"
