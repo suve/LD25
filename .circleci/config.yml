@@ -13,7 +13,7 @@ jobs:
           name: Install dependencies
           command: >
             sudo dnf install --assumeyes --setopt=install_weak_deps=False
-            findutils fpc git glibc-devel make
+            findutils fpc git glibc-devel make optipng
             SDL2-devel SDL2_image-devel SDL2_mixer-devel
       - checkout
       - run:

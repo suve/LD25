@@ -39,9 +39,17 @@ FLAGS_PACKAGE = -vewn -OG3 -g -dPACKAGE
 
 SOURCES := $(filter-out '*ld25.pas', $(shell find src/ -name '*.{pas,inc}'))
 
+GFX_SOURCES := $(shell find gfx/ -name '*.png')
+GFX_TARGETS := $(GFX_SOURCES:gfx/%.png=build/gfx/%.png)
+
+SLIDE_SOURCES := $(shell find slides/ -name '*.png')
+SLIDE_TARGETS := $(SLIDE_SOURCES:slides/%.png=build/slides/%.png)
+
 ## -- Start .PHONY targets
 
-.PHONY = clean executable executable-debug executable-release executable-package
+.PHONY = assets clean executable executable-debug executable-release executable-package
+
+assets: $(GFX_TARGETS) $(SLIDE_TARGETS)
 
 executable-debug:
 	FPC_FLAGS="$(FLAGS_DEBUG)" make executable
@@ -61,6 +69,14 @@ clean:
 
 build/colorful: build/obj/colorful
 	cp -a "$<" "$@"
+
+build/gfx/%.png: gfx/%.png
+	mkdir -p "$(dir $@)"
+	optipng -clobber -out "$@" "$<" >/dev/null 2>/dev/null
+
+build/slides/%.png: slides/%.png
+	mkdir -p "$(dir $@)"
+	optipng -clobber -out "$@" "$<" >/dev/null 2>/dev/null
 
 build/obj/colorful: src/ld25.pas $(SOURCES)
 	mkdir -p "$(dir $@)"
