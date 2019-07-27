@@ -53,18 +53,24 @@ SLIDE_TARGETS := $(SLIDE_SOURCES:slides/%.png=build/slides/%.png)
 
 ## -- Start .PHONY targets
 
-.PHONY = assets clean executable executable-debug executable-release executable-package
+.PHONY = all-debug all-release all-package assets clean executable executable-debug executable-release executable-package help
+
+all-debug: executable-debug assets
+
+all-package: executable-package assets
+
+all-release: executable-release assets
 
 assets: $(GFX_TARGETS) $(MAP_TARGETS) $(SFX_TARGETS) $(SLIDE_TARGETS)
 
 executable-debug:
 	FPC_FLAGS="$(FLAGS_DEBUG)" make executable
 
-executable-release:
-	FPC_FLAGS="$(FLAGS_RELEASE)" make executable
-
 executable-package:
 	FPC_FLAGS="$(FLAGS_PACKAGE)" make executable
+
+executable-release:
+	FPC_FLAGS="$(FLAGS_RELEASE)" make executable
 
 executable: build/colorful
 
