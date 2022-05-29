@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2018 Artur Iwicki
+ * Copyright (C) 2012-2022 suve (a.k.a. Artur Frenszek Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -99,7 +99,7 @@ Var
 
 	Hero : PPlayer;
 	PBul, EBul : Array of PBullet;
-	Mob  : Array of PEntity;
+	Mob  : Array of PEnemy;
 	Gib  : Array of PGib; //Entity arrays
 
 	Key     : Array[TPlayerKey] of Boolean;
@@ -374,7 +374,7 @@ End;
 Procedure SpawnEnemy(Tp:TEnemyType;mapX,mapY:sInt;SwitchNum:sInt=-1);
    Var Dron:PDrone;     Bash:PBasher; Ball:PBall; Spit:PSpitter; Spam:PSpammer;
        Gene:PGenerator; Turr:PTurret;
-       E:PEntity;
+       E:PEnemy;
    begin
    If (mapX<0) or (mapY<0) or (mapX>=ROOM_W) or (mapY>=ROOM_H) then Exit;
    SetLength(Mob,Length(Mob)+1);

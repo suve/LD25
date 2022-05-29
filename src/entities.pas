@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2018 Artur Iwicki
+ * Copyright (C) 2012-2022 suve (a.k.a. Artur Frenszek Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -47,15 +47,13 @@ Type
 			Procedure Set_mY(newY:sInt); // army of setters, duh
 
 		Public
-			Gfx : PImage;    // Pointer to a Sour Picture
-			Col : PSDL_Colour;   // Pointer to a Sour Colour
+			Gfx : PImage;
+			Col : PSDL_Colour;
 			XVel, YVel : Double;  // X,Y velocity
 			XCol, YCol : Boolean; // X,Y collision
 			W, H : uInt;          // Width and height
 			HP  : Double;         // Health points
 			Face : TFacing;       // Facing
-			SfxID : sInt;         // Death SFX ID. <0 means none.
-			SwitchNum : sInt;     // Switch to trigger on death
 
 			Function GetCoords:TSDL_Point; // fart out an SDL Coordinate
 
@@ -114,9 +112,20 @@ Type
 			Destructor Destroy; Virtual;
 	end;
 
+	// Enemy object - holds some extra fields not needed for non-enemy entities
+	PEnemy = ^TEnemy;
+	TEnemy = Object(TEntity)
+		Public
+			SfxID : sInt;     // Death SFX ID. <0 means none.
+			SwitchNum : sInt; // Switch to trigger on death
+
+			Constructor Create;
+			Destructor Destroy; Virtual;
+	end;
+
 	// Drone, a basic enemy
 	PDrone = ^TDrone;
-	TDrone = Object(TEntity)
+	TDrone = Object(TEnemy)
 		Private
 			ChaseTime, IdleTime : uInt;
 			Chase : Boolean;
@@ -130,7 +139,7 @@ Type
 
 	// Basher, another basic enemy
 	PBasher = ^TBasher;
-	TBasher = Object(TEntity)
+	TBasher = Object(TEnemy)
 		Private
 			BashTime, IdleTime, AccelTime : uInt;
 			Dir : uInt;
@@ -145,7 +154,7 @@ Type
 
 	// Ball, yet another enemy
 	PBall = ^TBall;
-	TBall = Object(TEntity)
+	TBall = Object(TEnemy)
 		Public
 			Procedure Calculate(dt:uInt); Virtual;
 
@@ -155,7 +164,7 @@ Type
 
 	// All right, let's try an enemy that can shoot
 	PSpitter = ^TSpitter;
-	TSpitter = Object(TEntity)
+	TSpitter = Object(TEnemy)
 		Private
 			MoveTime, IdleTime, FireInterval : uInt;
 			FireTimer, MoveTimer : sInt;
@@ -169,7 +178,7 @@ Type
 
 	// An enemy that spams the map with bullets
 	PSpammer = ^TSpammer;
-	TSpammer = Object(TEntity)
+	TSpammer = Object(TEnemy)
 		Private
 			FireInterval : uInt;
 			FireTimer, MoveTimer : sInt;
@@ -183,7 +192,7 @@ Type
 
 	// Energy generator
 	PGenerator = ^TGenerator;
-	TGenerator = Object(TEntity)
+	TGenerator = Object(TEnemy)
 		Private
 			BigTimer,SmallTimer : sInt;
 		Public
@@ -195,7 +204,7 @@ Type
 
 	// Turret, doh
 	PTurret = ^TTurret;
-	TTurret = Object(TEntity)
+	TTurret = Object(TEnemy)
 		Private
 			NorTime,SpamTime : sInt;
 		Public
@@ -266,8 +275,7 @@ Begin
 	Set_fX(0); Set_fY(0);
 	Gfx:=NIL; Col:=NIL;
 	W:=TILE_W; H:=TILE_H;
-	XCol:=False; YCol:=False;
-	SfxID:=(-1); SwitchNum:=(-1)
+	XCol:=False; YCol:=False
 End;
 
 Destructor TEntity.Destroy();
@@ -360,6 +368,18 @@ End;
 Destructor TPlayer.Destroy();
 Begin
 	Inherited Destroy();
+End;
+
+Constructor TEnemy.Create();
+Begin
+	Inherited Create();
+	SfxID := -1;
+	SwitchNum := -1
+End;
+
+Destructor TEnemy.Destroy();
+Begin
+	Inherited Destroy()
 End;
 
 Procedure TDrone.Calculate(dt:uInt);
