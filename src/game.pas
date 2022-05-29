@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2018 Artur Iwicki
+ * Copyright (C) 2012-2022 suve (a.k.a. Artur Frenszek Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -703,6 +703,8 @@ End;
 
 
 Procedure DamageMob(Const mID:uInt; Const Power:Double);
+Var
+	Idx, ChildID: sInt;
 Begin
 	Mob[mID]^.HP-=Power;
 	If (Mob[mID]^.HP <= 0) then begin
@@ -710,7 +712,14 @@ Begin
 
 		PlaceGibs(Mob[mID]); 
 		PlaySfx(Mob[mID]^.SfxID);
-		
+
+		If (Length(Mob[mID]^.Children) > 0) then begin
+			For Idx := Low(Mob[mID]^.Children) to High(Mob[mID]^.Children) do begin
+				ChildID := Mob[mID]^.Children[Idx];
+				If Mob[ChildID] <> NIL then DamageMob(ChildID, 1000);
+			end;
+		end;
+
 		Dispose(Mob[mID],Destroy()); Mob[mID]:=NIL
 	end 
 End;

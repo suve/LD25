@@ -116,8 +116,9 @@ Type
 	PEnemy = ^TEnemy;
 	TEnemy = Object(TEntity)
 		Public
-			SfxID : sInt;     // Death SFX ID. <0 means none.
-			SwitchNum : sInt; // Switch to trigger on death
+			Children: Array of sInt; // List of spawn-IDs of children mobs.
+			SfxID : sInt;            // Death SFX ID. <0 means none.
+			SwitchNum : sInt;        // Switch to trigger on death
 
 			Constructor Create;
 			Destructor Destroy; Virtual;
