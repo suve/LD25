@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2018 Artur Iwicki
+ * Copyright (C) 2012-2022 suve (a.k.a. Artur Frenszek Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -449,32 +449,68 @@ Var
 	Idx, Count: sInt;
 	rsi: TRoomScriptInstruction;
 	Condition: Boolean;
+	{$IFDEF DEVELOPER}
+		CondStr: AnsiString;
+	{$ENDIF}
 Begin
-	If(Length(Scri) = 0) then Exit;
-	
+	{$IFDEF DEVELOPER}
+		Writeln(StdErr, 'RoomScript(', Self.X, ',', Self.Y, ') --- BEGIN');
+	{$ENDIF}
+
 	Idx := 0;
 	Count := Length(Scri);
 	While((Idx >= 0) and (Idx < Count)) do begin
+		{$IFDEF DEVELOPER}
+			Writeln(StdErr, 'RoomScript: #', Shared.IntToStr(Idx, 2), ' ', Scri[Idx].Opcode);
+		{$ENDIF}
+
 		rsi := Scri[Idx];
 		Idx += 1;
-		
+
 		Case(rsi.Opcode) of
 			RSOP_IF: begin
 				Condition := Shared.Switch[rsi.If_.SwitchNo];
-				If(rsi.If_.Negative) then Condition := Not Condition;
+				If(rsi.If_.Negative) then begin
+					{$IFDEF DEVELOPER}
+						WriteStr(CondStr, 'switchNo: ~', Shared.IntToStr(rsi.If_.SwitchNo, 2));
+					{$ENDIF}
+					Condition := Not Condition;
+				end else begin
+					{$IFDEF DEVELOPER}
+						WriteStr(CondStr, 'switchNo: ', Shared.IntToStr(rsi.If_.SwitchNo, 2));
+					{$ENDIF}
+				end;
 				
-				If(Not Condition) then Idx := rsi.If_.ElseJumpTo
+				If(Not Condition) then begin
+					{$IFDEF DEVELOPER}
+						Writeln(StdErr, 'RoomScript:     Condition not met (', CondStr, '); jumping to #', Shared.IntToStr(rsi.If_.ElseJumpTo, 2));
+					{$ENDIF}
+					Idx := rsi.If_.ElseJumpTo
+				end else begin
+					{$IFDEF DEVELOPER}
+						Writeln(StdErr, 'RoomScript:     Condition satisfied (', CondStr, ')');
+					{$ENDIF}
+				end
 			end;
-			
-			RSOP_ELSE: Idx := rsi.Else_.JumpTo;
-			
+
+			RSOP_ELSE: begin
+				{$IFDEF DEVELOPER}
+					Writeln(StdErr, 'RoomScript:     Jumping to ', rsi.Else_.JumpTo);
+				{$ENDIF}
+				Idx := rsi.Else_.JumpTo
+			end;
+
 			RSOP_COLOUR:  RunScript_Colour(rsi);
 			RSOP_PALETTE: RunScript_Palette(rsi);
 			RSOP_SPAWN:   RunScript_Spawn(rsi);
 			RSOP_TEXT:    RunScript_Text(rsi);
 			RSOP_TILE:    RunScript_Tile(rsi);
 		end
-	end 
+	end;
+
+	{$IFDEF DEVELOPER}
+		Writeln(StdErr, 'RoomScript(', Self.X, ',', Self.Y, ') --- END');
+	{$ENDIF}
 End;
 
 Function TRoom.CharToTile(Const tT:Char):TTile;
@@ -673,9 +709,9 @@ Begin
 				end else begin
 					If(IfStack[IfNest].ElseInstr >= 0) then begin
 						Self.Scri[IfStack[IfNest].IfInstr].If_.ElseJumpTo := IfStack[IfNest].ElseInstr + 1;
-						Self.Scri[IfStack[IfNest].ElseInstr].Else_.JumpTo := LineCount + 1;
+						Self.Scri[IfStack[IfNest].ElseInstr].Else_.JumpTo := LineCount;
 					end else
-						Self.Scri[IfStack[IfNest].IfInstr].If_.ElseJumpTo := LineCount + 1;
+						Self.Scri[IfStack[IfNest].IfInstr].If_.ElseJumpTo := LineCount;
 					
 					IfNest -= 1
 				end
