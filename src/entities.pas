@@ -231,6 +231,7 @@ Type
 
 Implementation
 Uses
+	Math,
 	Assets, Colours, MathUtils, Shared;
 
 Const
@@ -541,7 +542,7 @@ Begin
 	else begin
 		PlaySfx(SFX_SHOT);
 		FireTimer:=FireInterval+FireTimer;
-		PlaceBullet(@Self,Sgn(Hero^.X-Self.X)*TILE_S*4,0,5,0)
+		PlaceBullet(@Self,Sign(Hero^.X-Self.X)*TILE_S*4,0,5,0)
 	end;
 	
 	If (MoveTimer > 0) then begin

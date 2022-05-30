@@ -22,14 +22,12 @@ Unit MathUtils;
 Interface
 	uses Entities;
 
-// Some functions for calculating distances
-Function  Hypotenuse(X,Y:Double):Double;
-Function  Hypotenuse(aX,aY,bX,bY:Double):Double;
-Function  Hypotenuse(A,B:PEntity):Double;
+Function Hypotenuse(X, Y: Double): Double;
+Function Hypotenuse(aX, aY, bX, bY: Double): Double;
+Function Hypotenuse(A, B: PEntity): Double;
+
 Procedure GetDist(A,B:PEntity;Out oX,oY,oD:Double);
 
-// Sign function (probably is implemented in math or sysutils, but I'm too lazy to check)
-Function Sgn(Wat:Double):sInt;
 Function InRange(Num,Min,Max:Int64):Boolean;
 Function Random(Min,Max:Int64):Int64; Overload; // The overload prevents shadowing "System.Random()"
 
@@ -39,15 +37,16 @@ Function Overlap(A,B:PEntity):Boolean;
 
 
 Implementation
+	uses Math;
 
 Function Hypotenuse(X,Y:Double):Double;
 Begin
-	Result := Sqrt(Sqr(X)+Sqr(Y))
+	Result := Math.Hypot(X, Y)
 End;
 
 Function Hypotenuse(aX,aY,bX,bY:Double):Double;
 Begin
-	Result := Sqrt(Sqr(aX-bX)+Sqr(aY-bY))
+	Result := Math.Hypot(aX-bX, aY-bY)
 End;
 
 Function Hypotenuse(A,B:PEntity):Double;
@@ -61,16 +60,6 @@ Begin
 	oY:=(B^.Y+(B^.H/2))-(A^.Y+(A^.H/2));
 	oD:=Hypotenuse(oX,oY)
 end;
-
-Function Sgn(Wat:Double):sInt;
-Begin
-	If (Wat>0) then
-		Exit(+1)
-	else If (Wat<0) then
-		Exit(-1)
-	else
-		Exit(0)
-End;
 
 Function InRange(Num,Min,Max:Int64):Boolean;
 Begin
