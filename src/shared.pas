@@ -74,6 +74,7 @@ Type
 	);
 	TEnemyType = (
 		ENEM_DRONE, ENEM_BASHER, ENEM_BALL, ENEM_SPITTER, ENEM_SPAMMER,
+		ENEM_SNEK,
 		ENEM_GENERATOR, ENEM_TURRET
 	);
 	TColState = (
@@ -371,27 +372,67 @@ Begin
 	end
 End;
 
-Procedure SpawnEnemy(Tp:TEnemyType;mapX,mapY:sInt;SwitchNum:sInt=-1);
-   Var Dron:PDrone;     Bash:PBasher; Ball:PBall; Spit:PSpitter; Spam:PSpammer;
-       Gene:PGenerator; Turr:PTurret;
-       E:PEnemy;
-   begin
-   If (mapX<0) or (mapY<0) or (mapX>=ROOM_W) or (mapY>=ROOM_H) then Exit;
-   SetLength(Mob,Length(Mob)+1);
-   Case Tp of
-      ENEM_DRONE:     begin New(Dron,Create()); E:=Dron end;
-      ENEM_BASHER:    begin New(Bash,Create()); E:=Bash end;
-      ENEM_BALL:      begin New(Ball,Create()); E:=Ball end;
-      ENEM_SPITTER:   begin New(Spit,Create()); E:=Spit end;
-      ENEM_SPAMMER:   begin New(Spam,Create()); E:=Spam end;
-      ENEM_GENERATOR: begin New(Gene,Create()); E:=Gene end;
-      ENEM_TURRET:    begin New(Turr,Create()); E:=Turr end;
-      otherwise Exit();
-      end;
-   E^.mX:=mapX; E^.mY:=mapY; E^.SwitchNum:=SwitchNum;
-   If (RoomPalette < 8) then E^.Col:=@PaletteColour[RoomPalette];
-   Mob[High(Mob)]:=E;
-   end;
+Procedure SetEnemySpawnProps(E: PEnemy; mapX, mapY, SwitchNum: sInt);
+Begin
+	E^.mX:=mapX; E^.mY:=mapY; E^.SwitchNum:=SwitchNum;
+	If (RoomPalette < 8) then E^.Col:=@PaletteColour[RoomPalette]
+End;
+
+Procedure SpawnSnek(mapX, mapY, SwitchNum:sInt);
+Const
+	SnekSegments = 5;
+Var
+	Snek: PSnek;
+	MobID, Idx: sInt;
+Begin
+	MobID := Length(Mob);
+	SetLength(Mob, MobID + SnekSegments);
+
+	New(Snek, Create(SnekSegments, -1));
+	SetEnemySpawnProps(Snek, mapX, mapY, SwitchNum);
+	Mob[MobID] := Snek;
+
+	For Idx := 1 to (SnekSegments - 1) do begin
+		New(Snek, Create(SnekSegments - Idx, MobID + Idx - 1));
+		SetEnemySpawnProps(Snek, mapX, mapY, -1);
+		Mob[MobID + Idx] := Snek;
+
+		Mob[MobID + Idx - 1]^.AddChild(MobID + Idx)
+	end;
+End;
+
+Procedure SpawnEnemy(Tp: TEnemyType; mapX, mapY:sInt; SwitchNum: sInt = -1);
+Var
+	Dron: PDrone;
+	Bash: PBasher;
+	Ball: PBall;
+	Spit: PSpitter;
+	Spam: PSpammer;
+	Gene: PGenerator;
+	Turr: PTurret;
+	E: PEnemy;
+
+	Len: sInt;
+Begin
+	If (mapX<0) or (mapY<0) or (mapX>=ROOM_W) or (mapY>=ROOM_H) then Exit;
+
+	Case Tp of
+		ENEM_DRONE:     begin New(Dron,Create()); E:=Dron end;
+		ENEM_BASHER:    begin New(Bash,Create()); E:=Bash end;
+		ENEM_BALL:      begin New(Ball,Create()); E:=Ball end;
+		ENEM_SPITTER:   begin New(Spit,Create()); E:=Spit end;
+		ENEM_SPAMMER:   begin New(Spam,Create()); E:=Spam end;
+		ENEM_GENERATOR: begin New(Gene,Create()); E:=Gene end;
+		ENEM_TURRET:    begin New(Turr,Create()); E:=Turr end;
+		ENEM_SNEK:      begin SpawnSnek(mapX, mapY, SwitchNum); Exit() end;
+		otherwise Exit()
+	end;
+	SetEnemySpawnProps(E, mapX, mapY, SwitchNum);
+
+	Len := Length(Mob);
+	SetLength(Mob, Len + 1);
+	Mob[Len]:=E
+End;
 
 Procedure PlaceGibs(E:PEntity);
    Var X,Y,W,H,I:uInt; Angle:Double; G:PGib;

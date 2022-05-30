@@ -120,6 +120,8 @@ Type
 			SfxID : sInt;            // Death SFX ID. <0 means none.
 			SwitchNum : sInt;        // Switch to trigger on death
 
+			Procedure AddChild(ChildID: sInt);
+
 			Constructor Create;
 			Destructor Destroy; Virtual;
 	end;
@@ -212,6 +214,18 @@ Type
 			Procedure Calculate(dt:uInt); Virtual;
 
 			Constructor Create;
+			Destructor Destroy; Virtual;
+	end;
+
+	// Snek - a collection of enemies following each other around
+	PSnek = ^TSnek;
+	TSnek = Object(TEnemy)
+		Private
+			Parent: sInt;
+		Public
+			Procedure Calculate(dt:uInt); Virtual;
+
+			Constructor Create(SegmentNo, ParentID: sInt);
 			Destructor Destroy; Virtual;
 	end;
 
@@ -369,6 +383,15 @@ End;
 Destructor TPlayer.Destroy();
 Begin
 	Inherited Destroy();
+End;
+
+Procedure TEnemy.AddChild(ChildID: sInt);
+Var
+	Len: sInt;
+Begin
+	Len := Length(Self.Children);
+	SetLength(Self.Children, Len + 1);
+	Self.Children[Len] := ChildID
 End;
 
 Constructor TEnemy.Create();
@@ -686,6 +709,42 @@ End;
 Destructor TTurret.Destroy();
 Begin
 	Inherited Destroy();
+End;
+
+Procedure TSnek.Calculate(dt:uInt);
+Const
+	FollowDist = TILE_W * 3 div 4;
+	Speed = HERO_SPEED * 0.555;
+Var
+	Dist:Double;
+Begin
+	If Parent >= 0 then begin
+		GetDist(@Self, Mob[Self.Parent], Self.XVel, Self.YVel, Dist);
+		If Dist < FollowDist then begin
+			Self.XVel := 0;
+			Self.YVel := 0;
+			Exit
+		end
+	end else begin
+		GetDist(@Self, Hero, Self.XVel, Self.YVel, Dist)
+	end;
+	Self.XVel := Self.XVel / Dist * Speed;
+	Self.YVel := Self.YVel / Dist * Speed
+End;
+
+Constructor TSnek.Create(SegmentNo, ParentID: sInt);
+Var
+	Head: PSnek;
+Begin
+	Inherited Create();
+	Gfx:=EnemyGfx[7]; SfxID:=SFX_DIE+1;
+	HP:=7.5 * SegmentNo;
+	Parent := ParentID
+End;
+
+Destructor TSnek.Destroy();
+Begin
+	Inherited Destroy()
 End;
 
 End.
