@@ -579,8 +579,10 @@ Var
 	Title, S:AnsiString; Timu:Comp; GM:TGameMode;
 Begin
 	Timu:=GetMSecs(); Randomize();
-	
-	SetPaths(); 
+
+	ConfigFiles.SetPaths();
+	ConfigFiles.CopyOldSavegames();
+
 	LoadConfig();
 	For GM:=Low(GM) to High(GM) do SaveExists[GM]:=IHasGame(GM);
 	

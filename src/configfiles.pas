@@ -26,6 +26,7 @@ Var
 	DataPath : AnsiString; // Location of assets
 
 Procedure SetPaths();
+Procedure CopyOldSavegames();
 Function CheckConfPath():Boolean;
 
 Type
@@ -320,6 +321,50 @@ Begin
 		 * this pre-determined location. *)
 		DataPath:='/usr/share/suve/colorful/';
 	{$ENDIF}
+End;
+
+Procedure CopyFile(OldPath, NewPath: AnsiString);
+Const
+	BufferSize = 4096;
+Var
+	Buffer: Array[0 .. (BufferSize - 1)] of Char;
+	ReadHandle, WriteHandle: THandle;
+	Count: sInt;
+Begin
+	ReadHandle := FileOpen(OldPath, fmOpenRead);
+	If ReadHandle = -1 then Exit();
+
+	// FPC does not have a "create file if it does not exist yet" function,
+	// so let's just do this and try to live with the TOCTTOU issue.
+	If FileExists(NewPath) then Exit();
+	WriteHandle := FileCreate(NewPath, fmOpenWrite, &660);
+	If WriteHandle = -1 then Exit();
+
+	While True do begin
+		Count := FileRead(ReadHandle, Buffer, BufferSize);
+		If Count <= 0 then Break;
+
+		FileWrite(WriteHandle, Buffer, Count)
+	end;
+
+	FileClose(WriteHandle);
+	FileClose(ReadHandle)
+End;
+
+Procedure CopyOldSavegames();
+Var
+	GM: TGameMode;
+	OldPath, NewPath: AnsiString;
+Begin
+	// Don't bother checking individual files if the old configuration directory doesn't exist.
+	If Not DirectoryExists(OldConfPath) then Exit();
+
+	// v1.X had only GM_TUTORIAL and GM_ORIGINAL. Do not check for GM_NEWWORLD.
+	For GM := GM_TUTORIAL to GM_ORIGINAL do begin
+		WriteStr(OldPath, OldConfPath, GM, '.ini');
+		WriteStr(NewPath, ConfPath, GM, '.ini');
+		CopyFile(OldPath, NewPath)
+	end
 End;
 
 end.
