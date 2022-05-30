@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2018 Artur Iwicki
+ * Copyright (C) 2012-2022 suve (a.k.a. Artur Frenszek Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -21,32 +21,17 @@ unit configfiles;
 interface
 	uses Shared;
 
-Const
-	HomeVar =
-		{$IFDEF LINUX}   'HOME';    {$ELSE}
-		{$IFDEF WINDOWS} 'APPDATA'; {$ELSE}
-		{$FATAL Please set up the HomeVar, ConfDir and DirDelim constants before trying to compile for a new platform.} {$ENDIF} {$ENDIF}
-
-	ConfDir = 
-		{$IFDEF LINUX}   '/.suve/colorful/'; {$ELSE}
-		{$IFDEF WINDOWS} '\suve\colorful\';  {$ELSE}
-		{$FATAL Didn't I just tell you something?} {$ENDIF} {$ENDIF}
-	
-	DirDelim = 
-		{$IFDEF LINUX}   '/'; {$ELSE}
-		{$IFDEF WINDOWS} '\'; {$ELSE}
-		{$FATAL Awful troll, 1/10.} {$ENDIF} {$ENDIF}
-
 Var
-	ConfPath, DataPath : AnsiString; //Configuration and data paths
+	ConfPath, OldConfPath: AnsiString; // Configuration (.ini, savegame) paths
+	DataPath : AnsiString; // Location of assets
 
 Procedure SetPaths();
 Function CheckConfPath():Boolean;
 
 Type
 	TIniVersion = (
-		INIVER_1_0,
-		INIVER_2_0
+		INIVER_1_0 = 1,
+		INIVER_2_0 = 2
 	);
 
 Function SaveIni():Boolean;
@@ -67,10 +52,7 @@ Uses
 	Colours, SDL1Keys;
 
 Const
-	ConfFile: Array[TIniVersion] of ShortString = (
-		'settings.ini',
-		'settings-2.0.ini'
-	);
+	ConfFileName = 'settings.ini';
 
 // Check if ConfPath exists. If not, try to create it.
 Function CheckConfPath():Boolean;
@@ -167,7 +149,7 @@ Function IHasGame(Const GM:TGameMode):Boolean;
 Var
 	Path:AnsiString;
 Begin
-	WriteStr(Path, ConfPath, GM,'.ini');
+	WriteStr(Path, ConfPath, GM, '.ini');
 	Exit(FileExists(Path))
 End;
 
@@ -184,7 +166,7 @@ Var
 Begin
 	If (Not CheckConfPath()) then Exit(False);
 	
-	Assign(F,ConfPath+ConfFile[INIVER_2_0]);
+	Assign(F, ConfPath + ConfFileName);
 	{$I-} Rewrite(F); {$I+}
 	If (IOResult <> 0) then Exit(False);
 	
@@ -256,19 +238,28 @@ Begin
 	Exit(True)
 End;
 
+Function GetIniPath(Const Version: TIniVersion): AnsiString;
+Begin
+	If Version > INIVER_1_0 then
+		Result := ConfPath + ConfFileName
+	else
+		Result := OldConfPath + ConfFileName
+End;
+
 Function LoadIni(Const Version: TIniVersion):Boolean;
 Var
+	Path: AnsiString;
 	Ini: TIniFile;
 Begin
-	Ini:=TIniFile.Create(ConfPath+ConfFile[Version]);
-	If(Ini <> NIL) then Exit(ParseIni(Ini, Ord(Version)+1));
-	
-	Exit(False)
+	Ini:=TIniFile.Create(GetIniPath(Version));
+	If Ini = NIL then Exit(False);
+
+	Result := ParseIni(Ini, Ord(Version))
 End;
 
 Function IHasIni(Const Version: TIniVersion):Boolean;
 Begin
-	Exit(FileExists(ConfPath+ConfFile[Version]))
+	Result := FileExists(GetIniPath(Version))
 End;
 
 Procedure DefaultSettings();
@@ -287,23 +278,42 @@ Begin
 	SetVol(VolLevel_MAX,False) 
 End;
 
-Procedure SetPaths();
+Procedure SetOldConfPath();
+Const
+	// Consts used to determine the locations of v1.X config files.
+	{$IFDEF LINUX}
+		HomeVar = 'HOME';
+		ConfDir = '/.suve/colorful/';
+	{$ENDIF}
+	{$IFDEF WINDOWS}
+		HomeVar = 'APPDATA';
+		ConfDir = '\suve\colorful';
+	{$ENDIF}
 Begin
-	(* Retrieve the appropriate place for storing the config files and
-	 * add our folder tree to create the configuration path. *)
-	ConfPath:=GetEnvironmentVariable(HomeVar)+ConfDir;
+	OldConfPath := GetEnvironmentVariable(HomeVar) + ConfDir
+End;
+
+Procedure SetPaths();
+Var
+	PrefPath: PChar;
+Begin
+	SetOldConfPath();
+
+	PrefPath := SDL_GetPrefPath(PChar('suve'), PChar('colorful'));
+	ConfPath := AnsiString(PrefPath);
+	SDL_Free(PrefPath);
 
 	{$IFNDEF PACKAGE}
 		(* On most systems, ParamStr(0) returns the full path to the executable.
 		 * ExtractFileDir() takes a string and returns everything until the last
 		 * directory delimeter. So, we take the executable path, extract the dir,
 		 * add the delimeter and voila, we now know where the executable resides. *)
-		DataPath := ExtractFileDir(ParamStr(0)) + DirDelim;
+		DataPath := ExtractFileDir(ParamStr(0)) + System.DirectorySeparator;
 		{$IFNDEF DEVELOPER} 
 			(* Since the executables are placed in bin/platform/, we need to go two
 			 * folders up to reach the game's main directory. All the data files 
 			 * (gfx, sfx, maps) should be found within subfolders of that location. *)
-			DataPath += '..' + DirDelim + '..' + DirDelim;
+			DataPath += '..' + System.DirectorySeparator + '..' + System.DirectorySeparator;
 		{$ENDIF}
 	{$ELSE}
 		(* If we are building a package version, data files should be found in
