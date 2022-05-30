@@ -20,7 +20,7 @@ program ld25;
 
 uses
 	SysUtils, SDL2, SDL2_image, SDL2_mixer,
-	Assets, Colours, ConfigFiles, FloatingText, Fonts, Game, Images, Objects, Rooms, Shared
+	Assets, Colours, ConfigFiles, FloatingText, Fonts, Game, Images, Objects, MathUtils, Rooms, Shared
 ;
 
 

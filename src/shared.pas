@@ -139,21 +139,6 @@ Procedure FinishFrame();
 Procedure DrawColouredRect(Const Rect: PSDL_Rect; Const Colour: PSDL_Colour);
 Procedure DrawColouredRect(Const Rect: PSDL_Rect; Const RGB: LongWord);
 
-// Some functions for calculating distances
-Function  Hypotenuse(X,Y:Double):Double;
-Function  Hypotenuse(aX,aY,bX,bY:Double):Double;
-Function  Hypotenuse(A,B:PEntity):Double;
-Procedure GetDist(A,B:PEntity;Out oX,oY,oD:Double);
-
-// Sign function (probably is implemented in math or sysutils, but I'm too lazy to check)
-Function Sgn(Wat:Double):sInt;
-Function InRange(Num,Min,Max:Int64):Boolean;
-Function Random(Min,Max:Int64):Int64; Overload;
-
-// Check if objects overlap
-Function Overlap(AX,AY:Double;AW,AH:uInt;BX,BY:Double;BW,BH:uInt):Boolean;
-Function Overlap(A,B:PEntity):Boolean;
-
 // Some simple converstions from and to strings
 Function IntToStr(Num:uInt;Digits:uInt=0;Chr:Char='0'):AnsiString; Overload;
 Function StrToInt(S:AnsiString):Int64;
@@ -270,42 +255,6 @@ Begin
 	Colour := RGBToColour(RGB);
 	DrawColouredRect(Rect, @Colour)
 End;
-
-Function Hypotenuse(X,Y:Double):Double;
-   begin Exit(Sqrt(Sqr(X)+Sqr(Y))) end;
-
-Function Hypotenuse(aX,aY,bX,bY:Double):Double;
-   begin Exit(Sqrt(Sqr(aX-bX)+Sqr(aY-bY))) end;
-
-Function Hypotenuse(A,B:PEntity):Double;
-   begin Exit(Hypotenuse(A^.X+(A^.W/2),A^.Y+(A^.H/2),B^.X+(B^.W/2),B^.Y+(B^.H/2))) end;
-
-Procedure GetDist(A,B:PEntity;Out oX,oY,oD:Double);
-   begin
-   oX:=(B^.X+(B^.W/2))-(A^.X+(A^.W/2));
-   oY:=(B^.Y+(B^.H/2))-(A^.Y+(A^.H/2));
-   oD:=Hypotenuse(oX,oY)
-   end;
-
-Function Sgn(Wat:Double):sInt;
-   begin If (Wat>0) then Exit(+1) else If (Wat<0) then Exit(-1) else Exit(0) end;
-
-Function InRange(Num,Min,Max:Int64):Boolean;
-   begin Exit((Num>=Min) and (Num<=Max)) end;
-
-Function Random(Min,Max:Int64):Int64; Overload;
-   begin Exit(Min+Random(Max-Min+1)) end;
-
-Function Overlap(AX,AY:Double;AW,AH:uInt;BX,BY:Double;BW,BH:uInt):Boolean;
-   begin
-   If ((AX + AW - 1) < BX) then Exit(False);
-   If ((BX + BW - 1) < AX) then Exit(False);
-   If ((AY + AH - 1) < BY) then Exit(False);
-   If ((BY + BH - 1) < AY) then Exit(False);
-   Exit(True) end;
-
-Function Overlap(A,B:PEntity):Boolean;
-   begin Exit(Overlap(A^.X,A^.Y,A^.W,A^.H,B^.X,B^.Y,B^.W,B^.H)) end;
 
 Function IntToStr(Num:uInt;Digits:uInt=0;Chr:Char='0'):AnsiString;
    Var Res:AnsiString;

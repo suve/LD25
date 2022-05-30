@@ -28,7 +28,7 @@ Function PlayGame():Boolean;
 Implementation
 Uses
 	SDL2,
-	Assets, Colours, ConfigFiles, Entities, FloatingText, Fonts, Images, Rooms, Shared;
+	Assets, Colours, ConfigFiles, Entities, FloatingText, Fonts, Images, MathUtils, Rooms, Shared;
 
 Type
 	TRoomChange = (

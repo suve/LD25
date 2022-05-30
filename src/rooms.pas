@@ -143,7 +143,7 @@ Function LoadRoom(Const rX, rY: sInt; Const Name:AnsiString):PRoom;
 Implementation
 Uses
 	StrUtils, SysUtils,
-	Assets, Colours, FloatingText;
+	Assets, Colours, FloatingText, MathUtils;
 
 Function TRoom.ParseScript_If(Const LineNo: sInt; Const Tokens:Array of AnsiString; Out rsi:TRoomScriptInstruction):Boolean;
 Var

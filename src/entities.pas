@@ -231,7 +231,7 @@ Type
 
 Implementation
 Uses
-	Assets, Colours, Shared;
+	Assets, Colours, MathUtils, Shared;
 
 Const
 	TwoRoot = Sqrt(2);
