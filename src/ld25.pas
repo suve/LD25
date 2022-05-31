@@ -19,7 +19,8 @@ program ld25;
 {$INCLUDE defines.inc}
 
 uses
-	SysUtils, SDL2, SDL2_image, SDL2_mixer,
+	SysUtils, Math,
+	SDL2, SDL2_image, SDL2_mixer,
 	Assets, Colours, ConfigFiles, FloatingText, Fonts, Game, Images, Objects, MathUtils, Rooms, Shared
 ;
 
@@ -576,7 +577,10 @@ End;
 
 Function Startup():Boolean;
 Var
-	Title, S:AnsiString; Timu:Comp; GM:TGameMode;
+	Title, ErrStr: AnsiString;
+	Timu: Comp;
+	GM: TGameMode;
+	OldMask, NewMask: TFPUExceptionMask;
 Begin
 	Timu:=GetMSecs(); Randomize();
 
@@ -585,7 +589,15 @@ Begin
 
 	LoadConfig();
 	For GM:=Low(GM) to High(GM) do SaveExists[GM]:=IHasGame(GM);
-	
+
+	// Disable Floating Poing Exception checking while initializing the video stack.
+	// See: https://github.com/PascalGameDevelopment/SDL2-for-Pascal/issues/56
+	OldMask := Math.GetExceptionMask();
+	NewMask := OldMask;
+	Include(NewMask, exInvalidOp);
+	Include(NewMask, exZeroDivide);
+	Math.SetExceptionMask(NewMask);
+
 	Write('Initializing SDL2 video... ');
 	If (SDL_Init(SDL_Init_Video or SDL_Init_Timer)<>0) then begin
 		Writeln('Failed!');
@@ -647,7 +659,10 @@ Begin
 		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, 'nearest');
 		SDL_RenderSetLogicalSize(Shared.Renderer, RESOL_W, RESOL_H)
 	end;
-	
+
+	// Restore the old mask after we disabled FPE checks.
+	Math.SetExceptionMask(OldMask);
+
 	Write('Creating render target texture... ');
 	Shared.Display := SDL_CreateTexture(Shared.Renderer, SDL_GetWindowPixelFormat(Shared.Window), SDL_TEXTUREACCESS_TARGET, RESOL_W, RESOL_H);
 	if(Shared.Display = NIL) then begin
@@ -658,8 +673,8 @@ Begin
 
 	Write('Loading assets... ');
 	RegisterAllAssets();
-	If Not LoadAssets(S, @LoadUpdate) then begin
-		Writeln('ERROR'); Writeln(S); Exit(False);
+	If Not LoadAssets(ErrStr, @LoadUpdate) then begin
+		Writeln('ERROR'); Writeln(ErrStr); Exit(False);
 	end else
 		Writeln('Success!');
    
