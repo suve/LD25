@@ -307,6 +307,76 @@ Begin
 	end
 End;
 
+Procedure DonateScreen();
+Const
+	GitHubText = 'G - GITHUB SPONSORS';
+Var
+	dt: uInt;
+	XPos, YPos: sInt;
+	GitHubRect, LiberaPayRect: TSDL_Rect;
+	BackToMenu: Boolean;
+Begin
+	XPos := (Length(GitHubText) * Font^.CharW) + ((Length(GitHubText) - 1) * Font^.SpacingX);
+	XPos := (RESOL_W - (XPos * Font^.Scale)) div 2;
+
+	BackToMenu := False;
+	Repeat
+		Shared.BeginFrame();
+		DrawTitle();
+
+		Font^.Scale := 2; YPos:=TitleGfx^.H;
+		PrintText('DONATE',Font,(RESOL_W div 2),YPos,ALIGN_CENTRE,ALIGN_TOP,NIL);
+
+		YPos += Font^.CharH * Font^.Scale * 3;
+		PrintText('IF YOU LIKE THE GAME', Font,(RESOL_W div 2),YPos,ALIGN_CENTRE,ALIGN_TOP,NIL);
+		YPos += (Font^.CharH * Font^.Scale * 3) div 2;
+		PrintText('YOU CAN DONATE VIA:', Font,(RESOL_W div 2),YPos,ALIGN_CENTRE,ALIGN_TOP,NIL);
+
+		YPos += Font^.CharH * Font^.Scale * 3;
+		PrintMenuText(GitHubText, XPos, YPos, ALIGN_LEFT, @WhiteColour, GitHubRect);
+
+		YPos += Font^.CharH * Font^.Scale * 2;
+		PrintMenuText('L - LIBERAPAY', XPos, YPos, ALIGN_LEFT, @WhiteColour, LiberaPayRect);
+
+		YPos += Font^.CharH * Font^.Scale * 3;
+		PrintText('THANKS!', Font,(RESOL_W div 2),YPos,ALIGN_CENTRE,ALIGN_TOP,NIL);
+
+		Shared.FinishFrame();
+		GetDeltaTime(dt);
+
+		While (SDL_PollEvent(@Ev)>0) do begin
+			If (Ev.Type_ = SDL_QuitEv) then begin
+				Shutdown:=True; BackToMenu := True
+			end else
+			If (Ev.Type_ = SDL_KeyDown) then begin
+				If (Ev.Key.Keysym.Sym = SDLK_Escape) then
+					BackToMenu := True
+				else
+				If (Ev.Key.Keysym.Sym = SDLK_G) then begin
+					SDL_OpenUrl(PChar('https://github.com/sponsors/suve'));
+					BackToMenu := True
+				end else
+				If (Ev.Key.Keysym.Sym = SDLK_L) then begin
+					SDL_OpenUrl(PChar('https://liberapay.com/suve'));
+					BackToMenu := True
+				end
+			end else
+			If (Ev.Type_ = SDL_MouseButtonDown) then begin
+				If(MouseInRect(GitHubRect)) then begin
+					SDL_OpenUrl(PChar('https://github.com/sponsors/suve'));
+					BackToMenu := True
+				end else
+				If(MouseInRect(LiberaPayRect)) then begin
+					SDL_OpenUrl(PChar('https://liberapay.com/suve'));
+					BackToMenu := True
+				end
+			end else
+			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
+				Shared.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False)
+		end;
+	until BackToMenu
+End;
+
 Function GameworldDialog(Const Load:Boolean):Char;
 Const
 	WorldNames:Array[TGameMode] of AnsiString = (
@@ -424,9 +494,10 @@ Function Menu():Char;
 Var
 	Choice:Char;
 	dt, XPos, YPos:uInt; Col:PSDL_Colour; 
-	IHasSaves:Boolean; GM:TGameMode;
-	
-	IntroRect, ContinueRect, NewGameRect, LoadGameRect, BindRect, ColourRect, QuitRect: TSDL_Rect;
+	IHasSaves:Boolean;
+	GM:TGameMode;
+
+	IntroRect, ContinueRect, NewGameRect, LoadGameRect, BindRect, ColourRect, DonateRect, QuitRect: TSDL_Rect;
 Begin
 	Font^.Scale := 2;
 	XPos:=GetTextWidth('I - INTRODUCTION', Font);
@@ -443,24 +514,27 @@ Begin
 		Font^.Scale := 2; YPos:=TitleGfx^.H;
 		PrintMenuText('I - INTRODUCTION', XPos, YPos, ALIGN_LEFT, @WhiteColour, IntroRect);
 		
-		YPos += Font^.CharH * 2 * Font^.Scale;
+		YPos += (Font^.CharH * Font^.Scale * 7) div 4;
 		If (GameOn) then Col:=@WhiteColour else Col:=@GreyColour;
 		PrintMenuText('C - CONTINUE', XPos, YPos, ALIGN_LEFT, Col, ContinueRect);
 		
-		YPos += Font^.CharH * 2 * Font^.Scale;
+		YPos += (Font^.CharH * Font^.Scale * 7) div 4;
 		PrintMenuText('N - NEW GAME', XPos, YPos, ALIGN_LEFT, @WhiteColour, NewGameRect);
 		
-		YPos += Font^.CharH * 2 * Font^.Scale;
+		YPos += (Font^.CharH * Font^.Scale * 7) div 4;
 		If (IHasSaves) then Col:=@WhiteColour else Col:=@GreyColour;
 		PrintMenuText('L - LOAD GAME', XPos, YPos, ALIGN_LEFT, Col, LoadGameRect);
 		
-		YPos += Font^.CharH * 2 * Font^.Scale;
+		YPos += (Font^.CharH * Font^.Scale * 7) div 4;
 		PrintMenuText('S - SET COLOURS', XPos, YPos, ALIGN_LEFT, @WhiteColour, ColourRect);
 		
-		YPos += Font^.CharH * 2 * Font^.Scale;
+		YPos += (Font^.CharH * Font^.Scale * 7) div 4;
 		PrintMenuText('B - BIND KEYS', XPos, YPos, ALIGN_LEFT, @WhiteColour, BindRect);
 		
-		YPos += Font^.CharH * 2 * Font^.Scale;
+		YPos += (Font^.CharH * Font^.Scale * 7) div 4;
+		PrintMenuText('D - DONATE', XPos, YPos, ALIGN_LEFT, @WhiteColour, DonateRect);
+		
+		YPos += (Font^.CharH * Font^.Scale * 7) div 4;
 		PrintMenuText('Q - QUIT', XPos, YPos, ALIGN_LEFT, @WhiteColour, QuitRect);
 		
 		Shared.FinishFrame();
@@ -479,6 +553,7 @@ Begin
 					If (IHasSaves) then Choice:='L' end else
 				If (Ev.Key.Keysym.Sym = SDLK_B) then Choice:='B' else
 				If (Ev.Key.Keysym.Sym = SDLK_S) then Choice:='S' else
+				If (Ev.Key.Keysym.Sym = SDLK_D) then Choice:='D' else
 			end else
 			If (Ev.Type_ = SDL_MouseButtonDown) then begin
 				If (MouseInRect(IntroRect)) then Choice:='I' else
@@ -489,6 +564,7 @@ Begin
 					If (IHasSaves) then Choice:='L' end else
 				If (MouseInRect(BindRect)) then Choice:='B' else
 				If (MouseInRect(ColourRect)) then Choice:='S' else
+				If (MouseInRect(DonateRect)) then Choice:='D' else
 				If (MouseInRect(QuitRect)) then Choice:='Q' else
 			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then begin
@@ -756,43 +832,45 @@ Begin
 End;
 
 begin
-Writeln(GAMENAME,' v.',GAMEVERS,' by ',GAMEAUTH);
+	Writeln(GAMENAME,' v.',GAMEVERS,' by ',GAMEAUTH);
 {$IFNDEF PACKAGE}
 	Writeln('build ',GAMEDATE);
 {$ENDIF}
-Writeln(StringOfChar('-',36));
-If (Not Startup()) Then Halt(255);
-Repeat
-   MenuChoice:=Menu();
-   Case MenuChoice of
-      'I': Intro();
-      'C': PlayGame();
-      'N': begin
-           MenuChoice:=GameworldDialog(False);
-           If (MenuChoice<>'Q') and (GameOn) then begin
-              Write('Saving current game... ');
-              If (SaveGame(GameMode)) then Writeln('Done.') end;
-           Case MenuChoice of
-              'T': begin NewGame(GM_TUTORIAL); PlayGame() end;
-              'C': begin NewGame(GM_ORIGINAL); PlayGame() end;
-              'N': begin NewGame(GM_NEWWORLD); PlayGame() end;
-              end;
-           MenuChoice:='N'
-           end;
-      'L': begin
-           MenuChoice:=GameworldDialog(True);
-           Case MenuChoice of
-              'T': If(GameloadRequest(GM_TUTORIAL)) then PlayGame();
-              'C': If(GameloadRequest(GM_ORIGINAL)) then PlayGame();
-              'N': If(GameloadRequest(GM_NEWWORLD)) then PlayGame();
-              end;
-           MenuChoice:='L'
-           end;
-      'B': BindKeys();
-      'S': SetColours();
-      end;
-   If (GameOn) and (GameMode <> GM_TUTORIAL) and (Given >= 8) then begin
-      GameOn:=False; Outro() end;
-   Until (MenuChoice = 'Q') or (Shutdown);
-QuitProg()
+	Writeln(StringOfChar('-',36));
+	If (Not Startup()) Then Halt(255);
+	Repeat
+		MenuChoice:=Menu();
+		Case MenuChoice of
+			'I': Intro();
+			'C': PlayGame();
+			'N': begin
+				MenuChoice:=GameworldDialog(False);
+				If (MenuChoice<>'Q') and (GameOn) then begin
+					Write('Saving current game... ');
+					If (SaveGame(GameMode)) then Writeln('Done.') end;
+					Case MenuChoice of
+					'T': begin NewGame(GM_TUTORIAL); PlayGame() end;
+					'C': begin NewGame(GM_ORIGINAL); PlayGame() end;
+					'N': begin NewGame(GM_NEWWORLD); PlayGame() end;
+				end;
+				MenuChoice:='N'
+			end;
+			'L': begin
+				MenuChoice:=GameworldDialog(True);
+				Case MenuChoice of
+					'T': If(GameloadRequest(GM_TUTORIAL)) then PlayGame();
+					'C': If(GameloadRequest(GM_ORIGINAL)) then PlayGame();
+					'N': If(GameloadRequest(GM_NEWWORLD)) then PlayGame();
+				end;
+				MenuChoice:='L'
+			end;
+			'B': BindKeys();
+			'S': SetColours();
+			'D': DonateScreen();
+		end;
+		If (GameOn) and (GameMode <> GM_TUTORIAL) and (Given >= 8) then begin
+			GameOn:=False; Outro()
+		end;
+	Until (MenuChoice = 'Q') or (Shutdown);
+	QuitProg()
 end.
