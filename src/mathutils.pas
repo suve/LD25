@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2022 suve (a.k.a. Artur Frenszek Iwicki)
+ * Copyright (C) 2012-2022 suve (a.k.a. Artur Frenszek-Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -63,12 +63,12 @@ end;
 
 Function InRange(Num,Min,Max:Int64):Boolean;
 Begin
-	Result := (Num>=Min) and (Num<=Max)
+	Result := (Num >= Min) and (Num <= Max)
 end;
 
 Function Random(Min,Max:Int64):Int64; Overload;
 Begin
-	Exit(Min + System.Random(Max-Min+1))
+	Result := Min + System.Random(Max - Min + 1)
 End;
 
 Function Overlap(AX,AY:Double;AW,AH:uInt;BX,BY:Double;BW,BH:uInt):Boolean;
@@ -82,7 +82,7 @@ End;
 
 Function Overlap(A,B:PEntity):Boolean;
 Begin
-	Overlap(A^.X,A^.Y,A^.W,A^.H,B^.X,B^.Y,B^.W,B^.H)
+	Result := Overlap(A^.X,A^.Y,A^.W,A^.H,B^.X,B^.Y,B^.W,B^.H)
 End;
 
 End.
