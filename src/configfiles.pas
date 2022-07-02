@@ -305,7 +305,7 @@ Const
 	{$ENDIF}
 	{$IFDEF WINDOWS}
 		HomeVar = 'APPDATA';
-		ConfDir = '\suve\colorful';
+		ConfDir = '\suve\colorful\';
 	{$ENDIF}
 Begin
 	OldConfPath := GetEnvironmentVariable(HomeVar) + ConfDir
