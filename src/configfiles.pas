@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2022 suve (a.k.a. Artur Frenszek Iwicki)
+ * Copyright (C) 2012-2022 suve (a.k.a. Artur Frenszek-Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -22,12 +22,18 @@ interface
 	uses Shared;
 
 Var
-	ConfPath, OldConfPath: AnsiString; // Configuration (.ini, savegame) paths
+	ConfPath: AnsiString; // Configuration (.ini, savegame) paths - v2.X
+	{$IFNDEF ANDROID}
+		OldConfPath: AnsiString; // Configuration (.ini, savegame) paths - legacy v1.X location
+	{$ENDIF}
+
 	DataPath : AnsiString; // Location of assets
 
 Procedure SetPaths();
+
+{$IFNDEF ANDROID}
 Procedure CopyOldSavegames();
-Function CheckConfPath():Boolean;
+{$ENDIF}
 
 Type
 	TIniVersion = (
@@ -244,12 +250,15 @@ Begin
 	If Version > INIVER_1_0 then
 		Result := ConfPath + ConfFileName
 	else
-		Result := OldConfPath + ConfFileName
+		{$IFNDEF ANDROID}
+			Result := OldConfPath + ConfFileName
+		{$ELSE}
+			Result := '/dev/null'
+		{$ENDIF}
 End;
 
 Function LoadIni(Const Version: TIniVersion):Boolean;
 Var
-	Path: AnsiString;
 	Ini: TIniFile;
 Begin
 	Ini:=TIniFile.Create(GetIniPath(Version));
@@ -260,7 +269,14 @@ End;
 
 Function IHasIni(Const Version: TIniVersion):Boolean;
 Begin
-	Result := FileExists(GetIniPath(Version))
+	{$IFNDEF ANDROID}
+		Result := FileExists(GetIniPath(Version))
+	{$ELSE}
+		If Version > INIVER_1_0 then
+			Result := FileExists(GetIniPath(Version))
+		else
+			Result := False
+	{$ENDIF}
 End;
 
 Procedure DefaultSettings();
@@ -279,6 +295,7 @@ Begin
 	SetVol(VolLevel_MAX,False) 
 End;
 
+{$IFNDEF ANDROID}
 Procedure SetOldConfPath();
 Const
 	// Consts used to determine the locations of v1.X config files.
@@ -293,12 +310,15 @@ Const
 Begin
 	OldConfPath := GetEnvironmentVariable(HomeVar) + ConfDir
 End;
+{$ENDIF}
 
 Procedure SetPaths();
 Var
 	PrefPath: PChar;
 Begin
-	SetOldConfPath();
+	{$IFNDEF ANDROID}
+		SetOldConfPath();
+	{$ENDIF}
 
 	PrefPath := SDL_GetPrefPath(PChar('suve'), PChar('colorful'));
 	ConfPath := AnsiString(PrefPath);
@@ -323,6 +343,7 @@ Begin
 	{$ENDIF}
 End;
 
+{$IFNDEF ANDROID}
 Procedure CopyFile(OldPath, NewPath: AnsiString);
 Const
 	BufferSize = 4096;
@@ -366,6 +387,7 @@ Begin
 		CopyFile(OldPath, NewPath)
 	end
 End;
+{$ENDIF}
 
 end.
 

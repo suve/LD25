@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2022 suve (a.k.a. Artur Frenszek Iwicki)
+ * Copyright (C) 2012-2022 suve (a.k.a. Artur Frenszek-Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -637,16 +637,18 @@ Begin
 	end else
 		Writeln('Configuration file not found.');
 	
-	If (IHasIni(INIVER_1_0)) then begin
-		Write('Loading 1.0 configuration file... ');
-		If (LoadIni(INIVER_1_0)) then begin
-			Writeln('Success!');
-			Exit()
+	{$IFNDEF ANDROID}
+		If (IHasIni(INIVER_1_0)) then begin
+			Write('Loading 1.0 configuration file... ');
+			If (LoadIni(INIVER_1_0)) then begin
+				Writeln('Success!');
+				Exit()
+			end else
+				Writeln('Failed!');
 		end else
-			Writeln('Failed!');
-	end else
-		Writeln('Old configuration file not found.');
-	
+			Writeln('Old configuration file not found.');
+	{$ENDIF}
+
 	Writeln('Using default settings.');
 	Configfiles.DefaultSettings()
 End;
@@ -661,7 +663,9 @@ Begin
 	Timu:=GetMSecs(); Randomize();
 
 	ConfigFiles.SetPaths();
+	{$IFNDEF ANDROID}
 	ConfigFiles.CopyOldSavegames();
+	{$ENDIF}
 
 	LoadConfig();
 	For GM:=Low(GM) to High(GM) do SaveExists[GM]:=IHasGame(GM);
