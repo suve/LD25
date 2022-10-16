@@ -7,3 +7,6 @@
 [submodule "SDL2_image"]
 	path = SDL2_image
 	url = https://github.com/libsdl-org/SDL_image
+[submodule "colorful"]
+	path = colorful
+	url = https://github.com/suve/LD25
