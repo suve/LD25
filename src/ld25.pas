@@ -14,7 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *)
-program ld25; 
+{$IFNDEF ANDROID}
+	program ld25;
+{$ELSE}
+	library ld25;
+{$ENDIF}
 
 {$INCLUDE defines.inc}
 
@@ -835,6 +839,15 @@ Begin
 	Writeln('Thanks for playing and have a nice day!')
 End;
 
+(*
+ * On Android, we're building the game as a library, not as an executable.
+ * Stick the code in a "ld25main" function and export it.
+ * Use cdecl for compatibility with C wrapper code.
+ *)
+{$IFDEF ANDROID}
+Procedure ld25main(); cdecl;
+{$ENDIF}
+
 begin
 	Writeln(GAMENAME,' v.',GAMEVERS,' by ',GAMEAUTH);
 {$IFNDEF PACKAGE}
@@ -877,4 +890,10 @@ begin
 		end;
 	Until (MenuChoice = 'Q') or (Shutdown);
 	QuitProg()
+{$IFDEF ANDROID}
+end;
+
+exports	ld25main;
+{$ENDIF}
+
 end.
