@@ -19,10 +19,14 @@ if [[ -z "${ANDROID_API}" ]]; then
 	exit 1
 fi
 
-# -- perform the build
+# -- prepare the build directory
 
 BUILD_DIR="${SCRIPT_DIR}/build"
 mkdir -p "${BUILD_DIR}"
+
+# -- build the SDL2 libraries
+
+cd "${SCRIPT_DIR}"
 
 "${ANDROID_NDK_ROOT}/ndk-build" \
 	NDK_MODULE_PATH="${SCRIPT_DIR}" \
@@ -49,4 +53,23 @@ mkdir -p "${BUILD_DIR}"
 	SUPPORT_PNG=false \
 	SUPPORT_WEBP=false \
 	"-j$(nproc)"
+
+# -- build the game executable
+
+function fpcbuild() {
+	local FPC_ARCH="$1"
+	local NDK_ARCH="$2"
+
+	fpc -Tandroid "-P${FPC_ARCH}" \
+		"-Fl${SCRIPT_DIR}/build/lib/${NDK_ARCH}" \
+		"-FE${SCRIPT_DIR}/build/lib/${NDK_ARCH}" \
+		"-FU${SCRIPT_DIR}/build/obj/local/${NDK_ARCH}" \
+		"-Fu${SCRIPT_DIR}/colorful/SDL2/units" \
+		"${SCRIPT_DIR}/colorful/src/ld25.pas"
+}
+
+cd "${SCRIPT_DIR}/colorful"
+fpcbuild arm armeabi-v7a
+fpcbuild aarch64 arm64-v8a
+fpcbuild x86_64 x86_64
 
