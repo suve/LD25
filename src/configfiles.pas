@@ -25,9 +25,8 @@ Var
 	ConfPath: AnsiString; // Configuration (.ini, savegame) paths - v2.X
 	{$IFNDEF ANDROID}
 		OldConfPath: AnsiString; // Configuration (.ini, savegame) paths - legacy v1.X location
+		DataPath : AnsiString; // Location of assets
 	{$ENDIF}
-
-	DataPath : AnsiString; // Location of assets
 
 Procedure SetPaths();
 
@@ -314,6 +313,7 @@ End;
 
 Procedure SetPaths();
 Var
+	{$IFNDEF ANDROID} BasePath: PChar; {$ENDIF}
 	PrefPath: PChar;
 Begin
 	{$IFNDEF ANDROID}
@@ -324,22 +324,31 @@ Begin
 	ConfPath := AnsiString(PrefPath);
 	SDL_Free(PrefPath);
 
-	{$IFNDEF PACKAGE}
-		(* On most systems, ParamStr(0) returns the full path to the executable.
-		 * ExtractFileDir() takes a string and returns everything until the last
-		 * directory delimeter. So, we take the executable path, extract the dir,
-		 * add the delimeter and voila, we now know where the executable resides. *)
-		DataPath := ExtractFileDir(ParamStr(0)) + System.DirectorySeparator;
-		{$IFNDEF DEVELOPER} 
-			(* Since the executables are placed in bin/platform/, we need to go two
-			 * folders up to reach the game's main directory. All the data files 
-			 * (gfx, sfx, maps) should be found within subfolders of that location. *)
-			DataPath += '..' + System.DirectorySeparator + '..' + System.DirectorySeparator;
+	{$IFNDEF ANDROID}
+		{$IFDEF PACKAGE}
+			(*
+			 * If we are building a package version, data files should be found
+			 * in this pre-determined location.
+			 *)
+			DataPath:='/usr/share/suve/colorful/';
+		{$ELSE}
+			(*
+			 * If we're not building a package, grab the path to the executable.
+			 * For development builds, rely on the assets being in the same directory.
+			 *
+			 * For release builds, assume the following directory structure:
+			 * - colorful/             - location of assets
+			 * - colorful/bin/linux64/ - location of executable
+			 * Hence, to reach the assets, we need to go two folders up in the hierarchy.
+			 *)
+			BasePath := SDL_GetBasePath();
+			DataPath := AnsiString(BasePath);
+			{$IFNDEF DEVELOPER}
+				DataPath += '..' + System.DirectorySeparator + '..' + System.DirectorySeparator;
+			{$ENDIF}
+
+			SDL_Free(BasePath);
 		{$ENDIF}
-	{$ELSE}
-		(* If we are building a package version, data files should be found in
-		 * this pre-determined location. *)
-		DataPath:='/usr/share/suve/colorful/';
 	{$ENDIF}
 End;
 

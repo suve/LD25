@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2018 Artur Iwicki
+ * Copyright (C) 2012-2022 suve (a.k.a. Artur Frenszek-Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -253,7 +253,7 @@ Begin
 	For idx := 0 to (AssetCount-1) do begin
 		If(AssetArr[idx].Ptr^ <> NIL) then Continue;
 		
-		FullPath := DataPath + AssetArr[idx].Path;
+		FullPath := {$IFNDEF ANDROID} DataPath + {$ENDIF} AssetArr[idx].Path;
 		Case(AssetArr[idx].Kind) of
 			ASSET_FONT: begin
 				FontImage := LoadImage(FullPath, @COLOUR_BLACK);
@@ -297,7 +297,7 @@ Const
 	ICON_FILE = 'gfx/icon.png';
 Begin
 	If(IconSurf = NIL) then begin
-		IconSurf:=IMG_Load(PChar(DataPath + ICON_FILE));
+		IconSurf:=IMG_Load(PChar({$IFNDEF ANDROID} DataPath + {$ENDIF} ICON_FILE));
 		
 		If (IconSurf = NIL) then begin
 			Writeln('Failed to load file: '+ {$IFDEF PACKAGE} DataPath+ {$ENDIF} ICON_FILE);
