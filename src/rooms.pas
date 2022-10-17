@@ -19,7 +19,7 @@ Unit rooms;
 {$INCLUDE defines.inc}
 
 Interface
-	uses SDL2, Shared;
+	uses SDL2, Shared, LineReader;
 
 Type
 	TTile = (
@@ -106,7 +106,7 @@ Type
 			Function ParseScript_Spawn(Const LineNo: sInt; Const Tokens:Array of AnsiString; Out rsi:TRoomScriptInstruction):Boolean;
 			Function ParseScript_Text(Const LineNo: sInt; Const Tokens:Array of AnsiString; Out rsi:TRoomScriptInstruction):Boolean;
 			Function ParseScript_Tile(Const LineNo: sInt; Const Tokens:Array of AnsiString; Out rsi:TRoomScriptInstruction):Boolean;
-			Procedure ParseScript(Var Stream:Text);
+			Procedure ParseScript(Reader: PLineReader);
 			
 			Procedure RunScript_Colour(Const rsi: TRoomScriptInstruction);
 			Procedure RunScript_Palette(Const rsi: TRoomScriptInstruction);
@@ -114,7 +114,7 @@ Type
 			Procedure RunScript_Text(Const rsi: TRoomScriptInstruction);
 			Procedure RunScript_Tile(Const rsi: TRoomScriptInstruction);
 			
-			Procedure ParseTiles(Var Stream:Text);
+			Procedure ParseTiles(Reader: PLineReader);
 			Procedure Tokenize(Const Line: AnsiString; Const Tokens:PAnsiStringArray);
 			
 		Public
@@ -130,7 +130,7 @@ Type
 
 			Procedure RunScript();
 
-			Constructor Create(Const rX, rY: sInt; Var Stream:Text);
+			Constructor Create(Const rX, rY: sInt; Reader: PLineReader);
 			Destructor Destroy;
 	end;
 
@@ -583,13 +583,13 @@ Begin
 		PlaySfx(SFX_METAL+Random(METAL_SFX))
 end;
 
-Procedure TRoom.ParseTiles(Var Stream:Text);
+Procedure TRoom.ParseTiles(Reader: PLineReader);
 Var
 	rx, ry: sInt;
 	Line: AnsiString;
 Begin
 	For rY:=0 to (ROOM_H-1) do begin
-		Readln(Stream, Line);
+		Line := Reader^.GetLine();
 		For rX:=0 to (ROOM_W-1) do begin
 			Self.SetTile(rX, rY, Line[rX+1]);
 			Self.TCol[rX][rY] := @WhiteColour;
@@ -622,7 +622,7 @@ Begin
 	end;
 End;
 
-Procedure TRoom.ParseScript(Var Stream:Text);
+Procedure TRoom.ParseScript(Reader: PLineReader);
 Const
 	SCRIPT_OFFSET = 21;
 	MAX_IF_NEST = 8;
@@ -645,10 +645,10 @@ Begin
 	IfNest := 0;
 	LineNo := SCRIPT_OFFSET - 1;
 	LineCount := 0;
-	While Not Eof(Stream) do begin
+	While Not Reader^.IsFinished() do begin
 		LineNo += 1;
 		
-		Readln(Stream, Line); Line:=Trim(Line);
+		Line := Trim(Reader^.GetLine());
 		If (Length(Line) = 0) then Continue;
 		
 		// Oddly named function. Replaces multiple spaces with single spaces.
@@ -737,11 +737,11 @@ Begin
 	end
 end;
 
-Constructor TRoom.Create(Const rX, rY: sInt; Var Stream:Text);
+Constructor TRoom.Create(Const rX, rY: sInt; Reader: PLineReader);
 Begin
 	Self.X := rX; Self.Y := rY;
-	Self.ParseTiles(Stream);
-	Self.ParseScript(Stream);
+	Self.ParseTiles(Reader);
+	Self.ParseScript(Reader);
 end;
 
 Destructor TRoom.Destroy();
@@ -751,14 +751,13 @@ End;
 
 Function LoadRoom(Const rX, rY: sInt; Const Name:AnsiString):PRoom;
 Var
-	F:Text;
+	Reader: PLineReader;
 Begin
-	// Open file safely, bail out if failed to open
-	Assign(F,Name); {$I-} Reset(F); {$I+}
-	If (IOResult <> 0) then Exit(NIL);
+	Reader := NewLineReader(Name);
+	If(Reader = NIL) then Exit(NIL);
 	
-	New(Result, Create(rX, rY, F));
-	Close(F)
+	New(Result, Create(rX, rY, Reader));
+	Dispose(Reader, Destroy())
 End;
 
 End.
