@@ -280,7 +280,7 @@ Begin
 		ExitRequested := False;
 		While(SDL_PollEvent(@Ev) > 0) do Case(Ev.Type_) of
 			SDL_QuitEv: ExitRequested := True;
-			SDL_KeyDown: If(Ev.Key.Keysym.Sym = SDLK_ESCAPE) then ExitRequested := True;
+			SDL_KeyDown: If((Ev.Key.Keysym.Sym = SDLK_Escape) or (Ev.Key.Keysym.Sym = SDLK_AC_BACK)) then ExitRequested := True;
 		end;
 		
 		If(ExitRequested) then begin

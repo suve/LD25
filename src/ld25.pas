@@ -127,7 +127,7 @@ Begin
 				Shutdown:=True; Exit() 
 			end else
 			If (Ev.Type_ = SDL_KeyDown) then begin
-				If (Ev.Key.Keysym.Sym = SDLK_Escape) then
+				If ((Ev.Key.Keysym.Sym = SDLK_Escape) or (Ev.Key.Keysym.Sym = SDLK_AC_BACK)) then
 					Exit()
 				else begin
 					NewBind[K]:=Ev.Key.Keysym.Sym; Bound:=True
@@ -231,7 +231,7 @@ Begin
 				Shutdown:=True; Exit()
 			end else
 			If (Ev.Type_ = SDL_KeyDown) then begin
-				If (Ev.Key.Keysym.Sym = SDLK_Escape) then Finished:=True
+				If ((Ev.Key.Keysym.Sym = SDLK_Escape) or (ev.Key.Keysym.Sym = SDLK_AC_BACK)) then Finished:=True
 				else
 				If (Ev.Key.Keysym.Sym = SDLK_R) then CurrentCol.R:=CurrentCol.R + $10
 				else
@@ -296,7 +296,7 @@ Begin
 				Shutdown:=True; Exit()
 			end else
 			If (Ev.Type_ = SDL_KeyDown) then begin
-				If (Ev.Key.Keysym.Sym = SDLK_Escape) then Exit()
+				If ((Ev.Key.Keysym.Sym = SDLK_Escape) or (Ev.Key.Keysym.Sym = SDLK_AC_BACK)) then Exit()
 				else
 				If (Ev.Key.Keysym.Sym >= SDLK_1) and (Ev.Key.Keysym.Sym <= SDLK_8) then Sel:=Ord(Ev.Key.Keysym.Sym - SDLK_1)
 			end else
@@ -353,7 +353,7 @@ Begin
 				Shutdown:=True; BackToMenu := True
 			end else
 			If (Ev.Type_ = SDL_KeyDown) then begin
-				If (Ev.Key.Keysym.Sym = SDLK_Escape) then
+				If ((Ev.Key.Keysym.Sym = SDLK_Escape) or (Ev.Key.Keysym.Sym = SDLK_AC_BACK)) then
 					BackToMenu := True
 				else
 				If (Ev.Key.Keysym.Sym = SDLK_G) then begin
@@ -422,7 +422,7 @@ Begin
 			If (Ev.Type_ = SDL_QuitEv) then begin
 				Shutdown:=True; Exit('Q') end else
 			If (Ev.Type_ = SDL_KeyDown) then begin
-				If (Ev.Key.Keysym.Sym = SDLK_Escape) then Choice:='Q' else
+				If ((Ev.Key.Keysym.Sym = SDLK_Escape) or (Ev.Key.Keysym.Sym = SDLK_AC_BACK)) then Choice:='Q' else
 				If (Ev.Key.Keysym.Sym = SDLK_T) then begin
 					If (OK[GM_TUTORIAL]) then Choice:='T' 
 				end else
@@ -547,7 +547,8 @@ Begin
 			If (Ev.Type_ = SDL_QuitEv) then begin
 				Shutdown:=True; Exit('Q') end else
 			If (Ev.Type_ = SDL_KeyDown) then begin
-				If (Ev.Key.Keysym.Sym = SDLK_ESCAPE) then Choice:='Q' else
+				If (Ev.Key.Keysym.Sym = SDLK_Escape) then Choice:='Q' else
+				If (Ev.Key.Keysym.Sym = SDLK_AC_BACK) then Choice:='Q' else
 				If (Ev.Key.Keysym.Sym = SDLK_Q) then Choice:='Q' else
 				If (Ev.Key.Keysym.Sym = SDLK_I) then Choice:='I' else
 				If (Ev.Key.Keysym.Sym = SDLK_N) then Choice:='N' else

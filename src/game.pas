@@ -62,6 +62,7 @@ Begin
 		end else
 		If (Ev.Type_ = SDL_KeyDown) then begin
 			If (Ev.Key.Keysym.Sym = SDLK_Escape) then WantToQuit:=True else
+			If (Ev.Key.Keysym.Sym = SDLK_AC_BACK) then WantToQuit:=True else
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_Up]        ) then Key[KEY_UP   ]     :=True else
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_RIGHT]     ) then Key[KEY_RIGHT]     :=True else
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_DOWN]      ) then Key[KEY_DOWN ]     :=True else
