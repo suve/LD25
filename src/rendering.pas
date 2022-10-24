@@ -40,8 +40,12 @@ Var
 	Wnd_W, Wnd_H: uInt;
 	Wnd_F : Boolean;
 
-// Resize window, duh
+Procedure HandleWindowResizedEvent(Ev: PSDL_Event);
+
+{$IFNDEF ANDROID}
+// Unused at the moment. Revise whether this is actually needed.
 Procedure ResizeWindow(W,H:uInt;Full:Boolean=FALSE);
+{$ENDIF}
 
 // Set up buffers for drawing frame, send frame to display
 Procedure BeginFrame();
@@ -49,10 +53,27 @@ Procedure FinishFrame();
 
 
 Implementation
+Uses
+	ctypes;
 
 Var
 	WindowTex: PSDL_Texture;
 
+Procedure HandleWindowResizedEvent(Ev: PSDL_Event);
+Var
+	ww, wh: cint;
+Begin
+	If (Ev <> NIL) then begin
+		Wnd_W := Ev^.Window.Data1;
+		Wnd_H := Ev^.Window.Data2
+	end else begin
+		SDL_GetWindowSize(Window, @ww, @wh);
+		Wnd_W := ww;
+		Wnd_H := wh
+	end
+End;
+
+{$IFNDEF ANDROID}
 Procedure ResizeWindow(W,H:uInt;Full:Boolean=FALSE);
 Begin
 	If (Full) then begin
@@ -74,6 +95,7 @@ Begin
 		Wnd_F := False
 	end
 End;
+{$ENDIF}
 
 Procedure BeginFrame();
 Begin

@@ -92,7 +92,7 @@ Begin
 		end else
 		If (Ev.Type_ = SDL_WindowEvent) then begin
 			If (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then begin
-				Rendering.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False);
+				HandleWindowResizedEvent(@Ev);
 				Paused:=True
 			end else
 			If (Ev.Window.Event = SDL_WINDOWEVENT_FOCUS_LOST) then begin

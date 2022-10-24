@@ -135,7 +135,7 @@ Begin
 				end
 			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
-				Rendering.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False)
+				HandleWindowResizedEvent(@Ev)
 		end;
 		If (Bound) then begin
 			If (K<High(TPlayerKey)) then
@@ -252,7 +252,7 @@ Begin
 				If (MouseInRect(DefaultRect)) then CurrentCol:=DefaultMapColour[idx]
 			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
-				Rendering.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False)
+				HandleWindowResizedEvent(@Ev)
 		end;
 	end;
 	
@@ -305,7 +305,7 @@ Begin
 				For C:=0 to 7 do If(MouseInRect(ChoiceRect[C])) then Sel:=C
 			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
-				Rendering.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False)
+				HandleWindowResizedEvent(@Ev)
 		end;
 		
 		If(Sel >= 0) then SetSingleColour(Sel)
@@ -377,7 +377,7 @@ Begin
 				end
 			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
-				Rendering.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False)
+				HandleWindowResizedEvent(@Ev)
 		end;
 	until BackToMenu
 End;
@@ -446,7 +446,7 @@ Begin
 				end else
 			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
-				Rendering.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False)
+				HandleWindowResizedEvent(@Ev)
 		end;
 	end;
 	Exit(Choice)
@@ -479,7 +479,7 @@ Begin
 					Q:=1
 			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
-				Rendering.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False)
+				HandleWindowResizedEvent(@Ev)
 		end
 	end;
 	Exit(Q >= 0)
@@ -574,7 +574,7 @@ Begin
 				If (MouseInRect(QuitRect)) then Choice:='Q' else
 			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then begin
-				Rendering.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False)
+				HandleWindowResizedEvent(@Ev)
 			end
 		end
 	end;
@@ -625,7 +625,7 @@ Begin
 			end else
 			If (Ev.Type_ = SDL_KeyDown) then Exit() else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then begin
-				Rendering.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False)
+				HandleWindowResizedEvent(@Ev)
 			end
 		end
 	end
@@ -732,6 +732,7 @@ Begin
 		Halt(1)
 	end else begin
 		Writeln('Success!');
+		SDL_SetWindowMinimumSize(Window, RESOL_W, RESOL_H);
 		LoadAndSetWindowIcon();
 	end;
 
