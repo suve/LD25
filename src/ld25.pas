@@ -25,7 +25,8 @@
 uses
 	SysUtils, Math,
 	SDL2, SDL2_image, SDL2_mixer,
-	Assets, Colours, ConfigFiles, FloatingText, Fonts, Game, Images, Objects, MathUtils, Rooms, Shared
+	Assets, Colours, ConfigFiles, FloatingText, Fonts, Game, Images, Objects,
+	MathUtils, Rendering, Rooms, Shared
 ;
 
 
@@ -81,7 +82,7 @@ Var
 Begin 
 	If(TitleGfx = NIL) or (Font = NIL) then Exit();
 	
-	Shared.BeginFrame();
+	Rendering.BeginFrame();
 	DrawTitle();
 	
 	Font^.Scale := 2;
@@ -97,7 +98,7 @@ Begin
 	Rect.W := Trunc(SIZEX*Perc);
 	DrawColouredRect(@Rect, @Col);
 	
-	Shared.FinishFrame()
+	Rendering.FinishFrame()
 End;
 
 Procedure BindKeys();
@@ -112,7 +113,7 @@ Var
 Begin
 	Finito:=False; Bound:=False; K:=Low(TPlayerKey);
 	Repeat
-		Shared.BeginFrame();
+		Rendering.BeginFrame();
 		DrawTitle();
 		
 		Font^.Scale := 2;
@@ -120,7 +121,7 @@ Begin
 		
 		PrintText(KeyName[K],Font,(RESOL_W div 2),(RESOL_H + TitleGfx^.H) div 2,ALIGN_CENTRE,ALIGN_MIDDLE,NIL);
 		
-		Shared.FinishFrame();
+		Rendering.FinishFrame();
 		GetDeltaTime(dt);
 		While (SDL_PollEvent(@Ev)>0) do begin
 			If (Ev.Type_ = SDL_QuitEv) then begin
@@ -134,7 +135,7 @@ Begin
 				end
 			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
-				Shared.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False)
+				Rendering.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False)
 		end;
 		If (Bound) then begin
 			If (K<High(TPlayerKey)) then
@@ -202,7 +203,7 @@ Begin
 	
 	Finished := False;
 	While Not Finished do begin
-		Shared.BeginFrame();
+		Rendering.BeginFrame();
 		DrawTitle();
 		
 		Font^.Scale := 2; YPos:=TitleGfx^.H;
@@ -224,7 +225,7 @@ Begin
 		PrintMenuText('D - DEFAULT', (RESOL_W div 2), YPos, ALIGN_CENTRE, @WhiteColour, DefaultRect);
 		
 		
-		Shared.FinishFrame();
+		Rendering.FinishFrame();
 		GetDeltaTime(dt);
 		While (SDL_PollEvent(@Ev)>0) do begin
 			If (Ev.Type_ = SDL_QuitEv) then begin
@@ -251,7 +252,7 @@ Begin
 				If (MouseInRect(DefaultRect)) then CurrentCol:=DefaultMapColour[idx]
 			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
-				Shared.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False)
+				Rendering.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False)
 		end;
 	end;
 	
@@ -276,7 +277,7 @@ Begin
 	XPos := (LongestName * Font^.CharW) + ((LongestName - 1) * Font^.SpacingX);
 	XPos := (RESOL_W - (XPos * Font^.Scale)) div 2;
 	While True do begin
-		Shared.BeginFrame();
+		Rendering.BeginFrame();
 		DrawTitle();
 		
 		Font^.Scale := 2; YPos:=TitleGfx^.H;
@@ -287,7 +288,7 @@ Begin
 			PrintMenuText(ChoiceName[C], XPos, YPos, ALIGN_LEFT, @WhiteColour, ChoiceRect[C])
 		end;
 		
-		Shared.FinishFrame();
+		Rendering.FinishFrame();
 		GetDeltaTime(dt);
 		
 		Sel := -1;
@@ -304,7 +305,7 @@ Begin
 				For C:=0 to 7 do If(MouseInRect(ChoiceRect[C])) then Sel:=C
 			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
-				Shared.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False)
+				Rendering.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False)
 		end;
 		
 		If(Sel >= 0) then SetSingleColour(Sel)
@@ -325,7 +326,7 @@ Begin
 
 	BackToMenu := False;
 	Repeat
-		Shared.BeginFrame();
+		Rendering.BeginFrame();
 		DrawTitle();
 
 		Font^.Scale := 2; YPos:=TitleGfx^.H;
@@ -345,7 +346,7 @@ Begin
 		YPos += Font^.CharH * Font^.Scale * 3;
 		PrintText('THANKS!', Font,(RESOL_W div 2),YPos,ALIGN_CENTRE,ALIGN_TOP,NIL);
 
-		Shared.FinishFrame();
+		Rendering.FinishFrame();
 		GetDeltaTime(dt);
 
 		While (SDL_PollEvent(@Ev)>0) do begin
@@ -376,7 +377,7 @@ Begin
 				end
 			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
-				Shared.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False)
+				Rendering.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False)
 		end;
 	until BackToMenu
 End;
@@ -403,7 +404,7 @@ Begin
    
 	Choice:=#$20;
 	While (Choice = #$20) do begin
-		Shared.BeginFrame();
+		Rendering.BeginFrame();
 		DrawTitle();
 		
 		Font^.Scale := 2;
@@ -416,7 +417,7 @@ Begin
 			YPos += (Font^.SpacingY + Font^.CharH) * 2 * Font^.Scale
 		end;
 		
-		Shared.FinishFrame();
+		Rendering.FinishFrame();
 		GetDeltaTime(dt);
 		While (SDL_PollEvent(@Ev)>0) do begin
 			If (Ev.Type_ = SDL_QuitEv) then begin
@@ -445,7 +446,7 @@ Begin
 				end else
 			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
-				Shared.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False)
+				Rendering.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False)
 		end;
 	end;
 	Exit(Choice)
@@ -458,13 +459,13 @@ Var
 Begin
 	Q:=0;
 	While (Q = 0) do begin
-		Shared.BeginFrame();
+		Rendering.BeginFrame();
 		Dst.X := (RESOL_W - Img^.W) div 2;
 		Dst.Y := 0;
 		Dst.W := Img^.W;
 		Dst.H := Img^.H;
 		DrawImage(Img,NIL,@Dst,NIL);
-		Shared.FinishFrame();
+		Rendering.FinishFrame();
 		
 		GetDeltaTime(dt);
 		While (SDL_PollEvent(@Ev)>0) do begin
@@ -478,7 +479,7 @@ Begin
 					Q:=1
 			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
-				Shared.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False)
+				Rendering.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False)
 		end
 	end;
 	Exit(Q >= 0)
@@ -512,7 +513,7 @@ Begin
 
 	Choice:=#$20;
 	While (Choice = #32) do begin
-		Shared.BeginFrame();
+		Rendering.BeginFrame();
 		DrawTitle();
 		
 		Font^.Scale := 2; YPos:=TitleGfx^.H;
@@ -541,7 +542,7 @@ Begin
 		YPos += (Font^.CharH * Font^.Scale * 7) div 4;
 		PrintMenuText('Q - QUIT', XPos, YPos, ALIGN_LEFT, @WhiteColour, QuitRect);
 		
-		Shared.FinishFrame();
+		Rendering.FinishFrame();
 		GetDeltaTime(dt);
 		While (SDL_PollEvent(@Ev)>0) do begin
 			If (Ev.Type_ = SDL_QuitEv) then begin
@@ -573,7 +574,7 @@ Begin
 				If (MouseInRect(QuitRect)) then Choice:='Q' else
 			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then begin
-				Shared.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False)
+				Rendering.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False)
 			end
 		end
 	end;
@@ -588,7 +589,7 @@ Begin
 		If Not ShowSlide(SlideOut[C]) then Exit();
 
 	While True do begin
-		Shared.BeginFrame();
+		Rendering.BeginFrame();
 		DrawTitle();
 		
 		Font^.Scale := 2;
@@ -616,7 +617,7 @@ Begin
 			ALIGN_CENTRE, ALIGN_TOP, NIL
 		);
 		
-		Shared.FinishFrame();
+		Rendering.FinishFrame();
 		GetDeltaTime(C);
 		While (SDL_PollEvent(@Ev)>0) do begin
 			If (Ev.Type_ = SDL_QuitEv) then begin
@@ -624,7 +625,7 @@ Begin
 			end else
 			If (Ev.Type_ = SDL_KeyDown) then Exit() else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then begin
-				Shared.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False)
+				Rendering.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False)
 			end
 		end
 	end
@@ -723,10 +724,10 @@ Begin
 	Write('Opening window... ');
 	Title := GAMENAME + ' v.' + GAMEVERS;
 	If (Not Wnd_F) then
-		Shared.Window := SDL_CreateWindow(PChar(Title), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, Wnd_W, Wnd_H, SDL_WINDOW_RESIZABLE)
+		Window := SDL_CreateWindow(PChar(Title), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, Wnd_W, Wnd_H, SDL_WINDOW_RESIZABLE)
 	else
-		Shared.Window := SDL_CreateWindow(PChar(Title), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, RESOL_W, RESOL_H, SDL_WINDOW_FULLSCREEN_DESKTOP or SDL_WINDOW_RESIZABLE);
-	If (Shared.Window = NIL) then begin
+		Window := SDL_CreateWindow(PChar(Title), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, RESOL_W, RESOL_H, SDL_WINDOW_FULLSCREEN_DESKTOP or SDL_WINDOW_RESIZABLE);
+	If (Window = NIL) then begin
 		Writeln('Failed!');
 		Halt(1)
 	end else begin
@@ -735,22 +736,22 @@ Begin
 	end;
 
 	Write('Creating SDL2 renderer... ');
-	Shared.Renderer := SDL_CreateRenderer(Shared.Window, -1, SDL_RENDERER_TARGETTEXTURE);
-	if(Shared.Renderer = NIL) then begin
+	Renderer := SDL_CreateRenderer(Window, -1, SDL_RENDERER_TARGETTEXTURE);
+	if(Renderer = NIL) then begin
 		Writeln('Failed!');
 		Halt(1)
 	end else begin
 		Writeln('Success!');
 		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, 'nearest');
-		SDL_RenderSetLogicalSize(Shared.Renderer, RESOL_W, RESOL_H)
+		SDL_RenderSetLogicalSize(Renderer, RESOL_W, RESOL_H)
 	end;
 
 	// Restore the old mask after we disabled FPE checks.
 	Math.SetExceptionMask(OldMask);
 
 	Write('Creating render target texture... ');
-	Shared.Display := SDL_CreateTexture(Shared.Renderer, SDL_GetWindowPixelFormat(Shared.Window), SDL_TEXTUREACCESS_TARGET, RESOL_W, RESOL_H);
-	if(Shared.Display = NIL) then begin
+	Display := SDL_CreateTexture(Renderer, SDL_GetWindowPixelFormat(Window), SDL_TEXTUREACCESS_TARGET, RESOL_W, RESOL_H);
+	if(Display = NIL) then begin
 		Writeln('Failed!');
 		Halt(1)
 	end else
@@ -798,7 +799,7 @@ Procedure QuitProg();
 Var Timu:Comp;
 Begin
 	Timu:=GetMSecs();
-	SDL_HideWindow(Shared.Window);
+	SDL_HideWindow(Window);
 	
 	If (GameOn) then begin
 		Write('Saving current game... ');
@@ -830,9 +831,9 @@ Begin
 	Writeln('Done.');
 	
 	Write('Closing SDL2... ');
-		SDL_DestroyTexture(Shared.Display);
-		SDL_DestroyRenderer(Shared.Renderer);
-		SDL_DestroyWindow(Shared.Window);
+		SDL_DestroyTexture(Display);
+		SDL_DestroyRenderer(Renderer);
+		SDL_DestroyWindow(Window);
 		SDL_Quit();
 	Writeln('Done.');
 	

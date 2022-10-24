@@ -30,7 +30,7 @@ Procedure RecalculatePosition();
 Implementation
 
 Uses
-	Assets, MathUtils, Shared;
+	Assets, MathUtils, Rendering, Shared;
 
 Const
 	BUTTON_SIZE = 8;
@@ -51,12 +51,12 @@ Begin
 
 	For Idx := 0 to 7 do begin
 		Src.Y := (Idx mod 2) * BUTTON_SIZE;
-		SDL_RenderCopyEx(Shared.Renderer, Assets.TouchControlsGfx^.Tex, @Src, @MovementButton[Idx], (Idx div 2) * 90.0, NIL, SDL_FLIP_NONE)
+		SDL_RenderCopyEx(Renderer, Assets.TouchControlsGfx^.Tex, @Src, @MovementButton[Idx], (Idx div 2) * 90.0, NIL, SDL_FLIP_NONE)
 	end;
 
 	Src.Y := BUTTON_SIZE * 2;
-	SDL_RenderCopy(Shared.Renderer, Assets.TouchControlsGfx^.Tex, @Src, @ShootLeftButton);
-	SDL_RenderCopyEx(Shared.Renderer, Assets.TouchControlsGfx^.Tex, @Src, @ShootRightButton, 0, NIL, SDL_FLIP_HORIZONTAL)
+	SDL_RenderCopy(Renderer, Assets.TouchControlsGfx^.Tex, @Src, @ShootLeftButton);
+	SDL_RenderCopyEx(Renderer, Assets.TouchControlsGfx^.Tex, @Src, @ShootRightButton, 0, NIL, SDL_FLIP_HORIZONTAL)
 End;
 
 Function MouseInRect(ev: PSDL_Event; Rect: TSDL_Rect): Boolean;

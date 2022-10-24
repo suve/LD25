@@ -75,7 +75,7 @@ Procedure FreeAssets();
 Implementation
 Uses
 	SDL2_Image,
-	Colours, ConfigFiles, FloatingText;
+	Colours, ConfigFiles, FloatingText, Rendering;
 
 Type
 	PPFont = ^PFont;

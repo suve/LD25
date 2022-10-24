@@ -37,9 +37,6 @@ const
 
 	FPS_LIMIT = 120; TICKS_MINIMUM = 1000 div FPS_LIMIT;
 
-	WINDOW_W = 640; WINDOW_H = 640; // Default window size
-	RESOL_W = 320; RESOL_H = 320;   // Game resolution (SDL renderer logical size)
-
 	TILE_W = 16; TILE_H = 16; TILE_S = ((TILE_W + TILE_H) div 2);
 	ROOM_W = 20; ROOM_H = 20;
 	SWITCHES = 100;
@@ -90,13 +87,7 @@ Type
 // require having a separate game controller class. I'll just keep everything global...
 
 Var 
-	Window   : PSDL_Window;   // Game window
-	Renderer : PSDL_Renderer; // Renderer handle
-	Display  : PSDL_Texture;  // The drawing target texture
-	Ev       : TSDL_Event;    // For retrieving SDL events
-
-	Wnd_W, Wnd_H : uInt; // Window width, height and fullscreen flag.
-	Wnd_F : Boolean;     // These can be read from Screen, but we save the .ini after closing SDL.
+	Ev: TSDL_Event;    // For retrieving SDL events
 
 	Hero : PPlayer;
 	PBul, EBul : Array of PBullet;
@@ -127,13 +118,6 @@ Procedure GetDeltaTime(Out Time,Ticks:uInt);
 
 // Mainly used in initialization, as we later switch to SDL ticks
 Function GetMSecs:Comp;
-
-// Resize window, doh
-Procedure ResizeWindow(W,H:uInt;Full:Boolean=FALSE);
-
-// Set up buffers for drawing frame, send frame to display
-Procedure BeginFrame();
-Procedure FinishFrame();
 
 // Draw primitives using SDL
 Procedure DrawColouredRect(Const Rect: PSDL_Rect; Const Colour: PSDL_Colour);
@@ -170,13 +154,12 @@ Procedure ResetGamestate();
 
 Implementation
 Uses
-	Assets, Colours, ConfigFiles, FloatingText, Rooms;
+	Assets, Colours, ConfigFiles, FloatingText, Rendering, Rooms;
 
 Var
 	Tikku : uInt;
 	VolLevel : TVolLevel;
 	Volume : uInt;
-	WindowTex: PSDL_Texture;
 
 Procedure GetDeltaTime(Out Time:uInt);
 Begin
@@ -198,48 +181,6 @@ End;
 Function GetMSecs():Comp;
 Begin
 	Exit(TimeStampToMSecs(DateTimeToTimeStamp(Now())))
-End;
-
-Procedure ResizeWindow(W,H:uInt;Full:Boolean=FALSE);
-Begin
-	If (Full) then begin
-		SDL_SetWindowSize(Window, RESOL_W, RESOL_H);
-		SDL_SetWindowFullscreen(Window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-		Wnd_F := True
-	end else begin
-		SDL_SetWindowFullscreen(Window, 0);
-		SDL_SetWindowSize(Window, W, H);
-		
-		// Centre window on the screen when coming back from fullscreen mode.
-		// We need the If() because otherwise, when dragging the window size,
-		// it keeps jumping back-and-forth as the WM fights the game over setting the window position.
-		If(Wnd_F) then SDL_SetWindowPosition(Window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
-		
-		Wnd_W := W; Wnd_H := H;
-		Wnd_F := False
-	end
-End;
-
-Procedure BeginFrame();
-Begin
-	WindowTex := SDL_GetRenderTarget(Renderer);
-	SDL_SetRenderTarget(Renderer, Display);
-
-	SDL_SetRenderDrawBlendMode(Renderer, SDL_BLENDMODE_BLEND);
-	SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 255);
-	SDL_RenderClear(Renderer)
-End;
-
-Procedure FinishFrame();
-Begin
-	SDL_SetRenderTarget(Renderer, WindowTex);
-	
-	SDL_SetRenderDrawBlendMode(Renderer, SDL_BLENDMODE_BLEND);
-	SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 255);
-	SDL_RenderClear(Renderer);
-	
-	SDL_RenderCopy(Renderer, Display, NIL, NIL);
-	SDL_RenderPresent(Renderer)
 End;
 
 Procedure DrawColouredRect(Const Rect: PSDL_Rect; Const Colour: PSDL_Colour);

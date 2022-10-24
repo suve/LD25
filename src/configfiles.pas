@@ -55,7 +55,7 @@ Implementation
 Uses
 	Classes, IniFiles, SysUtils,
 	SDL2,
-	Colours, SDL1Keys;
+	Colours, Rendering, SDL1Keys;
 
 Const
 	ConfFileName = 'settings.ini';

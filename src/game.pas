@@ -28,7 +28,8 @@ Function PlayGame():Boolean;
 Implementation
 Uses
 	SDL2,
-	Assets, Colours, ConfigFiles, Entities, FloatingText, Fonts, Images, MathUtils, Rooms, Shared;
+	Assets, Colours, ConfigFiles, Entities, FloatingText, Fonts, Images,
+	MathUtils, Rendering, Rooms, Shared;
 
 Type
 	TRoomChange = (
@@ -91,7 +92,7 @@ Begin
 		end else
 		If (Ev.Type_ = SDL_WindowEvent) then begin
 			If (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then begin
-				Shared.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False);
+				Rendering.ResizeWindow(Ev.Window.data1, Ev.Window.data2, False);
 				Paused:=True
 			end else
 			If (Ev.Window.Event = SDL_WINDOWEVENT_FOCUS_LOST) then begin
@@ -647,7 +648,7 @@ End;
 
 Procedure DrawFrame();
 Begin
-	Shared.BeginFrame();
+	Rendering.BeginFrame();
 	DrawRoom();
 
 	If (Length(Gib)>0) then DrawGibs();
@@ -662,7 +663,7 @@ Begin
 
 	{$IFDEF DEVELOPER} If Not (debugU) then {$ENDIF} DrawUI();
 
-	Shared.FinishFrame()
+	Rendering.FinishFrame()
 end;
 
 Procedure CountFrames(Const Time:uInt);
