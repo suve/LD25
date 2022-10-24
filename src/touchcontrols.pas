@@ -23,6 +23,10 @@ Interface
 Uses
 	SDL2;
 
+Const
+	BUTTON_SIZE = 8;
+	CONTROLS_SIZE = 5 * BUTTON_SIZE;
+
 Procedure Draw();
 Procedure ProcessEvent(ev: PSDL_Event);
 Procedure RecalculatePosition();
@@ -31,9 +35,6 @@ Implementation
 
 Uses
 	Assets, MathUtils, Rendering, Shared;
-
-Const
-	BUTTON_SIZE = 8;
 
 Var
 	MovementButton: Array[0..7] of TSDL_Rect;

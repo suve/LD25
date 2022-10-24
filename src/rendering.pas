@@ -54,14 +54,24 @@ Procedure FinishFrame();
 
 Implementation
 Uses
-	ctypes;
+	ctypes,
+	{$IFDEF ANDROID} TouchControls, {$ENDIF}
+	Shared;
 
 Var
 	WindowTex: PSDL_Texture;
 
+	{$IFDEF ANDROID}
+	GameArea: TSDL_Rect;
+	{$ENDIF}
+
 Procedure HandleWindowResizedEvent(Ev: PSDL_Event);
 Var
 	ww, wh: cint;
+
+	{$IFDEF ANDROID}
+	TotalHeight, VerticalOffset: uInt;
+	{$ENDIF}
 Begin
 	If (Ev <> NIL) then begin
 		Wnd_W := Ev^.Window.Data1;
@@ -70,7 +80,23 @@ Begin
 		SDL_GetWindowSize(Window, @ww, @wh);
 		Wnd_W := ww;
 		Wnd_H := wh
-	end
+	end;
+
+	(*
+	 * FIXME: This very naive code works correctly only when the device is in
+	 * portrait mode. It does not handle landscape mode, and will produce
+	 * bogus results on devices which have a display size ratio close to 1:1.
+	 *)
+	{$IFDEF ANDROID}
+	TotalHeight := RESOL_H + TouchControls.CONTROLS_SIZE;
+	TotalHeight := (TotalHeight * Wnd_W) div RESOL_W;
+	VerticalOffset := (Wnd_H - TotalHeight) div 4;
+
+	GameArea.X := 0;
+	GameArea.Y := VerticalOffset;
+	GameArea.W := Wnd_W;
+	GameArea.H := Wnd_W;
+	{$ENDIF}
 End;
 
 {$IFNDEF ANDROID}
@@ -115,7 +141,13 @@ Begin
 	SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 255);
 	SDL_RenderClear(Renderer);
 
-	SDL_RenderCopy(Renderer, Display, NIL, NIL);
+	{$IFDEF ANDROID}
+		SDL_RenderSetLogicalSize(Renderer, Wnd_W, Wnd_H);
+		SDL_RenderCopy(Renderer, Display, NIL, @GameArea);
+		SDL_RenderSetLogicalSize(Renderer, RESOL_W, RESOL_H);
+	{$ELSE}
+		SDL_RenderCopy(Renderer, Display, NIL, NIL);
+	{$ENDIF}
 	SDL_RenderPresent(Renderer);
 End;
 

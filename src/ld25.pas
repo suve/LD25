@@ -723,10 +723,22 @@ Begin
 
 	Write('Opening window... ');
 	Title := GAMENAME + ' v.' + GAMEVERS;
-	If (Not Wnd_F) then
-		Window := SDL_CreateWindow(PChar(Title), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, Wnd_W, Wnd_H, SDL_WINDOW_RESIZABLE)
-	else
-		Window := SDL_CreateWindow(PChar(Title), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, RESOL_W, RESOL_H, SDL_WINDOW_FULLSCREEN_DESKTOP or SDL_WINDOW_RESIZABLE);
+	{$IFDEF ANDROID}
+		(*
+		 * On Android, pass 0x0 as the window size. This makes SDL open a window covering the entire screen.
+		 * Set the RESIZABLE flag to allow for rotations, split-screen, et cetera.
+		 * Do not set FULLSCREEN, as that disables system navigation buttons.
+		 *)
+		Window := SDL_CreateWindow(PChar(Title), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 0, 0, SDL_WINDOW_RESIZABLE);
+	{$ELSE}
+		(*
+		 * On desktop platforms, open a window based on the values read beforehand from the config file.
+		 *)
+		If (Not Wnd_F) then
+			Window := SDL_CreateWindow(PChar(Title), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, Wnd_W, Wnd_H, SDL_WINDOW_RESIZABLE)
+		else
+			Window := SDL_CreateWindow(PChar(Title), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, RESOL_W, RESOL_H, SDL_WINDOW_FULLSCREEN_DESKTOP or SDL_WINDOW_RESIZABLE);
+	{$ENDIF}
 	If (Window = NIL) then begin
 		Writeln('Failed!');
 		Halt(1)
@@ -734,6 +746,11 @@ Begin
 		Writeln('Success!');
 		SDL_SetWindowMinimumSize(Window, RESOL_W, RESOL_H);
 		LoadAndSetWindowIcon();
+
+		{$IFDEF ANDROID}
+			// Invoke hander to recalculate screen proportions
+			HandleWindowResizedEvent(NIL);
+		{$ENDIF}
 	end;
 
 	Write('Creating SDL2 renderer... ');
