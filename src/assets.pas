@@ -49,6 +49,10 @@ Var
 	SlideIn  : Array[0..SLIDES_IN-1] of PImage;
 	SlideOut : Array[0..SLIDES_OUT-1] of PImage;
 
+	{$IFDEF ANDROID}
+	TouchControlsGfx: PImage;
+	{$ENDIF}
+
 	Font, NumFont : PFont;
 
 	Sfx: Array[0..SOUNDS-1] of PMix_Chunk;
@@ -198,7 +202,12 @@ Begin
 	
 	For idx:=0 to (SLIDES_IN-1) do RegisterImage('slides/intro' + IntToStr(idx) + '.png', @SlideIn[idx], @COLOUR_BLACK);
 	For idx:=0 to (SLIDES_OUT-1) do RegisterImage('slides/outro' + IntToStr(idx) + '.png', @SlideOut[idx], @COLOUR_BLACK);
-	
+
+	{$IFDEF ANDROID}
+	RegisterImage('gfx/touch-controls.png', @TouchControlsGfx, @COLOUR_LIME);
+	{$ENDIF}
+
+	// ----- ROOMS -----
 	For Y:=0 to (TUT_MAP_H-1) do
 		For X:=0 to (TUT_MAP_W-1) do
 			RegisterRoom('map/tut/' + IntToStr(X) + '-' + IntToStr(Y) + '.txt', @TutRoom[X][Y], X, Y);
