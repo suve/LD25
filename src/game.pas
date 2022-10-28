@@ -28,6 +28,7 @@ Function PlayGame():Boolean;
 Implementation
 Uses
 	SDL2,
+	{$IFDEF ANDROID} ctypes, TouchControls, {$ENDIF}
 	Assets, Colours, ConfigFiles, Entities, FloatingText, Fonts, Images,
 	MathUtils, Rendering, Rooms, Shared;
 
@@ -90,6 +91,11 @@ Begin
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_ShootLeft] ) then Key[KEY_ShootLeft] :=False else
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_ShootRight]) then Key[KEY_ShootRight]:=False else
 		end else
+		{$IFDEF ANDROID}
+		If (Ev.Type_ = SDL_FingerUp) or (Ev.Type_ = SDL_FingerDown) or (Ev.Type_ = SDL_FingerMotion) then begin
+			TouchControls.HandleEvent(@Ev)
+		end else
+		{$ENDIF}
 		If (Ev.Type_ = SDL_WindowEvent) then begin
 			If (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then begin
 				HandleWindowResizedEvent(@Ev);
