@@ -23,18 +23,19 @@ Interface
 Uses
 	SDL2;
 
-Const
-	BUTTON_SIZE = 8;
-	CONTROLS_SIZE = 5 * BUTTON_SIZE;
-
 Procedure Draw();
 Procedure ProcessEvent(ev: PSDL_Event);
-Procedure RecalculatePosition();
+
+Procedure SetPosition(DPad, ShootBtns: PSDL_Rect);
+
 
 Implementation
 
 Uses
 	Assets, MathUtils, Rendering, Shared;
+
+Const
+	BUTTON_SIZE = 16;
 
 Var
 	MovementButton: Array[0..7] of TSDL_Rect;
@@ -93,45 +94,50 @@ Begin
 		Key[KEY_SHOOTRIGHT] := SetTo
 End;
 
-Procedure RecalculatePosition();
+Procedure SetPosition(DPad, ShootBtns: PSDL_Rect);
 Var
 	Idx: uInt;
 	PosX, PosY: uInt;
-	HorizontalOffset, VerticalOffset: sInt;
+	BtnW, BtnH: uInt;
 Begin
-	HorizontalOffset := BUTTON_SIZE;
-	VerticalOffset := RESOL_H + BUTTON_SIZE;
+	If (DPad <> NIL) then begin
+		BtnW := DPad^.W div 5;
+		BtnH := DPad^.H div 5;
+		For Idx := 0 to 7 do begin
+			(* TODO: This can be reduced to a single equation. *)
+			If(Idx <= 2) then
+				PosX := Idx + 2
+			else If(Idx <= 6) then
+				PosX := 6 - Idx
+			else
+				PosX := 1;
 
-	For Idx := 0 to 7 do begin
-		(* TODO: This can be reduced to a single equation, but it's 01:10 now and I can barely think. *)
-		If(Idx <= 2) then
-			PosX := Idx + 2
-		else If(Idx <= 6) then
-			PosX := 6 - Idx
-		else
-			PosX := 1;
+			(* Same for this. *)
+			If(Idx <= 4) then
+				PosY := Idx
+			else
+				PosY := 8 - Idx;
 
-		(* Same for this. *)
-		If(Idx <= 4) then
-			PosY := Idx
-		else
-			PosY := 8 - Idx;
-
-		MovementButton[Idx].X := HorizontalOffset + (PosX * BUTTON_SIZE);
-		MovementButton[Idx].Y := VerticalOffset + (PosY * BUTTON_SIZE);
-		MovementButton[Idx].W := BUTTON_SIZE;
-		MovementButton[Idx].H := BUTTON_SIZE
+			MovementButton[Idx].X := DPad^.X + (PosX * BtnW);
+			MovementButton[Idx].Y := DPad^.Y + (PosY * BtnH);
+			MovementButton[Idx].W := BtnW;
+			MovementButton[Idx].H := BtnH;
+		end
 	end;
+	If (ShootBtns <> NIL) then begin
+		BtnW := ShootBtns^.W;
+		BtnH := BtnW;
 
-	ShootLeftButton.X := RESOL_W - HorizontalOffset - BUTTON_SIZE;
-	ShootLeftButton.Y := VerticalOffset;
-	ShootLeftButton.W := BUTTON_SIZE;
-	ShootLeftButton.H := BUTTON_SIZE;
-	
-	ShootRightButton.X := ShootLeftButton.X;
-	ShootRightButton.Y := ShootLeftButton.Y + (3 * BUTTON_SIZE);
-	ShootRightButton.W := BUTTON_SIZE;
-	ShootRightButton.H := BUTTON_SIZE
+		ShootLeftButton.X := ShootBtns^.X;
+		ShootLeftButton.Y := ShootBtns^.Y;
+		ShootLeftButton.W := BtnW;
+		ShootLeftButton.H := BtnH;
+
+		ShootRightButton.X := ShootBtns^.X;
+		ShootRightButton.Y := ShootBtns^.Y + ShootBtns^.H - BtnH;
+		ShootRightButton.W := BtnW;
+		ShootRightButton.H := BtnH
+	end
 End;
 
 End.

@@ -66,11 +66,17 @@ Var
 	{$ENDIF}
 
 Procedure HandleWindowResizedEvent(Ev: PSDL_Event);
+{$IFDEF ANDROID}
+Const
+	BUTTON_SIZE = 16;
+	DPAD_SIZE = 5 * BUTTON_SIZE;
+{$ENDIF}
 Var
 	ww, wh: cint;
 
 	{$IFDEF ANDROID}
 	TotalHeight, VerticalOffset: uInt;
+	DPad, ShootBtns: TSDL_Rect;
 	{$ENDIF}
 Begin
 	If (Ev <> NIL) then begin
@@ -88,14 +94,26 @@ Begin
 	 * bogus results on devices which have a display size ratio close to 1:1.
 	 *)
 	{$IFDEF ANDROID}
-	TotalHeight := RESOL_H + TouchControls.CONTROLS_SIZE;
+	TotalHeight := RESOL_H + DPAD_SIZE;
 	TotalHeight := (TotalHeight * Wnd_W) div RESOL_W;
-	VerticalOffset := (Wnd_H - TotalHeight) div 4;
+	VerticalOffset := (Wnd_H - TotalHeight) div 3;
 
 	GameArea.X := 0;
 	GameArea.Y := VerticalOffset;
 	GameArea.W := Wnd_W;
 	GameArea.H := Wnd_W;
+
+	DPad.X := (BUTTON_SIZE * Wnd_W) div RESOL_W;
+	DPad.Y := GameArea.Y + GameArea.H + VerticalOffset;
+	DPad.W := (DPAD_SIZE * Wnd_W) div RESOL_W;
+	DPad.H := DPad.W;
+
+	ShootBtns.X := ((RESOL_W - 2 * BUTTON_SIZE) * Wnd_W) div RESOL_W;
+	ShootBtns.Y := DPad.Y;
+	ShootBtns.W := (BUTTON_SIZE * Wnd_W) div RESOL_W;
+	ShootBtns.H := DPad.H;
+
+	TouchControls.SetPosition(@DPad, @ShootBtns);
 	{$ENDIF}
 End;
 
@@ -144,6 +162,10 @@ Begin
 	{$IFDEF ANDROID}
 		SDL_RenderSetLogicalSize(Renderer, Wnd_W, Wnd_H);
 		SDL_RenderCopy(Renderer, Display, NIL, @GameArea);
+
+		// TODO: Draw these only when in game
+		If (GameOn) then TouchControls.Draw();
+
 		SDL_RenderSetLogicalSize(Renderer, RESOL_W, RESOL_H);
 	{$ELSE}
 		SDL_RenderCopy(Renderer, Display, NIL, NIL);
