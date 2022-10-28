@@ -243,6 +243,7 @@ Begin
 				If (Ev.Key.Keysym.Sym = SDLK_D) then CurrentCol:=DefaultMapColour[idx]
 			end else
 			If (Ev.Type_ = SDL_MouseButtonDown) then begin
+				{$IFDEF ANDROID} TranslateMouseEventCoords(@Ev); {$ENDIF}
 				If (MouseInRect(RedRect)) then CurrentCol.R:=CurrentCol.R + $10
 				else
 				If (MouseInRect(GreenRect)) then CurrentCol.G:=CurrentCol.G + $10
@@ -302,6 +303,7 @@ Begin
 				If (Ev.Key.Keysym.Sym >= SDLK_1) and (Ev.Key.Keysym.Sym <= SDLK_8) then Sel:=Ord(Ev.Key.Keysym.Sym - SDLK_1)
 			end else
 			If (Ev.Type_ = SDL_MouseButtonDown) then begin
+				{$IFDEF ANDROID} TranslateMouseEventCoords(@Ev); {$ENDIF}
 				For C:=0 to 7 do If(MouseInRect(ChoiceRect[C])) then Sel:=C
 			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
@@ -367,6 +369,7 @@ Begin
 				end
 			end else
 			If (Ev.Type_ = SDL_MouseButtonDown) then begin
+				{$IFDEF ANDROID} TranslateMouseEventCoords(@Ev); {$ENDIF}
 				If(MouseInRect(GitHubRect)) then begin
 					SDL_OpenUrl(PChar('https://github.com/sponsors/suve'));
 					BackToMenu := True
@@ -435,6 +438,7 @@ Begin
 				end else
 			end else
 			If(Ev.Type_ = SDL_MouseButtonDown) then begin
+				{$IFDEF ANDROID} TranslateMouseEventCoords(@Ev); {$ENDIF}
 				If (MouseInRect(WorldRect[GM_TUTORIAL])) then begin
 					If (OK[GM_TUTORIAL]) then Choice:='T' 
 				end else
@@ -562,6 +566,7 @@ Begin
 				If (Ev.Key.Keysym.Sym = SDLK_D) then Choice:='D' else
 			end else
 			If (Ev.Type_ = SDL_MouseButtonDown) then begin
+				{$IFDEF ANDROID} TranslateMouseEventCoords(@Ev); {$ENDIF}
 				If (MouseInRect(IntroRect)) then Choice:='I' else
 				If (MouseInRect(NewGameRect)) then Choice:='N' else
 				If (MouseInRect(ContinueRect)) then begin
@@ -659,9 +664,41 @@ Begin
 	Configfiles.DefaultSettings()
 End;
 
+Function OpenWindow(): Boolean;
+Var
+	Title: AnsiString;
+Begin
+	Title := GAMENAME + ' v.' + GAMEVERS;
+	{$IFDEF ANDROID}
+		(*
+		 * On Android, pass 0x0 as the window size. This makes SDL open a window covering the entire screen.
+		 * Set the RESIZABLE flag to allow for rotations, split-screen, et cetera.
+		 * Do not set FULLSCREEN, as that disables system navigation buttons.
+		 *)
+		Window := SDL_CreateWindow(PChar(Title), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 0, 0, SDL_WINDOW_RESIZABLE);
+	{$ELSE}
+		(*
+		 * On desktop platforms, open a window based on the values read beforehand from the config file.
+		 *)
+		If (Not Wnd_F) then
+			Window := SDL_CreateWindow(PChar(Title), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, Wnd_W, Wnd_H, SDL_WINDOW_RESIZABLE)
+		else
+			Window := SDL_CreateWindow(PChar(Title), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, RESOL_W, RESOL_H, SDL_WINDOW_FULLSCREEN_DESKTOP or SDL_WINDOW_RESIZABLE);
+	{$ENDIF}
+	If (Window = NIL) then Exit(False);
+
+	(*
+	 * Trigger the resize event handler to force recalculating the window size and aspect ratio.
+	 *)
+	HandleWindowResizedEvent(NIL);
+
+	SDL_SetWindowMinimumSize(Window, RESOL_W, RESOL_H);
+	Exit(True)
+End;
+
 Function Startup():Boolean;
 Var
-	Title, ErrStr: AnsiString;
+	ErrStr: AnsiString;
 	Timu: Comp;
 	GM: TGameMode;
 	OldMask, NewMask: TFPUExceptionMask;
@@ -722,35 +759,12 @@ Begin
 		Writeln('SDL audio init failed - skipping SDL_mixer init.');
 
 	Write('Opening window... ');
-	Title := GAMENAME + ' v.' + GAMEVERS;
-	{$IFDEF ANDROID}
-		(*
-		 * On Android, pass 0x0 as the window size. This makes SDL open a window covering the entire screen.
-		 * Set the RESIZABLE flag to allow for rotations, split-screen, et cetera.
-		 * Do not set FULLSCREEN, as that disables system navigation buttons.
-		 *)
-		Window := SDL_CreateWindow(PChar(Title), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 0, 0, SDL_WINDOW_RESIZABLE);
-	{$ELSE}
-		(*
-		 * On desktop platforms, open a window based on the values read beforehand from the config file.
-		 *)
-		If (Not Wnd_F) then
-			Window := SDL_CreateWindow(PChar(Title), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, Wnd_W, Wnd_H, SDL_WINDOW_RESIZABLE)
-		else
-			Window := SDL_CreateWindow(PChar(Title), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, RESOL_W, RESOL_H, SDL_WINDOW_FULLSCREEN_DESKTOP or SDL_WINDOW_RESIZABLE);
-	{$ENDIF}
-	If (Window = NIL) then begin
+	If (Not OpenWindow()) then begin
 		Writeln('Failed!');
 		Halt(1)
 	end else begin
 		Writeln('Success!');
-		SDL_SetWindowMinimumSize(Window, RESOL_W, RESOL_H);
 		LoadAndSetWindowIcon();
-
-		{$IFDEF ANDROID}
-			// Invoke hander to recalculate screen proportions
-			HandleWindowResizedEvent(NIL);
-		{$ENDIF}
 	end;
 
 	Write('Creating SDL2 renderer... ');

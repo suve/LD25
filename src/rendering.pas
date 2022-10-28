@@ -42,6 +42,11 @@ Var
 
 Procedure HandleWindowResizedEvent(Ev: PSDL_Event);
 
+{$IFDEF ANDROID}
+Procedure TranslateMouseEventCoords(Ev: PSDL_Event);
+Procedure WindowCoordsToGameCoords(Const WindowX, WindowY: sInt; Out GameX, GameY: sInt);
+{$ENDIF}
+
 {$IFNDEF ANDROID}
 // Unused at the moment. Revise whether this is actually needed.
 Procedure ResizeWindow(W,H:uInt;Full:Boolean=FALSE);
@@ -138,6 +143,23 @@ Begin
 	{$ENDIF}
 End;
 
+{$IFDEF ANDROID}
+Procedure TranslateMouseEventCoords(Ev: PSDL_Event);
+Var
+	GameX, GameY: sInt;
+Begin
+	WindowCoordsToGameCoords(Ev^.Button.X, Ev^.Button.Y, GameX, GameY);
+	Ev^.Button.X := GameX;
+	Ev^.Button.Y := GameY
+End;
+
+Procedure WindowCoordsToGameCoords(Const WindowX, WindowY: sInt; Out GameX, GameY: sInt);
+Begin
+	GameX := ((WindowX - GameArea.X) * RESOL_W) div GameArea.W;
+	GameY := ((WindowY - GameArea.Y) * RESOL_H) div GameArea.H
+End;
+{$ENDIF}
+
 {$IFNDEF ANDROID}
 Procedure ResizeWindow(W,H:uInt;Full:Boolean=FALSE);
 Begin
@@ -167,6 +189,10 @@ Begin
 	WindowTex := SDL_GetRenderTarget(Renderer);
 	SDL_SetRenderTarget(Renderer, Display);
 
+	{$IFDEF ANDROID}
+	SDL_RenderSetLogicalSize(Renderer, RESOL_W, RESOL_H);
+	{$ENDIF}
+
 	SDL_SetRenderDrawBlendMode(Renderer, SDL_BLENDMODE_BLEND);
 	SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 255);
 	SDL_RenderClear(Renderer)
@@ -175,19 +201,18 @@ End;
 Procedure FinishFrame();
 Begin
 	SDL_SetRenderTarget(Renderer, WindowTex);
-	
+	{$IFDEF ANDROID}
+	SDL_RenderSetLogicalSize(Renderer, Wnd_W, Wnd_H);
+	{$ENDIF}
+
 	SDL_SetRenderDrawBlendMode(Renderer, SDL_BLENDMODE_BLEND);
 	SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 255);
 	SDL_RenderClear(Renderer);
 
 	{$IFDEF ANDROID}
-		SDL_RenderSetLogicalSize(Renderer, Wnd_W, Wnd_H);
 		SDL_RenderCopy(Renderer, Display, NIL, @GameArea);
-
 		// TODO: Draw these only when in game
 		If (GameOn) then TouchControls.Draw();
-
-		SDL_RenderSetLogicalSize(Renderer, RESOL_W, RESOL_H);
 	{$ELSE}
 		SDL_RenderCopy(Renderer, Display, NIL, NIL);
 	{$ENDIF}
