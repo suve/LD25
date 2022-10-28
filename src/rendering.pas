@@ -76,6 +76,7 @@ Var
 
 	{$IFDEF ANDROID}
 	TotalHeight, VerticalOffset: uInt;
+	TotalWidth, HorizontalOffset: uInt;
 	DPad, ShootBtns: TSDL_Rect;
 	{$ENDIF}
 Begin
@@ -89,29 +90,49 @@ Begin
 	end;
 
 	(*
-	 * FIXME: This very naive code works correctly only when the device is in
-	 * portrait mode. It does not handle landscape mode, and will produce
-	 * bogus results on devices which have a display size ratio close to 1:1.
+	 * FIXME: This code is quite naive and will produce rather bogus setups
+	 *        on devices with an aspect ratio close to 1:1 (like 5:4 tablets).
 	 *)
 	{$IFDEF ANDROID}
-	TotalHeight := RESOL_H + DPAD_SIZE;
-	TotalHeight := (TotalHeight * Wnd_W) div RESOL_W;
-	VerticalOffset := (Wnd_H - TotalHeight) div 3;
+	If (Wnd_W >= Wnd_H) then begin // "Landscape" mode
+		TotalWidth := RESOL_W + DPAD_SIZE + BUTTON_SIZE;
+		TotalWidth := (TotalWidth * Wnd_H) div RESOL_H;
+		HorizontalOffset := (Wnd_W - TotalWidth) div 4;
 
-	GameArea.X := 0;
-	GameArea.Y := VerticalOffset;
-	GameArea.W := Wnd_W;
-	GameArea.H := Wnd_W;
+		DPad.X := HorizontalOffset;
+		DPad.Y := (((RESOL_H - DPAD_SIZE) div 2) * Wnd_H) div RESOL_H;
+		DPad.W := (DPAD_SIZE * Wnd_H) div RESOL_H;
+		DPad.H := DPad.W;
 
-	DPad.X := (BUTTON_SIZE * Wnd_W) div RESOL_W;
-	DPad.Y := GameArea.Y + GameArea.H + VerticalOffset;
-	DPad.W := (DPAD_SIZE * Wnd_W) div RESOL_W;
-	DPad.H := DPad.W;
+		GameArea.X := DPad.X + DPad.W + HorizontalOffset;
+		GameArea.Y := 0;
+		GameArea.W := Wnd_H;
+		GameArea.H := Wnd_H;
 
-	ShootBtns.X := ((RESOL_W - 2 * BUTTON_SIZE) * Wnd_W) div RESOL_W;
-	ShootBtns.Y := DPad.Y;
-	ShootBtns.W := (BUTTON_SIZE * Wnd_W) div RESOL_W;
-	ShootBtns.H := DPad.H;
+		ShootBtns.X := GameArea.X + GameArea.W + HorizontalOffset;
+		ShootBtns.Y := DPad.Y;
+		ShootBtns.W := (BUTTON_SIZE * Wnd_H) div RESOL_H;
+		ShootBtns.H := DPad.H
+	end else begin // "Portrait" mode
+		TotalHeight := RESOL_H + DPAD_SIZE;
+		TotalHeight := (TotalHeight * Wnd_W) div RESOL_W;
+		VerticalOffset := (Wnd_H - TotalHeight) div 3;
+
+		GameArea.X := 0;
+		GameArea.Y := VerticalOffset;
+		GameArea.W := Wnd_W;
+		GameArea.H := Wnd_W;
+
+		DPad.X := (BUTTON_SIZE * Wnd_W) div RESOL_W;
+		DPad.Y := GameArea.Y + GameArea.H + VerticalOffset;
+		DPad.W := (DPAD_SIZE * Wnd_W) div RESOL_W;
+		DPad.H := DPad.W;
+
+		ShootBtns.X := ((RESOL_W - 2 * BUTTON_SIZE) * Wnd_W) div RESOL_W;
+		ShootBtns.Y := DPad.Y;
+		ShootBtns.W := (BUTTON_SIZE * Wnd_W) div RESOL_W;
+		ShootBtns.H := DPad.H
+	end;
 
 	TouchControls.SetPosition(@DPad, @ShootBtns);
 	{$ENDIF}
