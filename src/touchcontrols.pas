@@ -37,47 +37,49 @@ Uses
 
 Type
 	ButtonProps = record
+		Position: TSDL_Rect;
 		Touched: Boolean;
 		Finger: TSDL_FingerID
 	end;
 
 Var
-	MovementButton: Array[0..7] of ButtonProps;
 	DPadX, DPadY, DPadSize: sInt;
-
-	ShootLeftDst, ShootRightDst: TSDL_Rect;
+	MovementButton: Array[0..7] of ButtonProps;
 	ShootLeftButton, ShootRightButton: ButtonProps;
+
+Function BoolToInt(Value: Boolean): uInt; Inline;
+Begin
+	If (Value) then
+		Result := 1
+	else
+		Result := 0
+End;
 
 Procedure Draw();
 Const
-	DPAD_QUARTER_SIZE = 60;
+	MOVEMENT_BUTTON_SIZE = 60;
 	SHOOT_BUTTON_SIZE = 32;
 Var
 	Idx: uInt;
-	Src, Dst: TSDL_Rect;
+	Src: TSDL_Rect;
 Begin
-	Src.X := 0;
-	Src.Y := 0;
-	Src.W := DPAD_QUARTER_SIZE;
-	Src.H := DPAD_QUARTER_SIZE;
-
-	Dst.W := DPadSize;
-	Dst.H := DPadSize;
-	For Idx := 0 to 3 do begin
-		Dst.X := DPadX;
-		If (Idx = 0) or (Idx = 3) then Dst.X -= DPadSize;
-		Dst.Y := DPadY;
-		If (Idx < 2) then Dst.Y -= DPadSize;
-
-		SDL_RenderCopyEx(Renderer, Assets.TouchControlsGfx^.Tex, @Src, @Dst, Idx * 90.0, NIL, SDL_FLIP_NONE)
+	Src.W := MOVEMENT_BUTTON_SIZE;
+	Src.H := MOVEMENT_BUTTON_SIZE;
+	For Idx := 0 to 7 do begin
+		Src.X := BoolToInt(MovementButton[Idx].Touched) * MOVEMENT_BUTTON_SIZE;
+		Src.Y := (Idx mod 2) * MOVEMENT_BUTTON_SIZE;
+		SDL_RenderCopyEx(Renderer, Assets.TouchControlsGfx^.Tex, @Src, @MovementButton[Idx].Position, (Idx div 2) * 90.0, NIL, SDL_FLIP_NONE)
 	end;
 
-	Src.X := (DPAD_QUARTER_SIZE - SHOOT_BUTTON_SIZE) div 2;
-	Src.Y := DPAD_QUARTER_SIZE;
+	Src.Y := MOVEMENT_BUTTON_SIZE * 2;
 	Src.W := SHOOT_BUTTON_SIZE;
 	Src.H := SHOOT_BUTTON_SIZE;
-	SDL_RenderCopy(Renderer, Assets.TouchControlsGfx^.Tex, @Src, @ShootLeftDst);
-	SDL_RenderCopyEx(Renderer, Assets.TouchControlsGfx^.Tex, @Src, @ShootRightDst, 0, NIL, SDL_FLIP_HORIZONTAL)
+
+	Src.X := BoolToInt(ShootLeftButton.Touched) * MOVEMENT_BUTTON_SIZE;
+	SDL_RenderCopy(Renderer, Assets.TouchControlsGfx^.Tex, @Src, @ShootLeftButton.Position);
+
+	Src.X := BoolToInt(ShootRightButton.Touched) * MOVEMENT_BUTTON_SIZE;
+	SDL_RenderCopyEx(Renderer, Assets.TouchControlsGfx^.Tex, @Src, @ShootRightButton.Position, 0, NIL, SDL_FLIP_HORIZONTAL)
 End;
 
 Procedure PressMovementKeys();
@@ -135,7 +137,7 @@ Begin
 	If (Dist < DeadZoneSize) or (Dist > DPadSize) then Exit(-1);
 
 	Angle := Math.RadToDeg(ArcTan2(DiffY / Dist, DiffX / Dist));
-	Result := (Trunc(Angle + (360 * 2.5 / 8)) div 45) mod 8
+	Result := (Trunc(Angle + (360 * 10.5 / 8)) div 45) mod 8
 End;
 
 Procedure HandleEvent(ev: PSDL_Event);
@@ -158,12 +160,12 @@ Begin
 	 *)
 	If (Ev^.Type_ = SDL_FingerMotion) then UnfingerButtons(Ev^.TFinger.FingerID);
 
-	If FingerInRect(FingerX, FingerY, ShootLeftDst) then begin
+	If FingerInRect(FingerX, FingerY, ShootLeftButton.Position) then begin
 		ShootLeftButton.Touched := True;
 		ShootLeftButton.Finger := Ev^.TFinger.FingerID;
 		Key[KEY_SHOOTLEFT] := True
 	end else
-	If FingerInRect(FingerX, FingerY, ShootRightDst) then begin
+	If FingerInRect(FingerX, FingerY, ShootRightButton.Position) then begin
 		ShootRightButton.Touched := True;
 		ShootRightButton.Finger := Ev^.TFinger.FingerID;
 		Key[KEY_SHOOTRIGHT] := True
@@ -190,7 +192,25 @@ Begin
 		DPadX := NewDPadPos^.X + (NewDPadPos^.W) div 2;
 		DPadY := NewDPadPos^.Y + (NewDPadPos^.H) div 2;
 
-		For Idx := 0 to 7 do MovementButton[Idx].Touched := False;
+		For Idx := 0 to 7 do begin
+			With MovementButton[Idx] do begin
+				Position.X := DPadX;
+				If (Idx = 0) or (Idx = 4) then
+					Position.X -= (DPadSize div 2)
+				else If (Idx > 4) then
+					Position.X -= DPadSize;
+
+				Position.Y := DPadY;
+				If (Idx = 2) or (Idx = 6) then
+					Position.Y -= (DPadSize div 2)
+				else If (Idx < 2) or (Idx = 7) then
+					Position.Y -= DPadSize;
+
+				Position.W := DPadSize;
+				Position.H := DPadSize;
+				MovementButton[Idx].Touched := False
+			end
+		end;
 
 		// Mark virtual movement keys as not being pressed
 		Key[KEY_UP] := False;
@@ -202,17 +222,21 @@ Begin
 		BtnW := NewShootBtnsPos^.W;
 		BtnH := BtnW;
 
-		ShootLeftDst.X := NewShootBtnsPos^.X;
-		ShootLeftDst.Y := NewShootBtnsPos^.Y;
-		ShootLeftDst.W := BtnW;
-		ShootLeftDst.H := BtnH;
-		ShootLeftButton.Touched := False;
+		With ShootLeftButton do begin
+			Position.X := NewShootBtnsPos^.X;
+			Position.Y := NewShootBtnsPos^.Y;
+			Position.W := BtnW;
+			Position.H := BtnH;
+			Touched := False
+		end;
 
-		ShootRightDst.X := NewShootBtnsPos^.X;
-		ShootRightDst.Y := NewShootBtnsPos^.Y + NewShootBtnsPos^.H - BtnH;
-		ShootRightDst.W := BtnW;
-		ShootRightDst.H := BtnH;
-		ShootRightButton.Touched := False;
+		With ShootRightButton do begin
+			Position.X := NewShootBtnsPos^.X;
+			Position.Y := NewShootBtnsPos^.Y + NewShootBtnsPos^.H - BtnH;
+			Position.W := BtnW;
+			Position.H := BtnH;
+			Touched := False
+		end;
 
 		// Mark virtual "shoot" keys as not being pressed
 		Key[KEY_SHOOTLEFT] := False;
