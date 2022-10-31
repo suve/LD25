@@ -73,8 +73,8 @@ Var
 Procedure HandleWindowResizedEvent(Ev: PSDL_Event);
 {$IFDEF ANDROID}
 Const
-	BUTTON_SIZE = 24;
-	DPAD_SIZE = 5 * BUTTON_SIZE;
+	BUTTON_SIZE = 32;
+	DPAD_SIZE = 120;
 {$ENDIF}
 Var
 	ww, wh: cint;
@@ -114,29 +114,30 @@ Begin
 		GameArea.W := Wnd_H;
 		GameArea.H := Wnd_H;
 
-		ShootBtns.X := GameArea.X + GameArea.W + HorizontalOffset;
-		ShootBtns.Y := DPad.Y;
 		ShootBtns.W := (BUTTON_SIZE * Wnd_H) div RESOL_H;
-		ShootBtns.H := DPad.H
+		ShootBtns.X := Wnd_W - ShootBtns.W - HorizontalOffset;
+		ShootBtns.H := (ShootBtns.W * 7) div 2;
+		ShootBtns.Y := DPad.Y + ((DPad.H - ShootBtns.H) div 2)
 	end else begin // "Portrait" mode
 		TotalHeight := RESOL_H + DPAD_SIZE;
 		TotalHeight := (TotalHeight * Wnd_W) div RESOL_W;
 		VerticalOffset := (Wnd_H - TotalHeight) div 3;
+		HorizontalOffset := (((RESOL_W - DPAD_SIZE - BUTTON_SIZE) div 4) * Wnd_W) div RESOL_W;
 
 		GameArea.X := 0;
 		GameArea.Y := VerticalOffset;
 		GameArea.W := Wnd_W;
 		GameArea.H := Wnd_W;
 
-		DPad.X := (BUTTON_SIZE * Wnd_W) div RESOL_W;
+		DPad.X := HorizontalOffset;
 		DPad.Y := GameArea.Y + GameArea.H + VerticalOffset;
 		DPad.W := (DPAD_SIZE * Wnd_W) div RESOL_W;
 		DPad.H := DPad.W;
 
-		ShootBtns.X := ((RESOL_W - 2 * BUTTON_SIZE) * Wnd_W) div RESOL_W;
-		ShootBtns.Y := DPad.Y;
 		ShootBtns.W := (BUTTON_SIZE * Wnd_W) div RESOL_W;
-		ShootBtns.H := DPad.H
+		ShootBtns.X := Wnd_W - ShootBtns.W - HorizontalOffset;
+		ShootBtns.H := (ShootBtns.W * 7) div 2;
+		ShootBtns.Y := DPad.Y + ((DPad.H - ShootBtns.H) div 2)
 	end;
 
 	TouchControls.SetPosition(@DPad, @ShootBtns);

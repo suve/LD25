@@ -51,7 +51,7 @@ Var
 Procedure Draw();
 Const
 	DPAD_QUARTER_SIZE = 60;
-	BUTTON_SIZE = 24;
+	SHOOT_BUTTON_SIZE = 32;
 Var
 	Idx: uInt;
 	Src, Dst: TSDL_Rect;
@@ -72,10 +72,10 @@ Begin
 		SDL_RenderCopyEx(Renderer, Assets.TouchControlsGfx^.Tex, @Src, @Dst, Idx * 90.0, NIL, SDL_FLIP_NONE)
 	end;
 
-	Src.X := (DPAD_QUARTER_SIZE - BUTTON_SIZE) div 2;
+	Src.X := (DPAD_QUARTER_SIZE - SHOOT_BUTTON_SIZE) div 2;
 	Src.Y := DPAD_QUARTER_SIZE;
-	Src.W := BUTTON_SIZE;
-	Src.H := BUTTON_SIZE;
+	Src.W := SHOOT_BUTTON_SIZE;
+	Src.H := SHOOT_BUTTON_SIZE;
 	SDL_RenderCopy(Renderer, Assets.TouchControlsGfx^.Tex, @Src, @ShootLeftDst);
 	SDL_RenderCopyEx(Renderer, Assets.TouchControlsGfx^.Tex, @Src, @ShootRightDst, 0, NIL, SDL_FLIP_HORIZONTAL)
 End;
