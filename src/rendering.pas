@@ -73,7 +73,7 @@ Var
 Procedure HandleWindowResizedEvent(Ev: PSDL_Event);
 {$IFDEF ANDROID}
 Const
-	BUTTON_SIZE = 16;
+	BUTTON_SIZE = 24;
 	DPAD_SIZE = 5 * BUTTON_SIZE;
 {$ENDIF}
 Var
