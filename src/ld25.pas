@@ -101,6 +101,7 @@ Begin
 	Rendering.FinishFrame()
 End;
 
+{$IFNDEF ANDROID}
 Procedure BindKeys();
 Const
 	KeyName : Array[TPlayerKey] of AnsiString = (
@@ -148,6 +149,7 @@ Begin
 	Until Finito;
 	For K:=Low(TPlayerKey) to High(TPlayerKey) do KeyBind[K]:=NewBind[K]
 End;
+{$ENDIF}
 
 (*
  * TODO:
@@ -502,11 +504,13 @@ End;
 Function Menu():Char;
 Var
 	Choice:Char;
-	dt, XPos, YPos:uInt; Col:PSDL_Colour; 
+	dt, XPos, YPos, Spacing:uInt;
+	Col:PSDL_Colour;
 	IHasSaves:Boolean;
 	GM:TGameMode;
 
-	IntroRect, ContinueRect, NewGameRect, LoadGameRect, BindRect, ColourRect, DonateRect, QuitRect: TSDL_Rect;
+	IntroRect, ContinueRect, NewGameRect, LoadGameRect, ColourRect, DonateRect, QuitRect: TSDL_Rect;
+	{$IFNDEF ANDROID} BindRect: TSDL_Rect; {$ENDIF}
 Begin
 	Font^.Scale := 2;
 	XPos:=GetTextWidth('I - INTRODUCTION', Font);
@@ -519,33 +523,41 @@ Begin
 	While (Choice = #32) do begin
 		Rendering.BeginFrame();
 		DrawTitle();
-		
+
 		Font^.Scale := 2; YPos:=TitleGfx^.H;
 		PrintMenuText('I - INTRODUCTION', XPos, YPos, ALIGN_LEFT, @WhiteColour, IntroRect);
-		
-		YPos += (Font^.CharH * Font^.Scale * 7) div 4;
+
+		{$IFNDEF ANDROID}
+		Spacing := (Font^.CharH * Font^.Scale * 7) div 4;
+		{$ELSE}
+		Spacing := Font^.CharH * Font^.Scale * 2;
+		{$ENDIF}
+
+		YPos += Spacing;
 		If (GameOn) then Col:=@WhiteColour else Col:=@GreyColour;
 		PrintMenuText('C - CONTINUE', XPos, YPos, ALIGN_LEFT, Col, ContinueRect);
-		
-		YPos += (Font^.CharH * Font^.Scale * 7) div 4;
+
+		YPos += Spacing;
 		PrintMenuText('N - NEW GAME', XPos, YPos, ALIGN_LEFT, @WhiteColour, NewGameRect);
-		
-		YPos += (Font^.CharH * Font^.Scale * 7) div 4;
+
+		YPos += Spacing;
 		If (IHasSaves) then Col:=@WhiteColour else Col:=@GreyColour;
 		PrintMenuText('L - LOAD GAME', XPos, YPos, ALIGN_LEFT, Col, LoadGameRect);
-		
-		YPos += (Font^.CharH * Font^.Scale * 7) div 4;
+
+		YPos += Spacing;
 		PrintMenuText('S - SET COLOURS', XPos, YPos, ALIGN_LEFT, @WhiteColour, ColourRect);
-		
-		YPos += (Font^.CharH * Font^.Scale * 7) div 4;
+
+		{$IFNDEF ANDROID}
+		YPos += Spacing;
 		PrintMenuText('B - BIND KEYS', XPos, YPos, ALIGN_LEFT, @WhiteColour, BindRect);
-		
-		YPos += (Font^.CharH * Font^.Scale * 7) div 4;
+		{$ENDIF}
+
+		YPos += Spacing;
 		PrintMenuText('D - DONATE', XPos, YPos, ALIGN_LEFT, @WhiteColour, DonateRect);
-		
-		YPos += (Font^.CharH * Font^.Scale * 7) div 4;
+
+		YPos += Spacing;
 		PrintMenuText('Q - QUIT', XPos, YPos, ALIGN_LEFT, @WhiteColour, QuitRect);
-		
+
 		Rendering.FinishFrame();
 		GetDeltaTime(dt);
 		While (SDL_PollEvent(@Ev)>0) do begin
@@ -561,9 +573,11 @@ Begin
 					If (GameOn) then Choice:='C' end else
 				If (Ev.Key.Keysym.Sym = SDLK_L) then begin
 					If (IHasSaves) then Choice:='L' end else
-				If (Ev.Key.Keysym.Sym = SDLK_B) then Choice:='B' else
 				If (Ev.Key.Keysym.Sym = SDLK_S) then Choice:='S' else
 				If (Ev.Key.Keysym.Sym = SDLK_D) then Choice:='D' else
+				{$IFNDEF ANDROID}
+				If (Ev.Key.Keysym.Sym = SDLK_B) then Choice:='B' else
+				{$ENDIF}
 			end else
 			If (Ev.Type_ = SDL_MouseButtonDown) then begin
 				{$IFDEF ANDROID} TranslateMouseEventCoords(@Ev); {$ENDIF}
@@ -573,10 +587,12 @@ Begin
 					If (GameOn) then Choice:='C' end else
 				If (MouseInRect(LoadGameRect)) then begin
 					If (IHasSaves) then Choice:='L' end else
-				If (MouseInRect(BindRect)) then Choice:='B' else
 				If (MouseInRect(ColourRect)) then Choice:='S' else
 				If (MouseInRect(DonateRect)) then Choice:='D' else
 				If (MouseInRect(QuitRect)) then Choice:='Q' else
+				{$IFNDEF ANDROID}
+				If (MouseInRect(BindRect)) then Choice:='B' else
+				{$ENDIF}
 			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then begin
 				HandleWindowResizedEvent(@Ev)
@@ -915,9 +931,9 @@ begin
 				end;
 				MenuChoice:='L'
 			end;
-			'B': BindKeys();
 			'S': SetColours();
 			'D': DonateScreen();
+			{$IFNDEF ANDROID} 'B': BindKeys(); {$ENDIF}
 		end;
 		If (GameOn) and (GameMode <> GM_TUTORIAL) and (Given >= 8) then begin
 			GameOn:=False; Outro()
