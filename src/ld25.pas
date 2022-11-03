@@ -194,15 +194,25 @@ Const
 Var
 	idxName: AnsiString;
 	CurrentCol: TSDL_Colour;
-	RedRect, BlueRect, GreenRect, DefaultRect: TSDL_Rect;
 	
+	Menu: TMenu;
+	Choice: Char;
+	Changed: Boolean;
 	Finished: Boolean;
+
 	dt, pc: uInt;
 	YPos: sInt;
 Begin
 	idxName := UpperCase(ColourName[idx]);
 	CurrentCol := MapColour[idx];
-	
+
+	Menu.Create();
+	Menu.SetFontScale(2);
+	Menu.AddItem('R', 'RED:   #'+HexStr(CurrentCol.R, 2), @WhiteColour);
+	Menu.AddItem('G', 'GREEN: #'+HexStr(CurrentCol.G, 2), @WhiteColour);
+	Menu.AddItem('B', 'BLUE:  #'+HexStr(CurrentCol.B, 2), @WhiteColour);
+	Menu.AddItem('D', 'DEFAULT', @WhiteColour);
+
 	Finished := False;
 	While Not Finished do begin
 		Rendering.BeginFrame();
@@ -218,50 +228,50 @@ Begin
 		DrawColourPreview(@CurrentCol, (RESOL_W - RectWidth) div 2, YPos);
 		
 		YPos += RectHeight + (Font^.CharH * Font^.Scale) div 2;
-		PrintMenuText('R - RED:   #'+HexStr(CurrentCol.R, 2), (RESOL_W div 2), YPos, ALIGN_CENTRE, @WhiteColour, RedRect);
-		YPos += ((Font^.CharH * Font^.Scale) * 3) div 2;
-		PrintMenuText('G - GREEN: #'+HexStr(CurrentCol.G, 2), (RESOL_W div 2), YPos, ALIGN_CENTRE, @WhiteColour, GreenRect);
-		YPos += ((Font^.CharH * Font^.Scale) * 3) div 2;
-		PrintMenuText('B - BLUE:  #'+HexStr(CurrentCol.B, 2), (RESOL_W div 2), YPos, ALIGN_CENTRE, @WhiteColour, BlueRect);
-		YPos += ((Font^.CharH * Font^.Scale) * 3) div 2;
-		PrintMenuText('D - DEFAULT', (RESOL_W div 2), YPos, ALIGN_CENTRE, @WhiteColour, DefaultRect);
-		
+		Menu.SetVerticalOffset(YPos);
+		Menu.Draw();
 		
 		Rendering.FinishFrame();
 		GetDeltaTime(dt);
+
+		Changed := False;
 		While (SDL_PollEvent(@Ev)>0) do begin
-			If (Ev.Type_ = SDL_QuitEv) then begin
-				Shutdown:=True; Exit()
+			Choice := Menu.ProcessEvent(@Ev);
+			If (Choice = 'R') then begin
+				CurrentCol.R := CurrentCol.R + $10;
+				Changed := True
 			end else
-			If (Ev.Type_ = SDL_KeyDown) then begin
-				If ((Ev.Key.Keysym.Sym = SDLK_Escape) or (ev.Key.Keysym.Sym = SDLK_AC_BACK)) then Finished:=True
-				else
-				If (Ev.Key.Keysym.Sym = SDLK_R) then CurrentCol.R:=CurrentCol.R + $10
-				else
-				If (Ev.Key.Keysym.Sym = SDLK_G) then CurrentCol.G:=CurrentCol.G + $10
-				else
-				If (Ev.Key.Keysym.Sym = SDLK_B) then CurrentCol.B:=CurrentCol.B + $10
-				else
-				If (Ev.Key.Keysym.Sym = SDLK_D) then CurrentCol:=DefaultMapColour[idx]
+			If (Choice = 'G') then begin
+				CurrentCol.G := CurrentCol.G + $10;
+				Changed := True
 			end else
-			If (Ev.Type_ = SDL_MouseButtonDown) then begin
-				{$IFDEF ANDROID} TranslateMouseEventCoords(@Ev); {$ENDIF}
-				If (MouseInRect(RedRect)) then CurrentCol.R:=CurrentCol.R + $10
-				else
-				If (MouseInRect(GreenRect)) then CurrentCol.G:=CurrentCol.G + $10
-				else
-				If (MouseInRect(BlueRect)) then CurrentCol.B:=CurrentCol.B + $10
-				else
-				If (MouseInRect(DefaultRect)) then CurrentCol:=DefaultMapColour[idx]
+			If (Choice = 'B') then begin
+				CurrentCol.B := CurrentCol.B + $10;
+				Changed := True
 			end else
-			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
-				HandleWindowResizedEvent(@Ev)
+			If (Choice = 'D') then begin
+				CurrentCol:=DefaultMapColour[idx];
+				Changed := True
+			end else
+			If (Choice = CHOICE_BACK) then begin
+				For pc:=0 to 7 do If(CentralPalette[pc] = MapColour[idx]) then CentralPalette[pc] := CurrentCol;
+				For pc:=0 to 7 do If(PaletteColour[pc] = MapColour[idx]) then PaletteColour[pc] := CurrentCol;
+				MapColour[idx] := CurrentCol;
+				Finished := True
+			end else
+			If (Choice = CHOICE_QUIT) then begin
+				Shutdown := True;
+				Finished := True
+			end
 		end;
+
+		If (Changed) then begin
+			Menu.EditItem(0, 'RED:   #'+HexStr(CurrentCol.R, 2));
+			Menu.EditItem(1, 'GREEN: #'+HexStr(CurrentCol.G, 2));
+			Menu.EditItem(2, 'BLUE:  #'+HexStr(CurrentCol.B, 2))
+		end
 	end;
-	
-	For pc:=0 to 7 do If(CentralPalette[pc] = MapColour[idx]) then CentralPalette[pc] := CurrentCol;
-	For pc:=0 to 7 do If(PaletteColour[pc] = MapColour[idx]) then PaletteColour[pc] := CurrentCol;
-	MapColour[idx] := CurrentCol
+	Menu.Destroy()
 End;
 
 Procedure SetColours();

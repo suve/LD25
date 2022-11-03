@@ -49,8 +49,11 @@ Type
 
 			OffsetsAreDirty: Boolean;
 			Procedure RecalculateOffsets();
+			Procedure SetItemCaption(Index: sInt; Caption: AnsiString);
 		Public
-			Procedure AddItem(Letter: Char; Caption: AnsiString; Colour: PSDL_Colour);
+			Function AddItem(Letter: Char; Caption: AnsiString; Colour: PSDL_Colour): sInt;
+			Function EditItem(Index: sInt; NewCaption: AnsiString): Boolean;
+
 			Procedure SetFontScale(Scale: uInt);
 			Procedure SetVerticalOffset(Offset: uInt);
 
@@ -81,19 +84,55 @@ Begin
 	OffsetsAreDirty := False
 End;
 
-Procedure TMenu.AddItem(Letter: Char; Caption: AnsiString; Colour: PSDL_Colour);
+Procedure TMenu.SetItemCaption(Index: sInt; Caption: AnsiString);
 Begin
+	Self.Items[Index].Caption := {$IFNDEF ANDROID} Self.Items[Index].Letter + ' - ' + {$ENDIF} Caption;
+	Self.Items[Index].Width := (Fonts.GetTextWidth(Self.Items[Index].Caption, Assets.Font) * Self.FontScale) div Assets.Font^.Scale
+End;
+
+Function TMenu.AddItem(Letter: Char; Caption: AnsiString; Colour: PSDL_Colour): sInt;
+Begin
+	Result := Self.Count;
 	If (Self.Count = Length(Self.Items)) then SetLength(Self.Items, Self.Count+1);
 
-	Self.Items[Self.Count].Key := SDLK_A + Ord(Letter) - Ord('A');
+	// Quite a dirty hack, but eh, good enough
+	If (Ord(Letter) >= Ord('A')) then
+		Self.Items[Self.Count].Key := SDLK_A + Ord(Letter) - Ord('A')
+	else
+		Self.Items[Self.Count].Key := SDLK_0 + Ord(Letter) - Ord('0');
+
 	Self.Items[Self.Count].Letter := Letter;
-	Self.Items[Self.Count].Caption := {$IFNDEF ANDROID} Letter + ' - ' + {$ENDIF} Caption;
 	Self.Items[Self.Count].Colour := Colour;
-	Self.Items[Self.Count].Width := (Fonts.GetTextWidth(Self.Items[Self.Count].Caption, Assets.Font) * Self.FontScale) div Assets.Font^.Scale;
+	SetItemCaption(Self.Count, Caption);
 
 	If(Self.Items[Self.Count].Width > Self.MaxTextWidth) then Self.MaxTextWidth := Self.Items[Self.Count].Width;
 	Self.OffsetsAreDirty := True;
 	Self.Count += 1
+End;
+
+Function TMenu.EditItem(Index: sInt; NewCaption: AnsiString): Boolean;
+Var
+	OldWidth: uInt;
+Begin
+	If (Index < 0) or (Index >= Self.Count) then Exit(False);
+
+	OldWidth := Self.Items[Index].Width;
+	SetItemCaption(Index, NewCaption);
+
+	// If this was the longest caption, we need to update the MaxTextWidth field.
+	If (OldWidth = Self.MaxTextWidth) then begin
+		If (Self.Items[Index].Width >= OldWidth) then begin
+			// New caption is longer - just overwrite the old value
+			Self.MaxTextWidth := Self.Items[Index].Width
+		end else begin
+			// New caption is shorter - need to determine which existing caption is now the longest
+			Self.MaxTextWidth := 0;
+			For Index := 0 to (Self.Count - 1) do
+				If (Self.Items[Index].Width > Self.MaxTextWidth) then
+					Self.MaxTextWidth := Self.Items[Index].Width
+		end
+	end;
+	Result := True
 End;
 
 Procedure TMenu.SetFontScale(Scale: uInt);
