@@ -266,54 +266,44 @@ End;
 
 Procedure SetColours();
 Var
-	ChoiceName: Array[0..7] of AnsiString;
-	ChoiceRect: Array[0..7] of TSDL_Rect;
-	dt, LongestName, C: uInt;
-	XPos, YPos, Sel: sInt;
-Begin
-	LongestName := 0;
-	For C:=0 to 7 do begin
-		ChoiceName[C] := IntToStr(C+1) + ' - ' + UpperCase(ColourName[C]);
-		If(Length(ChoiceName[C]) > LongestName) then LongestName := Length(ChoiceName[C])
-	end;
+	Idx, dt: uInt;
 
-	XPos := (LongestName * Font^.CharW) + ((LongestName - 1) * Font^.SpacingX);
-	XPos := (RESOL_W - (XPos * Font^.Scale)) div 2;
-	While True do begin
+	Menu: TMenu;
+	Choice: Char;
+	Selection: sInt;
+	Finished: Boolean;
+Begin
+	Menu.Create();
+	Menu.SetFontScale(2);
+	For Idx := 0 to 7 do Menu.AddItem(Chr(48 + Idx), UpperCase(ColourName[Idx]), @WhiteColour);
+	Menu.SetVerticalOffset(TitleGfx^.H + (Font^.CharH * 3));
+
+	Finished := False;
+	Repeat
 		Rendering.BeginFrame();
 		DrawTitle();
-		
-		Font^.Scale := 2; YPos:=TitleGfx^.H;
-		PrintText('COLOUR SETTINGS',Font,(RESOL_W div 2),YPos,ALIGN_CENTRE,ALIGN_TOP,NIL);
-		
-		For C:=0 to 7 do begin
-			YPos += ((Font^.CharH * Font^.Scale) * 3) div 2;
-			PrintMenuText(ChoiceName[C], XPos, YPos, ALIGN_LEFT, @WhiteColour, ChoiceRect[C])
-		end;
-		
+
+		Font^.Scale := 2;
+		PrintText('COLOUR SETTINGS', Font, (RESOL_W div 2), TitleGfx^.H, ALIGN_CENTRE, ALIGN_TOP, NIL);
+
+		Menu.Draw();
 		Rendering.FinishFrame();
+
 		GetDeltaTime(dt);
-		
-		Sel := -1;
+		Selection := -1;
 		While (SDL_PollEvent(@Ev)>0) do begin
-			If (Ev.Type_ = SDL_QuitEv) then begin
-				Shutdown:=True; Exit()
+			Choice := Menu.ProcessEvent(@Ev);
+			If (Choice = CHOICE_QUIT) then begin
+				Shutdown := True;
+				Finished := True
 			end else
-			If (Ev.Type_ = SDL_KeyDown) then begin
-				If ((Ev.Key.Keysym.Sym = SDLK_Escape) or (Ev.Key.Keysym.Sym = SDLK_AC_BACK)) then Exit()
-				else
-				If (Ev.Key.Keysym.Sym >= SDLK_1) and (Ev.Key.Keysym.Sym <= SDLK_8) then Sel:=Ord(Ev.Key.Keysym.Sym - SDLK_1)
-			end else
-			If (Ev.Type_ = SDL_MouseButtonDown) then begin
-				{$IFDEF ANDROID} TranslateMouseEventCoords(@Ev); {$ENDIF}
-				For C:=0 to 7 do If(MouseInRect(ChoiceRect[C])) then Sel:=C
-			end else
-			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
-				HandleWindowResizedEvent(@Ev)
+			If (Choice = CHOICE_BACK) then Finished := True
+			else
+			If (Choice <> CHOICE_NONE) then Selection := Ord(Choice) - 48
 		end;
-		
-		If(Sel >= 0) then SetSingleColour(Sel)
-	end
+		If (Selection >= 0) and (Selection <= 7) then SetSingleColour(Selection)
+	Until Finished;
+	Menu.Destroy()
 End;
 
 Procedure DonateScreen();
