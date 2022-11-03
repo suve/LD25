@@ -389,73 +389,76 @@ End;
 
 Function GameworldDialog(Const Load:Boolean):Char;
 Const
-	WorldNames:Array[TGameMode] of AnsiString = (
-		'T - TUTORIAL ',
-		'C - CLASSIC  ',
-		'N - NEW WORLD'
+	WorldName: Array[TGameMode] of AnsiString = (
+		'TUTORIAL',
+		'CLASSIC',
+		'NEW WORLD'
 	);
 Var
-	WorldRect:Array[TGameMode] of TSDL_Rect;
-	
-	Msg:AnsiString;
-	OK:Array[TGameMode] of Boolean; GM:TGameMode;
-	Choice:Char; YPos:uInt; Col:PSDL_Colour; dt:uInt;
+	Msg: AnsiString;
+	OK: Array[TGameMode] of Boolean;
+	GM: TGameMode;
+
+	Menu: TMenu;
+	Col: PSDL_Colour;
+	Choice: Char;
+	YPos: uInt;
+	dt:uInt;
 Begin
-	If Load then begin Msg:='LOAD GAME';
+	If Load then begin
+		Msg:='LOAD GAME';
 		For GM:=Low(GM) to High(GM) do Ok[GM]:=SaveExists[GM]
-	end else begin Msg:='NEW GAME';
+	end else begin
+		Msg:='NEW GAME';
 		For GM:=Low(GM) to High(GM) do Ok[GM]:=True
 	end;
-   
-	Choice:=#$20;
-	While (Choice = #$20) do begin
+
+	Menu.Create();
+	Menu.SetFontScale(2);
+	For GM := Low(GM) to High(GM) do begin
+		If (Ok[GM]) then
+			Col := @WhiteColour
+		else
+			Col := @GreyColour;
+		Menu.AddItem(WorldName[GM][1], WorldName[GM], Col)
+	end;
+
+	Result := '?';
+	While (Result = '?') do begin
 		Rendering.BeginFrame();
 		DrawTitle();
-		
+
 		Font^.Scale := 2;
-		PrintText([Msg,'','SELECT GAMEWORLD'],Font,(RESOL_W div 2),TitleGfx^.H,ALIGN_CENTRE,ALIGN_TOP,NIL);
-		
-		YPos:=((RESOL_H * 3) div 5);
-		For GM:=Low(GM) to High(GM) do begin
-			If (OK[GM]) then Col:=@WhiteColour else Col:=@GreyColour;
-			PrintMenuText(WorldNames[GM], (RESOL_W div 2), YPos, ALIGN_CENTRE, Col, WorldRect[GM]);
-			YPos += (Font^.SpacingY + Font^.CharH) * 2 * Font^.Scale
-		end;
-		
+		YPos := TitleGfx^.H;
+		PrintText(Msg, Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+		YPos += ((Font^.CharH * Font^.Scale) * 3) div 2;
+		PrintText('SELECT GAMEWORLD', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+		YPos += (Font^.CharH * Font^.Scale);
+
+		Menu.SetVerticalOffset(YPos);
+		Menu.Draw();
+
 		Rendering.FinishFrame();
 		GetDeltaTime(dt);
 		While (SDL_PollEvent(@Ev)>0) do begin
-			If (Ev.Type_ = SDL_QuitEv) then begin
-				Shutdown:=True; Exit('Q') end else
-			If (Ev.Type_ = SDL_KeyDown) then begin
-				If ((Ev.Key.Keysym.Sym = SDLK_Escape) or (Ev.Key.Keysym.Sym = SDLK_AC_BACK)) then Choice:='Q' else
-				If (Ev.Key.Keysym.Sym = SDLK_T) then begin
-					If (OK[GM_TUTORIAL]) then Choice:='T' 
-				end else
-				If (Ev.Key.Keysym.sym = SDLK_C) then begin
-					If (Ok[GM_ORIGINAL]) then Choice:='C'
-				end else
-				If (Ev.Key.Keysym.sym = SDLK_N) then begin
-					If (Ok[GM_NEWWORLD]) then Choice:='N'
-				end else
+			Choice := Menu.ProcessEvent(@Ev);
+			If (Choice = 'T') then begin
+				If (Ok[GM_TUTORIAL]) then Result := 'T'
 			end else
-			If(Ev.Type_ = SDL_MouseButtonDown) then begin
-				{$IFDEF ANDROID} TranslateMouseEventCoords(@Ev); {$ENDIF}
-				If (MouseInRect(WorldRect[GM_TUTORIAL])) then begin
-					If (OK[GM_TUTORIAL]) then Choice:='T' 
-				end else
-				If (MouseInRect(WorldRect[GM_ORIGINAL])) then begin
-					If (Ok[GM_ORIGINAL]) then Choice:='C'
-				end else
-				If (MouseInRect(WorldRect[GM_NEWWORLD])) then begin
-					If (Ok[GM_NEWWORLD]) then Choice:='N'
-				end else
+			If (Choice = 'C') then begin
+				If (Ok[GM_ORIGINAL]) then Result := 'C'
 			end else
-			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
-				HandleWindowResizedEvent(@Ev)
-		end;
+			If (Choice = 'N') then begin
+				If (Ok[GM_NEWWORLD]) then Result := 'N'
+			end else
+			If (Choice = CHOICE_QUIT) then begin
+				Shutdown := True;
+				Result := 'Q'
+			end else
+			If (Choice = CHOICE_BACK) then Result := 'Q'
+		end
 	end;
-	Exit(Choice)
+	Menu.Destroy()
 End;
 
 Function ShowSlide(Const Img:PImage):Boolean;
