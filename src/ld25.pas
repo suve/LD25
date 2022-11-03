@@ -26,7 +26,7 @@ uses
 	SysUtils, Math,
 	SDL2, SDL2_image, SDL2_mixer,
 	Assets, Colours, ConfigFiles, FloatingText, Fonts, Game, Images, Objects,
-	MathUtils, Rendering, Rooms, Shared
+	MathUtils, Menus, Rendering, Rooms, Shared
 ;
 
 
@@ -501,105 +501,66 @@ Begin
 	Exit(True)
 End;
 
-Function Menu():Char;
+Function MainMenu():Char;
 Var
-	Choice:Char;
-	dt, XPos, YPos, Spacing:uInt;
-	Col:PSDL_Colour;
-	IHasSaves:Boolean;
-	GM:TGameMode;
+	dt: uInt;
 
-	IntroRect, ContinueRect, NewGameRect, LoadGameRect, ColourRect, DonateRect, QuitRect: TSDL_Rect;
-	{$IFNDEF ANDROID} BindRect: TSDL_Rect; {$ENDIF}
+	GM: TGameMode;
+	IHasSaves: Boolean;
+	ContinueColour: PSDL_Colour;
+	LoadColour: PSDL_Colour;
+
+	Menu: TMenu;
+	Choice: Char;
 Begin
-	Font^.Scale := 2;
-	XPos:=GetTextWidth('I - INTRODUCTION', Font);
-	XPos:=(RESOL_W - XPos) div 2;
+	If (GameOn) then
+		ContinueColour := @WhiteColour
+	else
+		ContinueColour := @GreyColour;
 
-	IHasSaves:=False;
-	For GM:=Low(GM) to High(GM) do If (SaveExists[GM]) then IHasSaves:=True;
+	For GM:=Low(GM) to High(GM) do If (SaveExists[GM]) then begin
+		IHasSaves:=True;
+		Break
+	end;
+	If (IHasSaves) then
+		LoadColour := @WhiteColour
+	else
+		LoadColour := @GreyColour;
 
-	Choice:=#$20;
-	While (Choice = #32) do begin
+	Menu.Create();
+	Menu.SetFontScale(2);
+	Menu.AddItem('I', 'INTRODUCTION', @WhiteColour);
+	Menu.AddItem('C', 'CONTINUE', ContinueColour);
+	Menu.AddItem('N', 'NEW GAME', @WhiteColour);
+	Menu.AddItem('L', 'LOAD GAME', LoadColour);
+	Menu.AddItem('S', 'SET COLOURS', @WhiteColour);
+	{$IFNDEF ANDROID}
+	Menu.AddItem('B', 'BIND KEYS', @WhiteColour);
+	{$ENDIF}
+	Menu.AddItem('D', 'DONATE', @WhiteColour);
+	Menu.AddItem('Q', 'QUIT', @WhiteColour);
+
+	Result := '?';
+	While (Result = '?') do begin
 		Rendering.BeginFrame();
 		DrawTitle();
-
-		Font^.Scale := 2; YPos:=TitleGfx^.H;
-		PrintMenuText('I - INTRODUCTION', XPos, YPos, ALIGN_LEFT, @WhiteColour, IntroRect);
-
-		{$IFNDEF ANDROID}
-		Spacing := (Font^.CharH * Font^.Scale * 7) div 4;
-		{$ELSE}
-		Spacing := Font^.CharH * Font^.Scale * 2;
-		{$ENDIF}
-
-		YPos += Spacing;
-		If (GameOn) then Col:=@WhiteColour else Col:=@GreyColour;
-		PrintMenuText('C - CONTINUE', XPos, YPos, ALIGN_LEFT, Col, ContinueRect);
-
-		YPos += Spacing;
-		PrintMenuText('N - NEW GAME', XPos, YPos, ALIGN_LEFT, @WhiteColour, NewGameRect);
-
-		YPos += Spacing;
-		If (IHasSaves) then Col:=@WhiteColour else Col:=@GreyColour;
-		PrintMenuText('L - LOAD GAME', XPos, YPos, ALIGN_LEFT, Col, LoadGameRect);
-
-		YPos += Spacing;
-		PrintMenuText('S - SET COLOURS', XPos, YPos, ALIGN_LEFT, @WhiteColour, ColourRect);
-
-		{$IFNDEF ANDROID}
-		YPos += Spacing;
-		PrintMenuText('B - BIND KEYS', XPos, YPos, ALIGN_LEFT, @WhiteColour, BindRect);
-		{$ENDIF}
-
-		YPos += Spacing;
-		PrintMenuText('D - DONATE', XPos, YPos, ALIGN_LEFT, @WhiteColour, DonateRect);
-
-		YPos += Spacing;
-		PrintMenuText('Q - QUIT', XPos, YPos, ALIGN_LEFT, @WhiteColour, QuitRect);
-
+		Menu.Draw();
 		Rendering.FinishFrame();
+
 		GetDeltaTime(dt);
 		While (SDL_PollEvent(@Ev)>0) do begin
-			If (Ev.Type_ = SDL_QuitEv) then begin
-				Shutdown:=True; Exit('Q') end else
-			If (Ev.Type_ = SDL_KeyDown) then begin
-				If (Ev.Key.Keysym.Sym = SDLK_Escape) then Choice:='Q' else
-				If (Ev.Key.Keysym.Sym = SDLK_AC_BACK) then Choice:='Q' else
-				If (Ev.Key.Keysym.Sym = SDLK_Q) then Choice:='Q' else
-				If (Ev.Key.Keysym.Sym = SDLK_I) then Choice:='I' else
-				If (Ev.Key.Keysym.Sym = SDLK_N) then Choice:='N' else
-				If (Ev.Key.Keysym.Sym = SDLK_C) then begin
-					If (GameOn) then Choice:='C' end else
-				If (Ev.Key.Keysym.Sym = SDLK_L) then begin
-					If (IHasSaves) then Choice:='L' end else
-				If (Ev.Key.Keysym.Sym = SDLK_S) then Choice:='S' else
-				If (Ev.Key.Keysym.Sym = SDLK_D) then Choice:='D' else
-				{$IFNDEF ANDROID}
-				If (Ev.Key.Keysym.Sym = SDLK_B) then Choice:='B' else
-				{$ENDIF}
+			Choice := Menu.ProcessEvent(@Ev);
+			If (Choice = CHOICE_QUIT) or (Choice = CHOICE_BACK) then begin
+				Shutdown := True;
+				Result := 'Q'
 			end else
-			If (Ev.Type_ = SDL_MouseButtonDown) then begin
-				{$IFDEF ANDROID} TranslateMouseEventCoords(@Ev); {$ENDIF}
-				If (MouseInRect(IntroRect)) then Choice:='I' else
-				If (MouseInRect(NewGameRect)) then Choice:='N' else
-				If (MouseInRect(ContinueRect)) then begin
-					If (GameOn) then Choice:='C' end else
-				If (MouseInRect(LoadGameRect)) then begin
-					If (IHasSaves) then Choice:='L' end else
-				If (MouseInRect(ColourRect)) then Choice:='S' else
-				If (MouseInRect(DonateRect)) then Choice:='D' else
-				If (MouseInRect(QuitRect)) then Choice:='Q' else
-				{$IFNDEF ANDROID}
-				If (MouseInRect(BindRect)) then Choice:='B' else
-				{$ENDIF}
+			If (Choice = 'C') then begin
+				If (GameOn) then Result := 'C'
 			end else
-			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then begin
-				HandleWindowResizedEvent(@Ev)
-			end
+			If (Choice <> CHOICE_NONE) then Result := Choice
 		end
 	end;
-	Exit(Choice)
+	Menu.Destroy()
 End;
 
 Procedure Outro();
@@ -906,7 +867,7 @@ begin
 	Writeln(StringOfChar('-',36));
 	If (Not Startup()) Then Halt(255);
 	Repeat
-		MenuChoice:=Menu();
+		MenuChoice:=MainMenu();
 		Case MenuChoice of
 			'I': Intro();
 			'C': PlayGame();
