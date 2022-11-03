@@ -41,6 +41,8 @@ Type
 			end;
 		Private
 			Items: Array of TMenuItem;
+			Count: sInt;
+
 			FontScale: uInt;
 			MaxTextWidth: uInt;
 			VertPos, VertSpacing: uInt;
@@ -58,6 +60,7 @@ Type
 			Function ProcessMouseEvent(ev: PSDL_Event):Char;
 
 			Constructor Create();
+			Constructor Create(Capacity: uInt);
 			Destructor Destroy();
 	end;
 
@@ -69,41 +72,37 @@ Uses
 Procedure TMenu.RecalculateOffsets();
 Var
 	TotalVerticalSpace: uInt;
-	RowHeight, RowCount: uInt;
+	RowHeight: uInt;
 Begin
 	TotalVerticalSpace := RESOL_H - Self.VertPos;
 	RowHeight := Assets.Font^.CharH * Self.FontScale;
-	RowCount := Length(Self.Items);
 
-	Self.VertSpacing := (TotalVerticalSpace - (RowHeight * RowCount)) div (RowCount + 1);
+	Self.VertSpacing := (TotalVerticalSpace - (RowHeight * Self.Count)) div (Self.Count + 1);
 	OffsetsAreDirty := False
 End;
 
 Procedure TMenu.AddItem(Letter: Char; Caption: AnsiString; Colour: PSDL_Colour);
-Var
-	Len: uInt;
 Begin
-	Len := Length(Self.Items);
-	SetLength(Self.Items, Len+1);
+	If (Self.Count = Length(Self.Items)) then SetLength(Self.Items, Self.Count+1);
 
-	Self.Items[Len].Key := SDLK_A + Ord(Letter) - Ord('A');
-	Self.Items[Len].Letter := Letter;
-	Self.Items[Len].Caption := {$IFNDEF ANDROID} Letter + ' - ' + {$ENDIF} Caption;
-	Self.Items[Len].Colour := Colour;
-	Self.Items[Len].Width := (Fonts.GetTextWidth(Self.Items[Len].Caption, Assets.Font) * Self.FontScale) div Assets.Font^.Scale;
+	Self.Items[Self.Count].Key := SDLK_A + Ord(Letter) - Ord('A');
+	Self.Items[Self.Count].Letter := Letter;
+	Self.Items[Self.Count].Caption := {$IFNDEF ANDROID} Letter + ' - ' + {$ENDIF} Caption;
+	Self.Items[Self.Count].Colour := Colour;
+	Self.Items[Self.Count].Width := (Fonts.GetTextWidth(Self.Items[Self.Count].Caption, Assets.Font) * Self.FontScale) div Assets.Font^.Scale;
 
-	If(Self.Items[Len].Width > Self.MaxTextWidth) then Self.MaxTextWidth := Self.Items[Len].Width;
-	Self.OffsetsAreDirty := True
+	If(Self.Items[Self.Count].Width > Self.MaxTextWidth) then Self.MaxTextWidth := Self.Items[Self.Count].Width;
+	Self.OffsetsAreDirty := True;
+	Self.Count += 1
 End;
 
 Procedure TMenu.SetFontScale(Scale: uInt);
 Var
-	Idx, Len: sInt;
+	Idx: sInt;
 Begin
 	If (Scale = 0) or (Scale = Self.FontScale) then Exit();
 
-	Len := Length(Self.Items);
-	For Idx := 0 to (Len - 1) do
+	For Idx := 0 to (Self.Count - 1) do
 		Self.Items[Idx].Width := (Self.Items[Idx].Width div Self.FontScale) * Scale;
 	Self.MaxTextWidth := (Self.MaxTextWidth div Self.FontScale) * Scale;
 
@@ -121,7 +120,7 @@ End;
 
 Procedure TMenu.Draw();
 Var
-	Idx: uInt;
+	Idx: sInt;
 	XPos, YPos, RowHeight: uInt;
 Begin
 	If (Self.OffsetsAreDirty) then Self.RecalculateOffsets();
@@ -133,7 +132,7 @@ Begin
 	RowHeight := Assets.Font^.CharH * Self.FontScale;
 
 	Font^.Scale := Self.FontScale;
-	For Idx := Low(Self.Items) to High(Self.Items) do begin
+	For Idx := 0 to (Self.Count - 1) do begin
 		{$IFDEF ANDROID}
 		XPos := (RESOL_W - Self.Items[Idx].Width) div 2;
 		{$ENDIF}
@@ -147,7 +146,7 @@ Function TMenu.ProcessKeyboardEvent(ev: PSDL_Event): Char;
 Var
 	Idx: sInt;
 Begin
-	For Idx := Low(Self.Items) to High(Self.Items) do
+	For Idx := 0 to (Self.Count - 1) do
 		If(Ev^.Key.Keysym.Sym = Self.Items[Idx].Key) then Exit(Self.Items[Idx].Letter);
 
 	If (Ev^.Key.Keysym.Sym = SDLK_Escape) or (Ev^.Key.Keysym.Sym = SDLK_AC_Back) then
@@ -158,17 +157,16 @@ End;
 
 Function TMenu.ProcessMouseEvent(ev: PSDL_Event): Char;
 Var
-	Idx, Len: sInt;
+	Idx: sInt;
 	YPos, RowHeight: uInt;
 Begin
 	If (Self.OffsetsAreDirty) then Self.RecalculateOffsets();
-	Len := Length(Self.Items);
 
 	YPos := Self.VertPos + Self.VertSpacing;
 	RowHeight := Assets.Font^.CharH * Assets.Font^.Scale;
 
 	Idx := (Ev^.Button.Y - YPos) div (RowHeight + VertSpacing);
-	If (Idx >= 0) and (Idx < Len) then begin
+	If (Idx >= 0) and (Idx < Self.Count) then begin
 		YPos := Ev^.Button.Y - YPos - (Idx * (RowHeight + VertSpacing));
 		If (YPos < RowHeight) then Exit(Self.Items[Idx].Letter)
 	end;
@@ -193,7 +191,13 @@ End;
 
 Constructor TMenu.Create();
 Begin
-	SetLength(Self.Items, 0);
+	Self.Create(0)
+end;
+
+Constructor TMenu.Create(Capacity: uInt);
+Begin
+	SetLength(Self.Items, Capacity);
+	Self.Count := 0;
 	Self.FontScale := 1;
 	Self.MaxTextWidth := 0;
 	Self.VertPos := TitleGfx^.H;

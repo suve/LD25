@@ -273,7 +273,7 @@ Var
 	Selection: sInt;
 	Finished: Boolean;
 Begin
-	Menu.Create();
+	Menu.Create(8);
 	Menu.SetFontScale(2);
 	For Idx := 0 to 7 do Menu.AddItem(Chr(48 + Idx), UpperCase(ColourName[Idx]), @WhiteColour);
 	Menu.SetVerticalOffset(TitleGfx^.H + (Font^.CharH * 3));
@@ -403,7 +403,7 @@ Begin
 		For GM:=Low(GM) to High(GM) do Ok[GM]:=True
 	end;
 
-	Menu.Create();
+	Menu.Create(Length(WorldName));
 	Menu.SetFontScale(2);
 	For GM := Low(GM) to High(GM) do begin
 		If (Ok[GM]) then
@@ -520,7 +520,7 @@ Begin
 	else
 		LoadColour := @GreyColour;
 
-	Menu.Create();
+	Menu.Create(8);
 	Menu.SetFontScale(2);
 	Menu.AddItem('I', 'INTRODUCTION', @WhiteColour);
 	Menu.AddItem('C', 'CONTINUE', ContinueColour);
