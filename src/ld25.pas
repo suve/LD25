@@ -25,6 +25,7 @@
 uses
 	SysUtils, Math,
 	SDL2, SDL2_image, SDL2_mixer,
+	{$IFDEF ANDROID} ctypes, {$ENDIF}
 	Assets, Colours, ConfigFiles, FloatingText, Fonts, Game, Images, Objects,
 	MathUtils, Menus, Rendering, Rooms, Shared
 ;
@@ -855,11 +856,11 @@ End;
 
 (*
  * On Android, we're building the game as a library, not as an executable.
- * Stick the code in a "ld25main" function and export it.
+ * Stick the code in an "ld25main" function and export it.
  * Use cdecl for compatibility with C wrapper code.
  *)
 {$IFDEF ANDROID}
-Procedure ld25main(); cdecl;
+Function ld25main(argc: cint; argv: Pointer): cint; cdecl;
 {$ENDIF}
 
 begin
@@ -903,8 +904,9 @@ begin
 			GameOn:=False; Outro()
 		end;
 	Until (MenuChoice = 'Q') or (Shutdown);
-	QuitProg()
+	QuitProg();
 {$IFDEF ANDROID}
+	Result := 0
 end;
 
 exports	ld25main;
