@@ -619,29 +619,35 @@ End;
 
 Procedure LoadConfig();
 Begin
+	(*
+	 * Start by setting everything to default values, just in case
+	 * the user manually edited the config file and some fields are now missing.
+	 *)
+	Configfiles.DefaultSettings();
+
 	If (IHasIni(INIVER_2_0)) then begin
-		Write('Loading 2.0 configuration file... ');
+		SDL_Log('Loading configuration file...', []);
 		If (LoadIni(INIVER_2_0)) then begin
-			Writeln('Success!');
+			SDL_Log('Configuration file loaded successfully.', []);
 			Exit()
 		end else
-			Writeln('Failed!');
+			SDL_Log('Failed to load configuration file!', []);
 	end else
-		Writeln('Configuration file not found.');
-	
+		SDL_Log('Configuration file not found.', []);
+
 	{$IFNDEF ANDROID}
 		If (IHasIni(INIVER_1_0)) then begin
-			Write('Loading 1.0 configuration file... ');
+			SDL_Log('Loading legacy v1.x configuration file...', []);
 			If (LoadIni(INIVER_1_0)) then begin
-				Writeln('Success!');
+				SDL_Log('Legacy configuration file loaded successfully.', []);
 				Exit()
 			end else
-				Writeln('Failed!');
+				SDL_Log('Failed to load legacy configuration file!', [])
 		end else
-			Writeln('Old configuration file not found.');
+			SDL_Log('Legacy v1.x configuration file not found.', []);
 	{$ENDIF}
 
-	Writeln('Using default settings.');
+	SDL_Log('Using default settings.', []);
 	Configfiles.DefaultSettings()
 End;
 
@@ -702,59 +708,60 @@ Begin
 	Include(NewMask, exZeroDivide);
 	Math.SetExceptionMask(NewMask);
 
-	Write('Initializing SDL2 video... ');
+	SDL_Log('Initializing SDL2...', []);
 	If (SDL_Init(SDL_Init_Video or SDL_Init_Timer)<>0) then begin
-		Writeln('Failed!');
+		SDL_Log('Failed to initialize SDL2! Error details: %s', [SDL_GetError()]);
 		Halt(1)
 	end else
-		Writeln('Success!');
+		SDL_Log('SDL2 initialized successfully.', []);
 
-	Write('Initializing SDL2_image... ');
+	SDL_Log('Initializing SDL2_image... ', []);
 	if(IMG_Init(IMG_INIT_PNG) <> IMG_INIT_PNG) then begin
-		Writeln('Failed!');
+		SDL_Log('Failed to initialize SDL2_image! Error details: %s', [IMG_GetError()]);
 		Halt(1)
 	end else
-		Writeln('Success!');
+		SDL_Log('SDL2_image initialized successfully.', []);
 
-	Write('Initializing SDL2 audio... ');
+	SDL_Log('Initializing SDL2 audio subsystem...', []);
 	If (SDL_InitSubSystem(SDL_Init_Audio)<>0) then begin
-		Writeln('Failed!');
+		SDL_Log('Failed to initialize SDL2 audio subsystem! Error details: %s', [SDL_GetError()]);
 		NoSound:=True
 	end else
-		Writeln('Success!');
+		SDL_Log('SDL2 audio subsystem initialized successfully.', []);
 
 	If (Not NoSound) then begin
-		Write('Initializing SDL2_mixer... ');
+		SDL_Log('Initializing SDL2_mixer...', []);
 		If(Mix_Init(0) <> 0) then begin
-			Writeln('Failed!');
+			SDL_Log('Failed to initialize SDL2_mixer! Error details: %s', [Mix_GetError()]);
 			NoSound:=True
 		end else
 		If (Mix_OpenAudio(AUDIO_FREQ, AUDIO_TYPE, AUDIO_CHAN, AUDIO_CSIZ)<>0) then begin
-			Writeln('Failed!');
+			SDL_Log('Failed to initialize SDL2_mixer! Error details: %s', [Mix_GetError()]);
 			NoSound:=True 
 		end else begin
 			Mix_AllocateChannels(SFXCHANNELS);
-			Writeln('Success!');
+			SDL_Log('SDL2_mixer initialized successfully.', [])
 		end
 	end else
-		Writeln('SDL audio init failed - skipping SDL_mixer init.');
+		SDL_Log('Failed to initialize SDL2 audio - skipping SDL2_mixer init.', []);
 
-	Write('Opening window... ');
+	SDL_Log('Opening window...', []);
 	If (Not OpenWindow()) then begin
-		Writeln('Failed!');
+		SDL_Log('Failed to open window! Error details: %s', [SDL_GetError()]);
 		Halt(1)
 	end else begin
-		Writeln('Success!');
+		SDL_Log('Window opened successfully.', []);
 		LoadAndSetWindowIcon();
 	end;
 
-	Write('Creating SDL2 renderer... ');
+	SDL_Log('Creating renderer...', []);
 	Renderer := SDL_CreateRenderer(Window, -1, SDL_RENDERER_TARGETTEXTURE);
 	if(Renderer = NIL) then begin
-		Writeln('Failed!');
+		SDL_Log('Failed to create renderer! Error details: %s', [SDL_GetError()]);
 		Halt(1)
 	end else begin
-		Writeln('Success!');
+		// TODO: Print some renderer info
+		SDL_Log('Renderer created successfully!', []);
 		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, 'nearest');
 		SDL_RenderSetLogicalSize(Renderer, RESOL_W, RESOL_H)
 	end;
@@ -762,23 +769,24 @@ Begin
 	// Restore the old mask after we disabled FPE checks.
 	Math.SetExceptionMask(OldMask);
 
-	Write('Creating render target texture... ');
+	SDL_Log('Creating render target texture...', []);
 	Display := SDL_CreateTexture(Renderer, SDL_GetWindowPixelFormat(Window), SDL_TEXTUREACCESS_TARGET, RESOL_W, RESOL_H);
 	if(Display = NIL) then begin
-		Writeln('Failed!');
+		SDL_Log('Failed to create render target texture! Error details: %s', [SDL_GetError()]);
 		Halt(1)
 	end else
-		Writeln('Success!');
+		SDL_Log('Render target texture created successfully.', []);
 
-	Write('Loading assets... ');
+	SDL_Log('Loading assets...', []);
 	RegisterAllAssets();
 	If Not LoadAssets(ErrStr, @LoadUpdate) then begin
-		Writeln('ERROR'); Writeln(ErrStr); Exit(False);
+		SDL_Log('Failed to load assets! %s', [PChar(ErrStr)]);
+		Exit(False)
 	end else
-		Writeln('Success!');
-   
+		SDL_Log('All assets loaded successfully.', []);
+
 	SetLength(Mob,0); SetLength(EBul,0); SetLength(PBul,0); SetLength(Gib,0); Hero:=NIL;
-	Writeln('All done! Initialization finished in ',((GetMSecs()-Timu)/1000):0:2,' second(s).');
+	SDL_Log('All done! Initialization finished in %.2f second(s).', [Single(GetMSecs()-Timu) / 1000]);
 	Exit(True)
 End;
 
@@ -793,19 +801,19 @@ End;
 Function GameloadRequest(Const GM:TGameMode):Boolean;
 Begin
 	If((GameOn) and (GM <> GameMode)) then begin
-		Write('Saving current game... ');
+		SDL_Log('Saving current game...', []);
 		If (SaveGame(GameMode)) then
-			Writeln('Done.')
+			SDL_Log('Game saved successfully.', [])
 		else
-			Writeln('Failed!')
+			SDL_Log('Failed to save the game!', [])
 	end;
-	
-	Write('Loading game... ');
+
+	SDL_Log('Loading game...', []);
 	Result := LoadGame(GM);
 	If(Result) then
-		Writeln('Done.')
+		SDL_Log('Game loaded successfully', [])
 	else
-		Writeln('Failed!')
+		SDL_Log('Failed to load the game!', [])
 End;
 
 Procedure QuitProg();
@@ -813,45 +821,45 @@ Var Timu:Comp;
 Begin
 	Timu:=GetMSecs();
 	SDL_HideWindow(Window);
-	
+
 	If (GameOn) then begin
-		Write('Saving current game... ');
+		SDL_Log('Saving current game...', []);
 		If (SaveGame(GameMode)) then
-			Writeln('Success.')
+			SDL_Log('Game saved successfully.', [])
 		else
-			Writeln('Failed!');
-		
+			SDL_Log('Failed to save the game!', []);
+
 		DestroyEntities();
 	end;
-	
-	Write('Saving configuration file... ');
+
+	SDL_Log('Saving configuration file...', []);
 	If (SaveIni()) then
-		Writeln('Success.')
+		SDL_Log('Configuration file saved successfully.', [])
 	else
-		Writeln('Failed!');
-	
-	Write('Freeing assets... ');
+		SDL_Log('Failed to save configuration file!', []);
+
+	SDL_Log('Freeing assets...', []);
 		Assets.FreeAssets();
-	Writeln('Done.');
-	
-	Write('Closing SDL2_Mixer... ');
+	SDL_Log('Assets freed.', []);
+
+	SDL_Log('Closing SDL2_mixer...', []);
 		Mix_CloseAudio();
 		Mix_Quit();
-	Writeln('Done.');
-	
-	Write('Closing SDL2_Image... ');
+	SDL_Log('SDL2_mixer closed', []);
+
+	SDL_Log('Closing SDL2_image...', []);
 		IMG_Quit();
-	Writeln('Done.');
-	
-	Write('Closing SDL2... ');
+	SDL_Log('SDL2_image closed.', []);
+
+	SDL_Log('Closing SDL2...', []);
 		SDL_DestroyTexture(Display);
 		SDL_DestroyRenderer(Renderer);
 		SDL_DestroyWindow(Window);
 		SDL_Quit();
-	Writeln('Done.');
-	
-	Writeln('Finalization finished in ',((GetMSecs-Timu)/1000):0:2,' second(s).');
-	Writeln('Thanks for playing and have a nice day!')
+	SDL_Log('SDL2 closed.', []);
+
+	SDL_Log('Finalization finished in %.2f seconds.', [Single(GetMSecs-Timu)/1000]);
+	SDL_Log('Thanks for playing and have a nice day!', [])
 End;
 
 (*
@@ -864,11 +872,7 @@ Function ld25main(argc: cint; argv: Pointer): cint; cdecl;
 {$ENDIF}
 
 begin
-	Writeln(GAMENAME,' v.',GAMEVERS,' by ',GAMEAUTH);
-{$IFNDEF PACKAGE}
-	Writeln('build ',GAMEDATE);
-{$ENDIF}
-	Writeln(StringOfChar('-',36));
+	SDL_Log(GAMENAME + ' v.' + GAMEVERS + ' by ' + GAMEAUTH, []);
 	If (Not Startup()) Then Halt(255);
 	Repeat
 		MenuChoice:=MainMenu();
@@ -878,9 +882,13 @@ begin
 			'N': begin
 				MenuChoice:=GameworldDialog(False);
 				If (MenuChoice<>'Q') and (GameOn) then begin
-					Write('Saving current game... ');
-					If (SaveGame(GameMode)) then Writeln('Done.') end;
-					Case MenuChoice of
+					SDL_Log('Saving current game...', []);
+					If (SaveGame(GameMode)) then
+						SDL_Log('Game saved successfully.', [])
+					else
+						SDL_Log('Failed to save the game!', [])
+				end;
+				Case MenuChoice of
 					'T': begin NewGame(GM_TUTORIAL); PlayGame() end;
 					'C': begin NewGame(GM_ORIGINAL); PlayGame() end;
 					'N': begin NewGame(GM_NEWWORLD); PlayGame() end;

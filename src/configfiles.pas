@@ -65,7 +65,7 @@ Function CheckConfPath():Boolean;
 Begin
 	If (Not DirectoryExists(ConfPath)) then begin
 		If (Not ForceDirectories(ConfPath)) then begin
-			Writeln('Could not create configuration directory! (',ConfPath,')');
+			SDL_Log('Could''t create the configuration directory! (%s)', [PChar(ConfPath)]);
 			Exit(False) 
 		end
 	end;
@@ -90,7 +90,7 @@ Begin
 	 * but I don't really think anyone cares that much. *)
 	Assign(F,Path); {$I-} Rewrite(F); {$I+}
 	If (IOResult <> 0) then begin
-		Writeln('Could not write savegame file! (',Path,')');
+		SDL_Log('Could not write savegame file! (%s)', [PChar(Path)]);
 		Exit(False)
 	end;
 

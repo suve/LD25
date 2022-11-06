@@ -309,7 +309,11 @@ Begin
 		IconSurf:=IMG_Load(PChar({$IFNDEF ANDROID} DataPath + {$ENDIF} ICON_FILE));
 		
 		If (IconSurf = NIL) then begin
-			Writeln('Failed to load file: '+ {$IFDEF PACKAGE} DataPath+ {$ENDIF} ICON_FILE);
+			{$IFDEF PACKAGE}
+			SDL_Log('Failed to load file: %s%s', [PChar(DataPath), PChar(ICON_FILE)]);
+			{$ELSE}
+			SDL_Log('Failed to load file: ' + ICON_FILE, []);
+			{$ENDIF}
 			Exit()
 		end
 	end;

@@ -342,28 +342,36 @@ Procedure PlaceGibs(E:PEntity);
    end;
 
 Function ChangeRoom(NX,NY:sInt):Boolean;
-   Var NoRoom:Boolean;
-   begin
-   // First, check if room exists
-   Case GameMode of
-      GM_TUTORIAL: NoRoom:=(NX<0) or (NY<0) or (NX>=TUT_MAP_W) or (NY>=TUT_MAP_H) or (TutRoom[NX][NY]=NIL);
-      GM_ORIGINAL: NoRoom:=(NX<0) or (NY<0) or (NX>=ORG_MAP_W) or (NY>=ORG_MAP_H) or (OrgRoom[NX][NY]=NIL);
-      GM_NEWWORLD: NoRoom:=(NX<0) or (NY<0) or (NX>=NEW_MAP_W) or (NY>=NEW_MAP_H) or (NewRoom[NX][NY]=NIL);
-      otherwise Exit(False)
-      end;
-   If (NoRoom) then begin
-      Writeln('Error: Room ',GameMode,':',NX,':',NY,' not found!'); Exit(False) end;
-   DestroyEntities();
-   // Change room and run its script
-   Case GameMode of
-      GM_TUTORIAL: Room:=TutRoom[NX][NY];
-      GM_ORIGINAL: Room:=OrgRoom[NX][NY];
-      GM_NEWWORLD: Room:=NewRoom[NX][NY];
-      end;
-   Room^.RunScript();
-   If (GameMode=GM_TUTORIAL) then Hero^.HP:=Hero^.MaxHP;
-   Exit(True)
-   end;
+Var
+	NoRoom:Boolean;
+	ErrStr: AnsiString;
+Begin
+	// First, check if room exists
+	Case GameMode of
+		GM_TUTORIAL: NoRoom:=(NX<0) or (NY<0) or (NX>=TUT_MAP_W) or (NY>=TUT_MAP_H) or (TutRoom[NX][NY]=NIL);
+		GM_ORIGINAL: NoRoom:=(NX<0) or (NY<0) or (NX>=ORG_MAP_W) or (NY>=ORG_MAP_H) or (OrgRoom[NX][NY]=NIL);
+		GM_NEWWORLD: NoRoom:=(NX<0) or (NY<0) or (NX>=NEW_MAP_W) or (NY>=NEW_MAP_H) or (NewRoom[NX][NY]=NIL);
+		otherwise Exit(False)
+	end;
+	If (NoRoom) then begin
+		WriteStr(ErrStr, 'Room ',GameMode,':',NX,':',NY,' not found!');
+		SDL_Log('%s', [PChar(ErrStr)]);
+		Exit(False)
+	end;
+
+	DestroyEntities();
+
+	// Change room and run its script
+	Case GameMode of
+		GM_TUTORIAL: Room:=TutRoom[NX][NY];
+		GM_ORIGINAL: Room:=OrgRoom[NX][NY];
+		GM_NEWWORLD: Room:=NewRoom[NX][NY];
+	end;
+	Room^.RunScript();
+
+	If (GameMode=GM_TUTORIAL) then Hero^.HP:=Hero^.MaxHP;
+	Exit(True)
+end;
 
 Procedure DestroyEntities(KillHero:Boolean=FALSE);
    Var C:uInt;
