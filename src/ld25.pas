@@ -685,10 +685,10 @@ End;
 
 Function Startup():Boolean;
 Var
-	ErrStr: AnsiString;
 	Timu: Comp;
 	GM: TGameMode;
 	OldMask, NewMask: TFPUExceptionMask;
+	Assload: Assets.TLoadingResult;
 Begin
 	Timu:=GetMSecs(); Randomize();
 
@@ -779,8 +779,12 @@ Begin
 
 	SDL_Log('Loading assets...', []);
 	RegisterAllAssets();
-	If Not LoadAssets(ErrStr, @LoadUpdate) then begin
-		SDL_Log('Failed to load assets! %s', [PChar(ErrStr)]);
+	Assload := LoadAssets(@LoadUpdate);
+	If(Assload.Status <> ALS_OK) then begin
+		If(Assload.Status = ALS_FAILED) then
+			SDL_Log('Failed to load file: %s (%s)', [PChar(Assload.FileName), PChar(Assload.ErrStr)])
+		else
+			SDL_Log('Failed to load assets: %s', [PChar(Assload.ErrStr)]);
 		Exit(False)
 	end else
 		SDL_Log('All assets loaded successfully.', []);

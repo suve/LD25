@@ -61,12 +61,23 @@ Var
 	OrgRoom:Array[0..(ORG_MAP_W-1), 0..(ORG_MAP_H-1)] of PRoom;
 	TutRoom:Array[0..(TUT_MAP_W-1), 0..(TUT_MAP_H-1)] of PRoom;
 
-Type UpdateProc = Procedure(Name:AnsiString;Perc:Double);
+Type
+	TLoadingStatus = (
+		ALS_OK,
+		ALS_FAILED,
+		ALS_INTERRUPTED
+	);
+	TLoadingResult = record
+		Status: TLoadingStatus;
+		FileName: AnsiString;
+		ErrStr: AnsiString;
+	end;
+	TUpdateProc = Procedure(Name: AnsiString; Perc: Double);
 
 Procedure RegisterAllAssets();
 
 
-Function  LoadAssets(Out Status:AnsiString; Const UpdateCallback: UpdateProc = NIL):Boolean;
+Function  LoadAssets(Const UpdateCallback: TUpdateProc = NIL):TLoadingResult;
 Procedure LoadAndSetWindowIcon();
 
 Procedure FreeAssets();
@@ -251,7 +262,7 @@ Begin
 	end
 End;
 
-Function LoadAssets(Out Status:AnsiString; Const UpdateCallback: UpdateProc = NIL):Boolean;
+Function LoadAssets(Const UpdateCallback: TUpdateProc = NIL):TLoadingResult;
 Var
 	idx: sInt;
 	FullPath: AnsiString;
@@ -266,39 +277,55 @@ Begin
 		Case(AssetArr[idx].Kind) of
 			ASSET_FONT: begin
 				FontImage := LoadImage(FullPath, @COLOUR_BLACK);
-				If(FontImage <> NIL) then begin
+				If(FontImage = NIL) then begin
+					Result.ErrStr := Images.ImageError()
+				end else begin
 					AssetArr[idx].Font^ := FontFromImage(FontImage, AssetArr[idx].FontStartChar, AssetArr[idx].FontW, AssetArr[idx].FontH);
-					If(AssetArr[idx].Font^ = NIL) then FreeImage(FontImage);
-				end;
+					If(AssetArr[idx].Font^ = NIL) then begin
+						Result.ErrStr := 'Failed to allocate memory';
+						FreeImage(FontImage)
+					end
+				end
 			end;
 			
-			ASSET_IMAGE: AssetArr[idx].Image^ := LoadImage(FullPath, AssetArr[idx].ImageTransCol);
-			ASSET_ROOM: AssetArr[idx].Room^ := LoadRoom(AssetArr[idx].RoomX, AssetArr[idx].RoomY, FullPath);
-			ASSET_SOUND: AssetArr[idx].Sound^ := Mix_LoadWAV(PChar(FullPath));
+			ASSET_IMAGE: begin
+				AssetArr[idx].Image^ := LoadImage(FullPath, AssetArr[idx].ImageTransCol);
+				If(AssetArr[idx].Image^ = NIL) then Result.ErrStr := Images.ImageError() // TODO: Improve this
+			end;
+			ASSET_ROOM: begin
+				AssetArr[idx].Room^ := LoadRoom(AssetArr[idx].RoomX, AssetArr[idx].RoomY, FullPath);
+				If(AssetArr[idx].Room^ = NIL) then Result.ErrStr := 'Unknown' // TODO: Improve this
+			end;
+			ASSET_SOUND: begin
+				AssetArr[idx].Sound^ := Mix_LoadWAV(PChar(FullPath));
+				If(AssetArr[idx].Sound^ = NIL) then Result.ErrStr := Mix_GetError()
+			end;
 		end;
 		
 		If(AssetArr[idx].Ptr^ = NIL) then begin
-			Status := 'Failed to load file: ' + {$IFDEF PACKAGE} FullPath {$ELSE} AssetArr[idx].Path {$ENDIF};
-			Exit(False)
+			Result.Status := ALS_FAILED;
+			Result.FileName := {$IFDEF PACKAGE} FullPath {$ELSE} AssetArr[idx].Path {$ENDIF};
+			Exit()
 		end;
 		
 		UpdateCallback(AssetArr[idx].Path, (idx+1) / AssetCount);
-		
 		
 		// Check for user interrupt
 		ExitRequested := False;
 		While(SDL_PollEvent(@Ev) > 0) do Case(Ev.Type_) of
 			SDL_QuitEv: ExitRequested := True;
 			SDL_KeyDown: If((Ev.Key.Keysym.Sym = SDLK_Escape) or (Ev.Key.Keysym.Sym = SDLK_AC_BACK)) then ExitRequested := True;
+			SDL_WindowEvent: If(Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then HandleWindowResizedEvent(@Ev);
 		end;
 		
 		If(ExitRequested) then begin
-			Status := 'Interrupted by user';
-			Exit(False)
+			Result.Status := ALS_INTERRUPTED;
+			Result.ErrStr := 'Interrupted by user';
+			Exit()
 		end
 	end;
-	
-	Exit(True)
+
+	Result.Status := ALS_OK	
 End;
 
 Procedure LoadAndSetWindowIcon();
