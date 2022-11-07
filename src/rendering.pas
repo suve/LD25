@@ -192,7 +192,6 @@ Function GetWindowInfo(): AnsiString;
 Var
 	ww, wh: cint;
 	Flags: UInt32;
-	FirstFlag: Boolean;
 
 	Procedure CheckFlag(FlagValue: UInt32; FlagName: AnsiString);
 	Begin

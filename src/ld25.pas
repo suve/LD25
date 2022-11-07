@@ -23,9 +23,8 @@
 {$INCLUDE defines.inc}
 
 uses
-	SysUtils, Math,
+	SysUtils, Math, ctypes,
 	SDL2, SDL2_image, SDL2_mixer,
-	{$IFDEF ANDROID} ctypes, {$ENDIF}
 	Assets, Colours, ConfigFiles, FloatingText, Fonts, Game, Images, Objects,
 	MathUtils, Menus, Rendering, Rooms, Shared
 ;
@@ -737,7 +736,7 @@ Begin
 		end else
 		If (Mix_OpenAudio(AUDIO_FREQ, AUDIO_TYPE, AUDIO_CHAN, AUDIO_CSIZ)<>0) then begin
 			SDL_Log('Failed to initialize SDL2_mixer! Error details: %s', [Mix_GetError()]);
-			NoSound:=True 
+			NoSound:=True
 		end else begin
 			Mix_AllocateChannels(SFXCHANNELS);
 			SDL_Log('SDL2_mixer initialized successfully.', [])
@@ -789,7 +788,7 @@ Begin
 		SDL_Log('All assets loaded successfully.', []);
 
 	SetLength(Mob,0); SetLength(EBul,0); SetLength(PBul,0); SetLength(Gib,0); Hero:=NIL;
-	SDL_Log('All done! Initialization finished in %.2f second(s).', [Single(GetMSecs()-Timu) / 1000]);
+	SDL_Log('All done! Initialization finished in %ld ms.', [clong(GetMSecs() - Timu)]);
 	Exit(True)
 End;
 
@@ -848,7 +847,7 @@ Begin
 	SDL_Log('Closing SDL2_mixer...', []);
 		Mix_CloseAudio();
 		Mix_Quit();
-	SDL_Log('SDL2_mixer closed', []);
+	SDL_Log('SDL2_mixer closed.', []);
 
 	SDL_Log('Closing SDL2_image...', []);
 		IMG_Quit();
@@ -861,7 +860,7 @@ Begin
 		SDL_Quit();
 	SDL_Log('SDL2 closed.', []);
 
-	SDL_Log('Finalization finished in %.2f seconds.', [Single(GetMSecs-Timu)/1000]);
+	SDL_Log('Finalization finished in %ld ms.', [clong(GetMSecs() - Timu)]);
 	SDL_Log('Thanks for playing and have a nice day!', [])
 End;
 
