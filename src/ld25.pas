@@ -792,8 +792,21 @@ Begin
 	Exit(True)
 End;
 
+Procedure SaveCurrentGame();
+Begin
+	If(Not GameOn) then Exit();
+
+	SDL_Log('Saving current game...', []);
+	If (SaveGame(GameMode)) then
+		SDL_Log('Game saved successfully.', [])
+	else
+		SDL_Log('Failed to save the game!', [])
+End;
+
 Procedure NewGame(Const GM:TGameMode);
 Begin
+	If(GM <> GameMode) then SaveCurrentGame();
+
 	GameMode:=GM;
 	DestroyEntities(True); ResetGamestate();
 	New(Hero,Create()); ChangeRoom(RespRoom[GM].X,RespRoom[GM].Y);
@@ -802,13 +815,7 @@ End;
 
 Function GameloadRequest(Const GM:TGameMode):Boolean;
 Begin
-	If((GameOn) and (GM <> GameMode)) then begin
-		SDL_Log('Saving current game...', []);
-		If (SaveGame(GameMode)) then
-			SDL_Log('Game saved successfully.', [])
-		else
-			SDL_Log('Failed to save the game!', [])
-	end;
+	If(GM <> GameMode) then SaveCurrentGame();
 
 	SDL_Log('Loading game...', []);
 	Result := LoadGame(GM);
@@ -824,21 +831,15 @@ Begin
 	Timu:=GetMSecs();
 	SDL_HideWindow(Window);
 
-	If (GameOn) then begin
-		SDL_Log('Saving current game...', []);
-		If (SaveGame(GameMode)) then
-			SDL_Log('Game saved successfully.', [])
-		else
-			SDL_Log('Failed to save the game!', []);
-
-		DestroyEntities();
-	end;
+	SaveCurrentGame();
 
 	SDL_Log('Saving configuration file...', []);
 	If (SaveIni()) then
 		SDL_Log('Configuration file saved successfully.', [])
 	else
 		SDL_Log('Failed to save configuration file!', []);
+
+	DestroyEntities();
 
 	SDL_Log('Freeing assets...', []);
 		Assets.FreeAssets();
@@ -883,13 +884,6 @@ begin
 			'C': PlayGame();
 			'N': begin
 				MenuChoice:=GameworldDialog(False);
-				If (MenuChoice<>'Q') and (GameOn) then begin
-					SDL_Log('Saving current game...', []);
-					If (SaveGame(GameMode)) then
-						SDL_Log('Game saved successfully.', [])
-					else
-						SDL_Log('Failed to save the game!', [])
-				end;
 				Case MenuChoice of
 					'T': begin NewGame(GM_TUTORIAL); PlayGame() end;
 					'C': begin NewGame(GM_ORIGINAL); PlayGame() end;
