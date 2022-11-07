@@ -750,8 +750,8 @@ Begin
 		SDL_Log('Failed to open window! Error details: %s', [SDL_GetError()]);
 		Halt(1)
 	end else begin
-		SDL_Log('Window opened successfully.', []);
-		LoadAndSetWindowIcon();
+		SDL_Log('Window opened successfully. (%s)', [PChar(Rendering.GetWindowInfo())]);
+		LoadAndSetWindowIcon()
 	end;
 
 	SDL_Log('Creating renderer...', []);
@@ -760,8 +760,7 @@ Begin
 		SDL_Log('Failed to create renderer! Error details: %s', [SDL_GetError()]);
 		Halt(1)
 	end else begin
-		// TODO: Print some renderer info
-		SDL_Log('Renderer created successfully!', []);
+		SDL_Log('Renderer created successfully. (%s)', [PChar(Rendering.GetRendererInfo())]);
 		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, 'nearest');
 		SDL_RenderSetLogicalSize(Renderer, RESOL_W, RESOL_H)
 	end;

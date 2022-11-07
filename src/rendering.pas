@@ -52,6 +52,9 @@ Procedure WindowCoordsToGameCoords(Const WindowX, WindowY: sInt; Out GameX, Game
 Procedure ResizeWindow(W,H:uInt;Full:Boolean=FALSE);
 {$ENDIF}
 
+Function GetWindowInfo(): AnsiString;
+Function GetRendererInfo(): AnsiString;
+
 // Set up buffers for drawing frame, send frame to display
 Procedure BeginFrame();
 Procedure FinishFrame();
@@ -184,6 +187,75 @@ Begin
 	end
 End;
 {$ENDIF}
+
+Function GetWindowInfo(): AnsiString;
+Var
+	ww, wh: cint;
+	Flags: UInt32;
+	FirstFlag: Boolean;
+
+	Procedure CheckFlag(FlagValue: UInt32; FlagName: AnsiString);
+	Begin
+		If((Flags and FlagValue) = FlagValue) then begin
+			Result += ', ' + FlagName
+		end
+	End;
+Begin
+	If(Window = NIL) then Exit('none');
+
+	SDL_GetWindowSize(Window, @ww, @wh);
+	Flags := SDL_GetWindowFlags(Window);
+
+	WriteStr(Result, ww, 'x', wh);
+
+	(*
+	 * Some of the flags are commented-out. This is on purpose,
+	 * to make it easy to differentiate between a flag we don't care about
+	 * and an unknown flag that was added in a newer version of SDL.
+	 *)
+	CheckFlag(SDL_WINDOW_FULLSCREEN,         'fullscreen');
+	CheckFlag(SDL_WINDOW_FULLSCREEN_DESKTOP, 'fullscreen-desktop');
+	CheckFlag(SDL_WINDOW_OPENGL,             'opengl');
+	CheckFlag(SDL_WINDOW_VULKAN,             'vulkan');
+	// CheckFlag(SDL_WINDOW_SHOWN,              'shown');
+	// CheckFlag(SDL_WINDOW_HIDDEN,             'hidden');
+	CheckFlag(SDL_WINDOW_BORDERLESS,         'borderless');
+	CheckFlag(SDL_WINDOW_RESIZABLE,          'resizable');
+	CheckFlag(SDL_WINDOW_MINIMIZED,          'minimized');
+	CheckFlag(SDL_WINDOW_MAXIMIZED,          'maximized');
+	CheckFlag(SDL_WINDOW_INPUT_GRABBED,      'input-grabbed');
+	CheckFlag(SDL_WINDOW_INPUT_FOCUS,        'input-focus');
+	CheckFlag(SDL_WINDOW_MOUSE_CAPTURE,      'mouse-grabbed');
+	CheckFlag(SDL_WINDOW_MOUSE_FOCUS,        'mouse-focus');
+	CheckFlag(SDL_WINDOW_FOREIGN,            'foreign');
+	CheckFlag(SDL_WINDOW_ALLOW_HIGHDPI,      'hidpi');
+	CheckFlag(SDL_WINDOW_ALWAYS_ON_TOP,      'always-on-top');
+	CheckFlag(SDL_WINDOW_SKIP_TASKBAR,       'skip-taskbar');
+	// CheckFlag(SDL_WINDOW_UTILITY,            'utility');
+	// CheckFlag(SDL_WINDOW_TOOLTIP,            'tooltip');
+	// CheckFlag(SDL_WINDOW_POPUP_MENU,         'popup-menu');
+End;
+
+Function GetRendererInfo(): AnsiString;
+Var
+	Info: TSDL_RendererInfo;
+
+	Procedure CheckFlag(FlagValue: UInt32; FlagName: AnsiString);
+	Begin
+		If((Info.Flags and FlagValue) = FlagValue) then begin
+			Result += ', ' + FlagName
+		end
+	End;
+Begin
+	If(Renderer = NIL) then Exit('none');
+	If(SDL_GetRendererInfo(Renderer, @Info) <> 0) then Exit('unknown');
+
+	WriteStr(Result, '"', Info.Name, '", maxsize: ', Info.max_texture_width, 'x', Info.max_texture_height);
+	CheckFlag(SDL_RENDERER_SOFTWARE,      'software');
+	CheckFlag(SDL_RENDERER_ACCELERATED,   'accelerated');
+	CheckFlag(SDL_RENDERER_PRESENTVSYNC,  'vsync');
+	CheckFlag(SDL_RENDERER_TARGETTEXTURE, 'target-texture')
+End;
 
 Procedure BeginFrame();
 Begin
