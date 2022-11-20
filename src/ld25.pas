@@ -682,7 +682,19 @@ Begin
 	Exit(True)
 End;
 
-Function Startup():Boolean;
+Procedure FatalError(fmt: AnsiString; args: Array of Const);
+Const
+	MsgBoxTitle = GAMENAME + ' v.' + GAMEVERS + ': Error';
+Var
+	ErrorStr: AnsiString;
+Begin
+	ErrorStr := SysUtils.Format(fmt, args);
+	SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, '%s', [PChar(ErrorStr)]);
+	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, PChar(MsgBoxTitle), PChar(ErrorStr), Window);
+	Halt(1)
+End;
+
+Procedure Startup();
 Var
 	Timu: Comp;
 	GM: TGameMode;
@@ -708,17 +720,15 @@ Begin
 	Math.SetExceptionMask(NewMask);
 
 	SDL_Log('Initializing SDL2...', []);
-	If (SDL_Init(SDL_Init_Video or SDL_Init_Timer)<>0) then begin
-		SDL_Log('Failed to initialize SDL2! Error details: %s', [SDL_GetError()]);
-		Halt(1)
-	end else
+	If (SDL_Init(SDL_Init_Video or SDL_Init_Timer)<>0) then
+		FatalError('Failed to initialize SDL2! Error details: %s', [SDL_GetError()])
+	else
 		SDL_Log('SDL2 initialized successfully.', []);
 
 	SDL_Log('Initializing SDL2_image... ', []);
-	if(IMG_Init(IMG_INIT_PNG) <> IMG_INIT_PNG) then begin
-		SDL_Log('Failed to initialize SDL2_image! Error details: %s', [IMG_GetError()]);
-		Halt(1)
-	end else
+	if(IMG_Init(IMG_INIT_PNG) <> IMG_INIT_PNG) then
+		FatalError('Failed to initialize SDL2_image! Error details: %s', [IMG_GetError()])
+	else
 		SDL_Log('SDL2_image initialized successfully.', []);
 
 	SDL_Log('Initializing SDL2 audio subsystem...', []);
@@ -746,8 +756,7 @@ Begin
 
 	SDL_Log('Opening window...', []);
 	If (Not OpenWindow()) then begin
-		SDL_Log('Failed to open window! Error details: %s', [SDL_GetError()]);
-		Halt(1)
+		FatalError('Failed to open window! Error details: %s', [SDL_GetError()])
 	end else begin
 		SDL_Log('Window opened successfully. (%s)', [PChar(Rendering.GetWindowInfo())]);
 		LoadAndSetWindowIcon()
@@ -756,8 +765,7 @@ Begin
 	SDL_Log('Creating renderer...', []);
 	Renderer := SDL_CreateRenderer(Window, -1, SDL_RENDERER_TARGETTEXTURE);
 	if(Renderer = NIL) then begin
-		SDL_Log('Failed to create renderer! Error details: %s', [SDL_GetError()]);
-		Halt(1)
+		FatalError('Failed to create renderer! Error details: %s', [SDL_GetError()])
 	end else begin
 		SDL_Log('Renderer created successfully. (%s)', [PChar(Rendering.GetRendererInfo())]);
 		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, 'nearest');
@@ -769,10 +777,9 @@ Begin
 
 	SDL_Log('Creating render target texture...', []);
 	Display := SDL_CreateTexture(Renderer, SDL_GetWindowPixelFormat(Window), SDL_TEXTUREACCESS_TARGET, RESOL_W, RESOL_H);
-	if(Display = NIL) then begin
-		SDL_Log('Failed to create render target texture! Error details: %s', [SDL_GetError()]);
-		Halt(1)
-	end else
+	if(Display = NIL) then
+		FatalError('Failed to create render target texture! Error details: %s', [SDL_GetError()])
+	else
 		SDL_Log('Render target texture created successfully.', []);
 
 	SDL_Log('Loading assets...', []);
@@ -780,16 +787,14 @@ Begin
 	Assload := LoadAssets(@LoadUpdate);
 	If(Assload.Status <> ALS_OK) then begin
 		If(Assload.Status = ALS_FAILED) then
-			SDL_Log('Failed to load file: %s (%s)', [PChar(Assload.FileName), PChar(Assload.ErrStr)])
+			FatalError('Failed to load file: %s (%s)', [Assload.FileName, Assload.ErrStr])
 		else
-			SDL_Log('Failed to load assets: %s', [PChar(Assload.ErrStr)]);
-		Exit(False)
+			FatalError('Failed to load assets: %s', [Assload.ErrStr])
 	end else
 		SDL_Log('All assets loaded successfully.', []);
 
 	SetLength(Mob,0); SetLength(EBul,0); SetLength(PBul,0); SetLength(Gib,0); Hero:=NIL;
-	SDL_Log('All done! Initialization finished in %ld ms.', [clong(GetMSecs() - Timu)]);
-	Exit(True)
+	SDL_Log('All done! Initialization finished in %ld ms.', [clong(GetMSecs() - Timu)])
 End;
 
 Procedure SaveCurrentGame();
@@ -876,7 +881,7 @@ Function ld25main(argc: cint; argv: Pointer): cint; cdecl;
 
 begin
 	SDL_Log(GAMENAME + ' v.' + GAMEVERS + ' by ' + GAMEAUTH, []);
-	If (Not Startup()) Then Halt(255);
+	Startup();
 	Repeat
 		MenuChoice:=MainMenu();
 		Case MenuChoice of
