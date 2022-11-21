@@ -151,6 +151,9 @@ Function ChangeRoom(NX,NY:sInt):Boolean;
 Procedure DestroyEntities(KillHero:Boolean=FALSE);
 Procedure ResetGamestate();
 
+// Convenience function for reducing the amount of copy-pasted code.
+Procedure SaveCurrentGame(Reason: AnsiString = '');
+
 
 Implementation
 Uses
@@ -410,6 +413,21 @@ Begin
 	For C:=Low(Switch) to High(Switch) do Switch[C]:=False;
 
 	Carried:=0; Given:=0;
+End;
+
+Procedure SaveCurrentGame(Reason: AnsiString = '');
+Begin
+	If Not GameOn then Exit;
+
+	If (Reason <> '') then
+		SDL_Log('Saving game %s...', [PChar(Reason)])
+	else
+		SDL_Log('Saving current game...', []);
+
+	If SaveGame(GameMode) then
+		SDL_Log('Game saved successfully.', [])
+	else
+		SDL_Log('Failed to save the game!', [])
 End;
 
 

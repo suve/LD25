@@ -171,11 +171,8 @@ Begin
 				If (ColState[C]=STATE_PICKED) then
 					ColState[C]:=STATE_NONE;
 			Carried:=0;
-			
-			Write('Saving game upon death... ');
-			If (SaveGame(GameMode))
-				then Writeln('Success!')
-				else Writeln('Failed!')
+
+			SaveCurrentGame('upon death')
 		end 
 	end
 End;
@@ -209,12 +206,8 @@ Begin
 		// If this is the last crystal, switch the quit-flag so we exit to outro after this game cycle.
 		If (Given >= 8) then
 			WantToQuit:=True 
-		else begin
-			Write('Saving game upon progress... '); 
-			If (SaveGame(GameMode)) 
-				then Writeln('Success!')
-				else Writeln('Failed!')
-		end
+		else
+			SaveCurrentGame('upon progress')
 	end;
 End;
 

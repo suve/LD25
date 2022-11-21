@@ -797,17 +797,6 @@ Begin
 	SDL_Log('All done! Initialization finished in %ld ms.', [clong(GetMSecs() - Timu)])
 End;
 
-Procedure SaveCurrentGame();
-Begin
-	If(Not GameOn) then Exit();
-
-	SDL_Log('Saving current game...', []);
-	If (SaveGame(GameMode)) then
-		SDL_Log('Game saved successfully.', [])
-	else
-		SDL_Log('Failed to save the game!', [])
-End;
-
 Procedure NewGame(Const GM:TGameMode);
 Begin
 	If(GM <> GameMode) then SaveCurrentGame();
@@ -825,7 +814,7 @@ Begin
 	SDL_Log('Loading game...', []);
 	Result := LoadGame(GM);
 	If(Result) then
-		SDL_Log('Game loaded successfully', [])
+		SDL_Log('Game loaded successfully.', [])
 	else
 		SDL_Log('Failed to load the game!', [])
 End;
