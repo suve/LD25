@@ -37,7 +37,7 @@ FLAGS_PACKAGE = -vewn -OG3 -g -dPACKAGE
 ## -- End vars
 ## -- Start scanning for source files
 
-SOURCES := $(filter-out '*ld25.pas', $(shell find src/ -name '*.{pas,inc}'))
+SOURCES := $(filter-out '*ld25.pas', $(shell find src/ -name '*.pas' -o -name '*.inc'))
 
 GFX_SOURCES := $(shell find gfx/ -name '*.png')
 GFX_TARGETS := $(GFX_SOURCES:gfx/%.png=build/gfx/%.png)

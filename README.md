@@ -47,8 +47,9 @@ https://libsdl.org
 
 Getting the SDL2 headers
 -----------------
-Before you can build, you need to get a copy of Pascal SDL2 headers.
-The recommended version to use are the [ev1313](https://github.com/ev1313/Pascal-SDL-2-Headers) headers,
+Before you can build, you need to get a copy of Pascal SDL2 units.
+The recommended version to use can be found in the
+[PGD SDL2-For-Pascal](https://github.com/PascalGameDevelopment/SDL2-for-Pascal) repository,
 although you're free to try compiling the game using any others.
 
 The repo links to aforementioned headers by the means of a git submodule;
