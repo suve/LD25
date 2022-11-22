@@ -60,7 +60,8 @@ function fpcbuild() {
 	local FPC_ARCH="$1"
 	local NDK_ARCH="$2"
 
-	fpc -Tandroid "-P${FPC_ARCH}" \
+	fpc -O2 -gl -gw \
+		-Tandroid "-P${FPC_ARCH}" \
 		"-Fl${SCRIPT_DIR}/build/lib/${NDK_ARCH}" \
 		"-FE${SCRIPT_DIR}/build/lib/${NDK_ARCH}" \
 		"-FU${SCRIPT_DIR}/build/obj/local/${NDK_ARCH}" \
@@ -72,4 +73,23 @@ cd "${SCRIPT_DIR}/colorful"
 fpcbuild arm armeabi-v7a
 fpcbuild aarch64 arm64-v8a
 fpcbuild x86_64 x86_64
+
+# -- build the game assets
+
+cd "${SCRIPT_DIR}/colorful"
+make "-j$(nproc)" assets
+
+# -- create symlinks to hook up required files and trigger a Gradle build
+
+cd "${SCRIPT_DIR}"
+ln -srf colorful/build \
+	android/app/src/main/assets
+ln -srf SDL2/android-project/app/src/main/java/org \
+	android/app/src/main/java/org
+ln -srf build/lib \
+	android/app/src/main/jniLibs
+
+cd "${SCRIPT_DIR}/android"
+./gradlew
+./gradlew build
 
