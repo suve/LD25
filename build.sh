@@ -9,12 +9,12 @@ SCRIPT_DIR="$(pwd)"
 
 # -- check env vars
 
-if [[ -z "${ANDROID_NDK_ROOT}" ]]; then
+if [[ -z "${ANDROID_NDK_ROOT+isset}" ]]; then
 	echo "Error: The \$ANDROID_NDK_ROOT variable is not set!" >&2
 	exit 1
 fi
 
-if [[ -z "${ANDROID_API}" ]]; then
+if [[ -z "${ANDROID_API+isset}" ]]; then
 	echo "Error: The \$ANDROID_API variable is not set!" >&2
 	exit 1
 fi
@@ -33,10 +33,10 @@ cd "${SCRIPT_DIR}"
 	NDK_PROJECT_PATH=null \
 	NDK_OUT="${BUILD_DIR}/obj" \
 	NDK_LIBS_OUT="${BUILD_DIR}/lib" \
-    APP_BUILD_SCRIPT=Android.mk \
-    APP_ABI="armeabi-v7a arm64-v8a x86_64" \
-    APP_PLATFORM="android-${ANDROID_API}" \
-    APP_MODULES="SDL2 SDL2_main SDL2_mixer SDL2_image" \
+	APP_BUILD_SCRIPT=Android.mk \
+	APP_ABI="armeabi-v7a arm64-v8a x86_64" \
+	APP_PLATFORM="android-${ANDROID_API}" \
+	APP_MODULES="SDL2 SDL2_main SDL2_mixer SDL2_image" \
 	SUPPORT_WAV=false \
 	SUPPORT_DRFLAC=false \
 	SUPPORT_FLAC_LIBFLAC=false \
