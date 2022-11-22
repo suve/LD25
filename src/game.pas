@@ -30,7 +30,7 @@ Uses
 	SDL2,
 	{$IFDEF ANDROID} ctypes, TouchControls, {$ENDIF}
 	Assets, Colours, ConfigFiles, Entities, FloatingText, Fonts, Images,
-	MathUtils, Rendering, Rooms, Shared;
+	MathUtils, Rendering, Rooms, Shared, Sprites;
 
 Type
 	TRoomChange = (
@@ -437,39 +437,27 @@ Begin
 			Rect.W := Gib[G]^.Rect.W;
 			Rect.H := Gib[G]^.Rect.H;
 			
-			DrawImage(Gib[G]^.Gfx,@Gib[G]^.Rect,@Rect,Gib[G]^.Col)
+			DrawImage(EntityGfx, @Gib[G]^.Rect, @Rect, Gib[G]^.Col)
 		end
 End;
 
-Procedure SetEntityDrawRects(Const E:PEntity; Out Src, Dst: TSDL_Rect);
+Procedure SetEntityDrawRects(Const E: PEntity; Const Sprite: PSprite; Out Src, Dst: TSDL_Rect);
 Begin
-	Src.X := AniFra * E^.W;
-	Src.W := E^.W;
-	Src.H := E^.H;
-	
-	// Some entities' looks does not change when they switch facing.
-	// Their files contain only one facing.
-	// Thus, we have to check if there actually is a second gfx
-	// before setting the Y coordinate.
-	If(E^.Face > 0) and (E^.Gfx^.H > E^.H * E^.Face) then
-		Src.Y := E^.Face * E^.H
-	else
-		Src.Y := 0;
-	
 	Dst.X := E^.iX;
 	Dst.Y := E^.iY;
 	Dst.W := E^.W;
 	Dst.H := E^.H;
+
+	Src := Sprite^.GetFrame(AniFra, E^.Face)
 End;
 
-Procedure DrawEntity(Const E:PEntity);
+Procedure DrawEntity(Const E:PEntity; Const Sprite: PSprite);
 Var
 	Src, Dst: TSDL_Rect;
 Begin
-	SetEntityDrawRects(E, Src, Dst);
-	DrawImage(E^.Gfx, @Src, @Dst, E^.Col)
+	SetEntityDrawRects(E, Sprite, Src, Dst);
+	DrawImage(EntityGfx, @Src, @Dst, E^.Col)
 End;
-
 
 Procedure DrawMonsters();
 Var
@@ -477,7 +465,7 @@ Var
 Begin
 	For M:=Low(Mob) to High(Mob) do
 		If (Mob[M]<>NIL) then
-			DrawEntity(Mob[M])
+			DrawEntity(Mob[M], Mob[M]^.Sprite)
 End;
 
 Procedure DrawPlayerBullets();
@@ -486,7 +474,7 @@ Var
 Begin
 	For B:=Low(PBul) to High(PBul) do
 		If (PBul[B]<>NIL) then
-			DrawEntity(PBul[B])
+			DrawEntity(PBul[B], PBul[B]^.Sprite)
 End;
 
 Procedure DrawEnemyBullets();
@@ -495,7 +483,7 @@ Var
 Begin
 	For B:=Low(EBul) to High(EBul) do
 		If (EBul[B]<>NIL) then
-			DrawEntity(EBul[B])
+			DrawEntity(EBul[B], EBul[B]^.Sprite)
 End;
 
 Procedure DrawHero();
@@ -506,7 +494,7 @@ Var
 Begin
 	If (Hero^.HP <= 0.0) then Exit;
 	
-	SetEntityDrawRects(Hero, Src, Dst);
+	SetEntityDrawRects(Hero, @HeroSprite, Src, Dst);
 	// If hero has taken damage recently, randomly move target position to make a "damage shake" effect
 	If (Hero^.InvTimer > 0) then begin
 		Dst.X += Random(-1, +1);
@@ -528,7 +516,7 @@ Begin
 	end else
 		Col:=GreyColour;
 	
-	DrawImage(Hero^.Gfx, @Src, @Dst, @Col)
+	DrawImage(EntityGfx, @Src, @Dst, @Col)
 End;
 
 Procedure DrawCrystal();
@@ -711,7 +699,7 @@ Begin
 	If (Mob[mID]^.HP <= 0) then begin
 		If (Mob[mID]^.SwitchNum >= 0) then Switch[Mob[mID]^.SwitchNum]:=True;
 
-		PlaceGibs(Mob[mID]); 
+		PlaceGibs(Mob[mID], Mob[mID]^.Sprite^.GetFrame(AniFra, Mob[mID]^.Face));
 		PlaySfx(Mob[mID]^.SfxID);
 
 		If (Length(Mob[mID]^.Children) > 0) then begin
@@ -733,7 +721,7 @@ Begin
 	
 	If (Hero^.HP <= 0) then begin
 		DeadTime:=DeathLength;
-		PlaceGibs(Hero);
+		PlaceGibs(Hero, HeroSprite.GetFrame(AniFra, Hero^.Face));
 		
 		PlaySfx(SFX_EXTRA+2)
 	end

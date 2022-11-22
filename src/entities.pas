@@ -22,13 +22,8 @@ Interface
 Uses
 	SysUtils,
 	SDL2, 
-	Images;
-
-
-Type
-    TFacing = 0..1;
-Const
-	FACE_RIGHT = 0; FACE_LEFT = 1;
+	Images,
+	Sprites;
 
 Type
 	// Basic class for all in-game entities
@@ -47,7 +42,6 @@ Type
 			Procedure Set_mY(newY:sInt); // army of setters, duh
 
 		Public
-			Gfx : PImage;
 			Col : PSDL_Colour;
 			XVel, YVel : Double;  // X,Y velocity
 			XCol, YCol : Boolean; // X,Y collision
@@ -74,9 +68,10 @@ Type
 	PBullet = ^TBullet;
 	TBullet = Object(TEntity)
 		Public
-			Power : Double;
+			Sprite: PSprite;
+			Power: Double;
 
-			Constructor Create(Index:uInt);
+			Constructor Create(SpritePtr: PSprite);
 			Destructor Destroy; Virtual;
 	end;
 
@@ -116,6 +111,7 @@ Type
 	PEnemy = ^TEnemy;
 	TEnemy = Object(TEntity)
 		Public
+			Sprite: PSprite;
 			Children: Array of sInt; // List of spawn-IDs of children mobs.
 			SfxID : sInt;            // Death SFX ID. <0 means none.
 			SwitchNum : sInt;        // Switch to trigger on death
@@ -209,7 +205,8 @@ Type
 	PTurret = ^TTurret;
 	TTurret = Object(TEnemy)
 		Private
-			NorTime,SpamTime : sInt;
+			NorTime: sInt;
+			// SpamTime: sInt;
 		Public
 			Procedure Calculate(dt:uInt); Virtual;
 
@@ -289,7 +286,7 @@ Begin End; //By default, an entity does nothing
 Constructor TEntity.Create();
 Begin
 	Set_fX(0); Set_fY(0);
-	Gfx:=NIL; Col:=NIL;
+	Col:=NIL;
 	W:=TILE_W; H:=TILE_H;
 	XCol:=False; YCol:=False
 End;
@@ -310,11 +307,11 @@ Begin
 	Inherited Destroy
 End;
 
-Constructor TBullet.Create(Index:uInt);
+Constructor TBullet.Create(SpritePtr: PSprite);
 Begin
 	Inherited Create();
-	Gfx:=BulletGfx[Index];
-	W:=Gfx^.W div 2; H:=Gfx^.H;
+	Self.Sprite := SpritePtr;
+	Self.Sprite^.GetFrameSize(Self.W, Self.H)
 End;
 
 Destructor TBullet.Destroy();
@@ -341,12 +338,12 @@ Begin
 		If (Key[KEY_ShootLeft]) then begin
 			Face:=FACE_LEFT; PlaySfx(SFX_SHOT+2);
 			FireTimer:=FireInterval+FireTimer;
-			PlaceBullet(@Self,(-2)*HERO_SPEED,0,FirePower,2)
+			PlaceBullet(@Self, (-2)*HERO_SPEED, 0, FirePower, @HeroBulletSprite)
 		end else
 		If (Key[KEY_ShootRight]) then begin
 			FACE:=FACE_RIGHT; PlaySfx(SFX_SHOT+2);
 			FireTimer:=FireInterval+FireTimer;
-			PlaceBullet(@Self,(+2)*HERO_SPEED,0,FirePower,2)
+			PlaceBullet(@Self, (+2)*HERO_SPEED, 0, FirePower, @HeroBulletSprite)
 		end
 	end;
 	If (InvTimer > 0) then InvTimer-=dt
@@ -375,7 +372,6 @@ Constructor TPlayer.Create();
 Begin
 	Inherited Create();
 	mX:=RespPos[GameMode].X; mY:=RespPos[GameMode].Y;
-	Gfx:=HeroGfx;
 	Col:=@GreyColour;
 	
 	Self.SetLevel(0)
@@ -436,9 +432,12 @@ End;
 Constructor TDrone.Create();
 Begin 
 	Inherited Create();
-	Gfx:=EnemyGfx[0]; SfxID:=SFX_DIE+3;
-	ChaseTime:=RndInt(800,0.2); IdleTime:=RndInt(200,0.2);
-	Chase:=False; Timer:=IdleTime div 2;
+	Sprite := @DroneSprite;
+	SfxID:=SFX_DIE+3;
+	ChaseTime:=RndInt(800,0.2);
+	IdleTime:=RndInt(200,0.2);
+	Chase:=False;
+	Timer:=IdleTime div 2;
 	HP:=5.75
 End;
 
@@ -494,10 +493,13 @@ End;
 Constructor TBasher.Create();
 Begin
 	Inherited Create();
-	Gfx:=EnemyGfx[3]; SfxID:=SFX_DIE+3;
-	BashTime:=RndInt(1500,0.2); IdleTime:=RndInt(100,0.2);
+	Sprite := @BasherSprite;
+	SfxID:=SFX_DIE+3;
+	BashTime:=RndInt(1500,0.2);
+	IdleTime:=RndInt(100,0.2);
 	AccelTime:=(BashTime div 10);
-	Bash:=False; Timer:=IdleTime;
+	Bash:=False;
+	Timer:=IdleTime;
 	HP:=16
 End;
 
@@ -522,7 +524,8 @@ End;
 Constructor TBall.Create();
 Begin
 	Inherited Create();
-	Gfx:=EnemyGfx[2]; SfxID:=SFX_DIE+2;
+	Sprite := @BallSprite;
+	SfxID:=SFX_DIE+2;
 	HP:=9.75
 End;
 
@@ -542,7 +545,7 @@ Begin
 	else begin
 		PlaySfx(SFX_SHOT);
 		FireTimer:=FireInterval+FireTimer;
-		PlaceBullet(@Self,Sign(Hero^.X-Self.X)*TILE_S*4,0,5,0)
+		PlaceBullet(@Self, Sign(Hero^.X-Self.X)*TILE_S*4, 0, 5, @SpitterBulletSprite)
 	end;
 	
 	If (MoveTimer > 0) then begin
@@ -567,9 +570,14 @@ End;
 Constructor TSpitter.Create();
 Begin
 	Inherited Create();
-	Gfx:=EnemyGfx[1]; SfxID:=SFX_DIE+4;
-	MoveTime:=RndInt(444,0.2); IdleTime:=RndInt(100,0.2); FireInterval:=RndInt(1200,0.2);
-	Move:=False; MoveTimer:=IdleTime; FireTimer:=(FireInterval * 5) div 6;
+	Sprite := @SpitterSprite;
+	SfxID:=SFX_DIE+4;
+	MoveTime:=RndInt(444,0.2);
+	IdleTime:=RndInt(100,0.2);
+	FireInterval:=RndInt(1200,0.2);
+	Move:=False;
+	MoveTimer:=IdleTime;
+	FireTimer:=(FireInterval * 5) div 6;
 	HP:=12
 End;
 
@@ -582,14 +590,17 @@ Procedure TSpammer.Calculate(dt:uInt);
 Const
 	MoveMin = 500; MoveMax = 700;
 	Spd = TILE_S * 1.5;
+	BulVel = TILE_S * 6;
 Begin
 	If (FireTimer > 0) then
 		FireTimer-=dt
 	else begin
 		PlaySfx(SFX_SHOT+1);
 		FireTimer:=FireInterval+FireTimer;
-		PlaceBullet(@Self,TILE_S*(+6),0,5,0); PlaceBullet(@Self,TILE_S*(-6),0,5,0);
-		PlaceBullet(@Self,0,TILE_S*(+6),5,0); PlaceBullet(@Self,0,TILE_S*(-6),5,0);
+		PlaceBullet(@Self, +BulVel, 0, 5, @SpitterBulletSprite);
+		PlaceBullet(@Self, -BulVel, 0, 5, @SpitterBulletSprite);
+		PlaceBullet(@Self, 0, +BulVel, 5, @SpitterBulletSprite);
+		PlaceBullet(@Self, 0, -BulVel, 5, @SpitterBulletSprite);
 	end;
 	
 	If (MoveTimer > 0) then begin
@@ -607,9 +618,11 @@ End;
 Constructor TSpammer.Create();
 Begin
 	Inherited Create();
-	Gfx:=EnemyGfx[4]; SfxID:=SFX_DIE+4;
+	Sprite := @SpammerSprite;
+	SfxID:=SFX_DIE+4;
 	FireInterval:=RndInt(800,0.2);
-	MoveTimer:=Random(100,333); FireTimer:=(FireInterval*10) div 8;
+	MoveTimer:=Random(100,333);
+	FireTimer:=(FireInterval*10) div 8;
 	Angle:=Random(2000)*Pi/1000;
 	HP:=18
 End;
@@ -636,11 +649,11 @@ Begin
 		GetDist(@Self,Hero,XV,YV,Dist);
 		XV:=XV/Dist*BigSpd; YV:=YV/Dist*BigSpd;
 		
-		PlaceBullet(@Self,XV,YV,12,4);
+		PlaceBullet(@Self, XV, YV, 12, @GeneratorBigBulletSprite);
 		If (Random(2)=0) then
-			PlaceBullet(@Self,XV*1.1,YV/1.1,12,4)
+			PlaceBullet(@Self, XV*1.1, YV/1.1, 12, @GeneratorBigBulletSprite)
 		else
-			PlaceBullet(@Self,XV/1.1,YV*1.1,12,4);
+			PlaceBullet(@Self, XV/1.1, YV*1.1, 12, @GeneratorBigBulletSprite)
 	end;
 	
 	If (SmallTimer > 0) then
@@ -650,7 +663,7 @@ Begin
 		For BulNum:=1 to SmaNum do begin
 			Angle:=Random(-450,450)*Pi/1800;
 			If (Hero^.X<Self.X) then Angle+=Pi;
-			PlaceBullet(@Self,Cos(Angle)*SmaSpd,Sin(Angle)*SmaSpd,4,3)
+			PlaceBullet(@Self, Cos(Angle)*SmaSpd, Sin(Angle)*SmaSpd, 4, @GeneratorSmallBulletSprite)
 		end
 	end;
 End;
@@ -658,8 +671,10 @@ End;
 Constructor TGenerator.Create();
 Begin
 	Inherited Create();
-	Gfx:=EnemyGfx[5]; SfxID:=SFX_DIE+0;
-	BigTimer:=2000; SmallTimer:=2000;
+	Sprite := @GeneratorSprite;
+	SfxID:=SFX_DIE+0;
+	BigTimer:=2000;
+	SmallTimer:=2000;
 	HP:=64
 End;
 
@@ -684,7 +699,7 @@ Begin
 		NorTime:=Random(NorTimerMin,NorTimerMax)+NorTime;
 		GetDist(@Self,Hero,XV,YV,Dist);
 		XV:=XV/Dist*NorSpd; YV:=YV/Dist*NorSpd;
-		PlaceBullet(@Self,XV,YV,3,3)
+		PlaceBullet(@Self, XV, YV, 3, @GeneratorSmallBulletSprite)
 	end;
 
 	{If (SpamTime > 0) then
@@ -702,8 +717,10 @@ End;
 Constructor TTurret.Create();
 Begin
 	Inherited Create();
-	Gfx:=EnemyGfx[6]; SfxID:=SFX_DIE+5;
-	NorTime:=1000; SpamTime:=1800;
+	Sprite := @TurretSprite;
+	SfxID:=SFX_DIE+5;
+	NorTime:=1000;
+	// SpamTime:=1800;
 	HP:=27
 End;
 
@@ -738,7 +755,8 @@ Var
 	Head: PSnek;
 Begin
 	Inherited Create();
-	Gfx:=EnemyGfx[7]; SfxID:=SFX_DIE+1;
+	Sprite := @HeroSprite; // kek
+	SfxID:=SFX_DIE+1;
 	HP:=7.5 * SegmentNo;
 	Parent := ParentID
 End;

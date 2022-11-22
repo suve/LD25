@@ -23,7 +23,7 @@ Interface
 Uses
 	SysUtils,
 	SDL2, SDL2_mixer,
-	Entities;
+	Entities, Sprites;
 
 
 // A shitload of constants - but hey, this is the 'shared' unit, isn't it?
@@ -55,7 +55,6 @@ Const
 	AUDIO_FREQ = 22050; AUDIO_TYPE = AUDIO_S16; AUDIO_CHAN = 2; AUDIO_CSIZ = 2048;
 	SFXCHANNELS = 32;
 
-	GibSpeed = TILE_S*8; GIB_X = 4; GIB_Y = 4;
 	DeathLength = 2500; WOMAN = 8;
 
 Const
@@ -110,8 +109,6 @@ Var
 	SaveExists : Array[TGameMode] of Boolean;
 	Shutdown, NoSound : Boolean;
 
-Type UpdateProc = Procedure(Name:AnsiString;Perc:Double);
-
 // The name is obvious, duh
 Procedure GetDeltaTime(Out Time:uInt);
 Procedure GetDeltaTime(Out Time,Ticks:uInt);
@@ -136,13 +133,13 @@ Function  GetVol:TVolLevel;
 Procedure PlaySfx(ID:uInt);
 
 // Place a bullet, duh
-Procedure PlaceBullet(Owner:PEntity;XV,YV,Pow:Double;Tp:uInt);
+Procedure PlaceBullet(Owner:PEntity; XVel, YVel, Power:Double; Sprite: PSprite);
 
 // Spawn enemies
 Procedure SpawnEnemy(Tp:TEnemyType;mapX,mapY:sInt;SwitchNum:sInt=-1);
 
 // Someone got killed - place gibs!
-Procedure PlaceGibs(E:PEntity);
+Procedure PlaceGibs(Const E: PEntity; Const Frame: TSDL_Rect);
 
 // Change current room
 Function ChangeRoom(NX,NY:sInt):Boolean;
@@ -245,16 +242,18 @@ Procedure PlaySfx(ID:uInt);
    Mix_Volume(Chan, Volume)
    end;
 
-Procedure PlaceBullet(Owner:PEntity;XV,YV,Pow:Double;Tp:uInt);
+Procedure PlaceBullet(Owner:PEntity; XVel, YVel, Power:Double; Sprite: PSprite);
 Var
 	B:PBullet;
 Begin
-	New(B,Create(Tp));
-	B^.X:=Owner^.X+(Owner^.W / 2);
-	B^.Y:=Owner^.Y+(Owner^.H / 2);
-	B^.XVel:=XV; B^.YVel:=YV;
-	B^.Power:=Pow; B^.HP:=Pow;
-	B^.Col:=Owner^.Col;
+	New(B,Create(Sprite));
+	B^.X := Owner^.X+(Owner^.W / 2);
+	B^.Y := Owner^.Y+(Owner^.H / 2);
+	B^.XVel := XVel;
+	B^.YVel := YVel;
+	B^.Power := Power;
+	B^.HP := Power;
+	B^.Col := Owner^.Col;
 	
 	If (Owner <> PEntity(Hero)) then begin
 		SetLength(EBul,Length(EBul)+1);
@@ -327,22 +326,35 @@ Begin
 	Mob[Len]:=E
 End;
 
-Procedure PlaceGibs(E:PEntity);
-   Var X,Y,W,H,I:uInt; Angle:Double; G:PGib;
-   begin
-   I:=Length(Gib);
-   SetLength(Gib,Length(Gib)+(GIB_X*GIB_Y));
-   W:=E^.W div GIB_X; H:=E^.H div GIB_Y;
-   For Y:=0 to (GIB_Y-1) do For X:=0 to (GIB_X-1) do begin
-       New(G,Create(X*W,Y*H,W,H));
-       Angle:=Random(3600)*Pi/1800;
-       G^.X:=E^.X+(X*W); G^.Y:=E^.Y+(Y*H);
-       G^.XVel:=Cos(Angle)*GibSpeed;
-       G^.YVel:=Sin(Angle)*GibSpeed;
-       G^.Gfx:=E^.Gfx; G^.Col:=E^.Col;
-       Gib[I]:=G; I+=1
-       end
-   end;
+Procedure PlaceGibs(Const E: PEntity; Const Frame: TSDL_Rect);
+Const
+	GIB_X = 4;
+	GIB_Y = 4;
+	GIB_SPEED = TILE_S*8;
+Var
+	X, Y, W, H, Idx: uInt;
+	Angle: Double;
+	G: PGib;
+begin
+	Idx:=Length(Gib);
+	SetLength(Gib, Length(Gib) + (GIB_X*GIB_Y));
+
+	W := Frame.W div GIB_X;
+	H := Frame.H div GIB_Y;
+	For Y:=0 to (GIB_Y-1) do For X:=0 to (GIB_X-1) do begin
+		New(G, Create(Frame.X + (X*W), Frame.Y + (Y*H), W, H));
+
+		G^.X := E^.X+(X*W);
+		G^.Y := E^.Y+(Y*H);
+		Angle:=Random(3600)*Pi/1800;
+		G^.XVel := Cos(Angle) * GIB_SPEED;
+		G^.YVel := Sin(Angle) * GIB_SPEED;
+		G^.Col := E^.Col;
+
+		Gib[Idx] := G;
+		Idx += 1
+	end
+end;
 
 Function ChangeRoom(NX,NY:sInt):Boolean;
 Var

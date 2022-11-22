@@ -30,8 +30,6 @@ Const
 	ORG_MAP_W = 7; ORG_MAP_H = 7; ORG_ROOMNUM = ORG_MAP_W*ORG_MAP_H;
 	TUT_MAP_W = 3; TUT_MAP_H = 3; TUT_ROOMNUM = TUT_MAP_W*TUT_MAP_H;
 	
-	ENEMY_TYPES = Ord(High(TEnemyType))+1;
-	BULLET_TYPES = 5;
 	SLIDES_IN = 6;
 	SLIDES_OUT = 10;
 
@@ -42,10 +40,9 @@ Const
 
 Var
 	IconSurf: PSDL_Surface;
-	TitleGfx, TileGfx, UIgfx, ColourGfx : PImage;
-	HeroGfx  : PImage;
-	EnemyGfx : Array[0..ENEMY_TYPES-1] of PImage;
-	BulletGfx  : Array[0..BULLET_TYPES-1] of PImage;
+	TitleGfx, UIgfx: PImage;
+	TileGfx, ColourGfx, EntityGfx: PImage;
+
 	SlideIn  : Array[0..SLIDES_IN-1] of PImage;
 	SlideOut : Array[0..SLIDES_OUT-1] of PImage;
 
@@ -206,11 +203,8 @@ Begin
 	
 	RegisterImage('gfx/colours.png', @ColourGfx, @COLOUR_GREY);
 	RegisterImage('gfx/tiles.png', @TileGfx, @COLOUR_BLACK);
-	
-	RegisterImage('gfx/hero.png', @HeroGfx, @COLOUR_BLACK);
-	For idx:=0 to (ENEMY_TYPES-1) do RegisterImage('gfx/enem' + IntToStr(idx) + '.png', @EnemyGfx[idx], @COLOUR_BLACK);
-	For idx:=0 to (BULLET_TYPES-1) do RegisterImage('gfx/shot' + IntToStr(idx) + '.png', @BulletGfx[idx], @COLOUR_BLACK);
-	
+	RegisterImage('gfx/entities.png', @EntityGfx, @COLOUR_BLACK);
+
 	For idx:=0 to (SLIDES_IN-1) do RegisterImage('slides/intro' + IntToStr(idx) + '.png', @SlideIn[idx], @COLOUR_BLACK);
 	For idx:=0 to (SLIDES_OUT-1) do RegisterImage('slides/outro' + IntToStr(idx) + '.png', @SlideOut[idx], @COLOUR_BLACK);
 
