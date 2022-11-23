@@ -34,6 +34,10 @@ Var
 	MenuChoice:Char;
 
 Procedure DrawTitle();
+Const
+	VersionText = 'V.' + GAMEVERS
+		{$IFDEF DEVELOPER} + ' # DEVEL # ' + {$INCLUDE %DATE%} + ', ' + {$INCLUDE %TIME%}{$ENDIF}
+	;
 Var
 	Dst: TSDL_Rect;
 Begin
@@ -42,13 +46,7 @@ Begin
 	DrawImage(TitleGfx, NIL, @Dst, NIL);
 	
 	Font^.Scale := 1;
-	PrintText(
-		UpperCase('V.'+GAMEVERS+' (build '+GAMEDATE+')') {$IFDEF DEVELOPER}+' DEVELOPER'{$ENDIF},
-		Assets.Font,
-		(RESOL_W div 2), 82, 
-		ALIGN_CENTRE, ALIGN_MIDDLE,
-		@WhiteColour
-	)
+	PrintText(VersionText, Assets.Font, (RESOL_W div 2), 82, ALIGN_CENTRE, ALIGN_MIDDLE, @WhiteColour)
 End;
 
 Procedure PrintMenuText(Const Text:AnsiString; Const X, Y:sInt; Const AlignX: THorizontalAlign; Const Colour: PSDL_Colour; Out Rect: TSDL_Rect);
