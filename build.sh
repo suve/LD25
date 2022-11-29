@@ -60,16 +60,16 @@ function fpcbuild() {
 	local FPC_ARCH="$1"
 	local NDK_ARCH="$2"
 
-	fpc -O2 -gl -gw \
-		-Tandroid "-P${FPC_ARCH}" \
-		"-Fl${SCRIPT_DIR}/build/lib/${NDK_ARCH}" \
-		"-FE${SCRIPT_DIR}/build/lib/${NDK_ARCH}" \
-		"-FU${SCRIPT_DIR}/build/obj/local/${NDK_ARCH}" \
-		"-Fu${SCRIPT_DIR}/colorful/SDL2/units" \
-		"${SCRIPT_DIR}/colorful/src/ld25.pas"
+	./configure.sh \
+		--flags "-P${FPC_ARCH}" \
+		--flags "-Fl${SCRIPT_DIR}/build/lib/${NDK_ARCH}" \
+		--flags "-FE${SCRIPT_DIR}/build/lib/${NDK_ARCH}" \
+		--android true
+	make executable
 }
 
 cd "${SCRIPT_DIR}/colorful"
+
 fpcbuild arm armeabi-v7a
 fpcbuild aarch64 arm64-v8a
 fpcbuild x86_64 x86_64
@@ -82,8 +82,12 @@ make "-j$(nproc)" assets
 # -- create symlinks to hook up required files and trigger a Gradle build
 
 cd "${SCRIPT_DIR}"
-ln -srf colorful/build \
-	android/app/src/main/assets
+
+mkdir -p android/app/src/main/assets
+for TYPE in gfx sfx map slides; do
+	ln -srf "colorful/build/${TYPE}" "android/app/src/main/assets/${TYPE}"
+done
+
 ln -srf SDL2/android-project/app/src/main/java/org \
 	android/app/src/main/java/org
 ln -srf build/lib \
