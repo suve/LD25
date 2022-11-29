@@ -1,0 +1,57 @@
+# Convenience variables
+
+FLAGS_SDL2 = -Fu./SDL2/units/
+
+## -- Sources
+
+SOURCES := $(filter-out '*ld25.pas', $(wildcard src/*.pas src/*.inc))
+
+GFX_SOURCES := $(wildcard gfx/*.png)
+GFX_TARGETS := $(GFX_SOURCES:gfx/%.png=build/gfx/%.png)
+
+MAP_SOURCES := $(wildcard map/*/*.txt)
+MAP_TARGETS := $(MAP_SOURCES:map/%.txt=build/map/%.txt)
+
+SFX_SOURCES := $(wildcard sfx/*.wav)
+SFX_TARGETS := $(SFX_SOURCES:sfx/%.wav=build/sfx/%.ogg)
+
+SLIDE_SOURCES := $(wildcard slides/*.png)
+SLIDE_TARGETS := $(SLIDE_SOURCES:slides/%.png=build/slides/%.png)
+
+## -- .PHONY targets
+
+.PHONY = all assets clean executable
+
+all: assets executable
+
+assets: $(GFX_TARGETS) $(MAP_TARGETS) $(SFX_TARGETS) $(SLIDE_TARGETS)
+
+executable: build/colorful
+
+clean:
+	rm -rf build/
+
+# -- Real targets
+
+build/colorful: build/obj/colorful
+	cp -a "$<" "$@"
+
+build/gfx/%.png: gfx/%.png
+	mkdir -p "$(dir $@)"
+	optipng -clobber -out "$@" "$<" >/dev/null 2>/dev/null
+
+build/map/%.txt: map/%.txt
+	mkdir -p "$(dir $@)"
+	sed -e 's|\r$$||g' -e 's|^[\t]*||g' -e 's| 0*\([0-9][0-9]*\)| \1|g' < "$<" > "$@"
+
+build/sfx/%.ogg: sfx/%.wav
+	mkdir -p "$(dir $@)"
+	oggenc --quiet "--quality=$(OGG_QUALITY)" -o "$@" "$<"
+
+build/slides/%.png: slides/%.png
+	mkdir -p "$(dir $@)"
+	optipng -clobber -out "$@" "$<" >/dev/null 2>/dev/null
+
+build/obj/colorful: src/ld25.pas $(SOURCES)
+	mkdir -p "$(dir $@)"
+	$(FPC) $(FLAGS_SDL2) $(FPC_FLAGS) -o'$@' '$<'
