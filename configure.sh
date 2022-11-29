@@ -32,7 +32,6 @@ Accepted options:
 
 --flags FLAGS
   Pass FLAGS to fpc. Can be specified multiple times.
-  Overrides *all* flags set by *any* other option.
 
 --ogg-quality QUALITY
   Encode sound effects to .ogg with this quality setting.
@@ -63,9 +62,9 @@ function parse_bool() {
 # Set defaults
 
 ANDROID="false"
-BUILD_FLAGS="-O1"
+BUILD_FLAGS="-O2"
 FPC="fpc"
-FPC_FLAGS=""
+USER_FLAGS=""
 OGG_QUALITY="10"
 PLATFORM="desktop"
 STRIP="false"
@@ -81,7 +80,7 @@ while [[ "${#}" -gt 0 ]]; do
 	elif [[ "${1}" == "--fpc" ]]; then
 		FPC="${2}"
 	elif [[ "${1}" == "--flags" ]]; then
-		FPC_FLAGS="${FPC_FLAGS} ${2}"
+		USER_FLAGS="${USER_FLAGS} ${2}"
 	elif [[ "${1}" == "--ogg-quality" ]]; then
 		OGG_QUALITY="${2}"
 	elif [[ "${1}" == "--strip" ]]; then
@@ -100,33 +99,31 @@ cat <<EOF
 Config values:
   ANDROID = ${ANDROID}
   FPC = ${FPC}
-  FPC_FLAGS = ${FPC_FLAGS}
+  FLAGS = ${USER_FLAGS}
   OGG_QUALITY = ${OGG_QUALITY}
   STRIP = ${STRIP}
 EOF
 
 # Calculate Makefile variables from arguments
 
-if [[ -z "${FPC_FLAGS}" ]]; then
-	if [[ "${STRIP}" == "true" ]]; then
-		BUILD_FLAGS="${BUILD_FLAGS} -CX -XX -Xs"
-	else
-		BUILD_FLAGS="${BUILD_FLAGS} -gl -gw"
-	fi
-
-	FPC_FLAGS="${BUILD_FLAGS}"
-fi
-
 if [[ "${ANDROID}" == "true" ]]; then
 	EXE_PREFIX="lib"
 	EXE_SUFFIX=".so"
 	GFX_FILTER=""
-	FPC_FLAGS="-Tandroid ${FPC_FLAGS}"
+	BUILD_FLAGS="-Tandroid ${BUILD_FLAGS}"
 else
 	EXE_PREFIX=""
 	EXE_SUFFIX=""
 	GFX_FILTER="gfx/touch-controls.png"
 fi
+
+if [[ "${STRIP}" == "true" ]]; then
+	BUILD_FLAGS="${BUILD_FLAGS} -CX -XX -Xs"
+else
+	BUILD_FLAGS="${BUILD_FLAGS} -gl -gw"
+fi
+
+FPC_FLAGS="${BUILD_FLAGS} ${USER_FLAGS}"
 
 # cd to this script's directory and create the Makefile
 cd "$(dirname "${0}")"
