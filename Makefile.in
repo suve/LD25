@@ -4,9 +4,10 @@ FLAGS_SDL2 = -Fu./SDL2/units/
 
 ## -- Sources
 
-SOURCES := $(filter-out '*ld25.pas', $(wildcard src/*.pas src/*.inc))
+SOURCES := $(filter-out src/ld25.pas, $(wildcard src/*.pas src/*.inc))
+EXECUTABLE := build/$(EXE_PREFIX)colorful$(EXE_SUFFIX)
 
-GFX_SOURCES := $(wildcard gfx/*.png)
+GFX_SOURCES := $(filter-out $(GFX_FILTER), $(wildcard gfx/*.png))
 GFX_TARGETS := $(GFX_SOURCES:gfx/%.png=build/gfx/%.png)
 
 MAP_SOURCES := $(wildcard map/*/*.txt)
@@ -26,15 +27,12 @@ all: assets executable
 
 assets: $(GFX_TARGETS) $(MAP_TARGETS) $(SFX_TARGETS) $(SLIDE_TARGETS)
 
-executable: build/colorful
+executable: $(EXECUTABLE)
 
 clean:
 	rm -rf build/
 
 # -- Real targets
-
-build/colorful: build/obj/colorful
-	cp -a "$<" "$@"
 
 build/gfx/%.png: gfx/%.png
 	mkdir -p "$(dir $@)"
@@ -52,6 +50,6 @@ build/slides/%.png: slides/%.png
 	mkdir -p "$(dir $@)"
 	optipng -clobber -out "$@" "$<" >/dev/null 2>/dev/null
 
-build/obj/colorful: src/ld25.pas $(SOURCES)
-	mkdir -p "$(dir $@)"
-	$(FPC) $(FLAGS_SDL2) $(FPC_FLAGS) -o'$@' '$<'
+$(EXECUTABLE): src/ld25.pas $(SOURCES)
+	mkdir -p "$(dir $@)/obj"
+	$(FPC) $(FLAGS_SDL2) -FUbuild/obj/ -o'$@' $(FPC_FLAGS) '$<'

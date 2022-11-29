@@ -22,6 +22,10 @@ function show_help() {
 configure.sh for colorful
 Accepted options:
 
+--android BOOLEAN
+  Controls whether Android-specific build settings are enabled.
+  The default value is "false".
+
 --fpc FULL_PATH
   Use the Free Pascal Compiler located at FULL_PATH.
   The default is to use "fpc".
@@ -58,10 +62,12 @@ function parse_bool() {
 
 # Set defaults
 
+ANDROID="false"
 BUILD_FLAGS="-O1"
 FPC="fpc"
 FPC_FLAGS=""
 OGG_QUALITY="10"
+PLATFORM="desktop"
 STRIP="false"
 
 while [[ "${#}" -gt 0 ]]; do
@@ -70,7 +76,9 @@ while [[ "${#}" -gt 0 ]]; do
 		exit
 	fi
 
-	if [[ "${1}" == "--fpc" ]]; then
+	if [[ "${1}" == "--android" ]]; then
+		ANDROID="$(parse_bool "--android" "${2}")"
+	elif [[ "${1}" == "--fpc" ]]; then
 		FPC="${2}"
 	elif [[ "${1}" == "--flags" ]]; then
 		FPC_FLAGS="${FPC_FLAGS} ${2}"
@@ -90,6 +98,7 @@ done
 
 cat <<EOF
 Config values:
+  ANDROID = ${ANDROID}
   FPC = ${FPC}
   FPC_FLAGS = ${FPC_FLAGS}
   OGG_QUALITY = ${OGG_QUALITY}
@@ -108,6 +117,17 @@ if [[ -z "${FPC_FLAGS}" ]]; then
 	FPC_FLAGS="${BUILD_FLAGS}"
 fi
 
+if [[ "${ANDROID}" == "true" ]]; then
+	EXE_PREFIX="lib"
+	EXE_SUFFIX=".so"
+	GFX_FILTER=""
+	FPC_FLAGS="-Tandroid ${FPC_FLAGS}"
+else
+	EXE_PREFIX=""
+	EXE_SUFFIX=""
+	GFX_FILTER="gfx/touch-controls.png"
+fi
+
 # cd to this script's directory and create the Makefile
 cd "$(dirname "${0}")"
 
@@ -119,13 +139,14 @@ echo 'Generating Makefile...'
 # ! Do not edit manually.
 # !
 
-FPC = ${FPC}
-FPC_FLAGS = ${FPC_FLAGS}
-OGG_QUALITY = ${OGG_QUALITY}
+EXE_PREFIX := ${EXE_PREFIX}
+EXE_SUFFIX := ${EXE_SUFFIX}
+FPC := ${FPC}
+FPC_FLAGS := ${FPC_FLAGS}
+GFX_FILTER := ${GFX_FILTER}
+OGG_QUALITY := ${OGG_QUALITY}
 
 EOF
 ) | cat - Makefile.in > Makefile
-
-# Print success message
 
 echo 'Done.'
