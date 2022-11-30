@@ -298,7 +298,7 @@ Begin
 		
 		If(AssetArr[idx].Ptr^ = NIL) then begin
 			Result.Status := ALS_FAILED;
-			Result.FileName := {$IFDEF PACKAGE} FullPath {$ELSE} AssetArr[idx].Path {$ENDIF};
+			Result.FileName := {$IFDEF LD25_ASSETS_SYSTEMWIDE} FullPath {$ELSE} AssetArr[idx].Path {$ENDIF};
 			Exit()
 		end;
 		
@@ -330,7 +330,7 @@ Begin
 		IconSurf:=IMG_Load(PChar({$IFNDEF ANDROID} DataPath + {$ENDIF} ICON_FILE));
 		
 		If (IconSurf = NIL) then begin
-			{$IFDEF PACKAGE}
+			{$IFDEF LD25_ASSETS_SYSTEMWIDE}
 			SDL_Log('Failed to load file: %s%s', [PChar(DataPath), PChar(ICON_FILE)]);
 			{$ELSE}
 			SDL_Log('Failed to load file: ' + ICON_FILE, []);

@@ -325,25 +325,20 @@ Begin
 	SDL_Free(PrefPath);
 
 	{$IFNDEF ANDROID}
-		{$IFDEF PACKAGE}
+		{$IFDEF LD25_ASSETS_SYSTEMWIDE}
 			(*
-			 * If we are building a package version, data files should be found
+			 * If we are building in "systemwide" mode, data files should be found
 			 * in this pre-determined location.
 			 *)
 			DataPath:='/usr/share/suve/colorful/';
 		{$ELSE}
 			(*
-			 * If we're not building a package, grab the path to the executable.
-			 * For development builds, rely on the assets being in the same directory.
-			 *
-			 * For release builds, assume the following directory structure:
-			 * - colorful/             - location of assets
-			 * - colorful/bin/linux64/ - location of executable
-			 * Hence, to reach the assets, we need to go two folders up in the hierarchy.
+			 * If we're not building in "systemwide" mode, grab the path to the executable.
+			 * For "bundle" mode, go two directories up. Otherwise, do nothing.
 			 *)
 			BasePath := SDL_GetBasePath();
 			DataPath := AnsiString(BasePath);
-			{$IFNDEF DEVELOPER}
+			{$IFDEF LD25_ASSETS_BUNDLE}
 				DataPath += '..' + System.DirectorySeparator + '..' + System.DirectorySeparator;
 			{$ENDIF}
 

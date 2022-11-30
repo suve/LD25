@@ -26,6 +26,18 @@ Accepted options:
   Controls whether Android-specific build settings are enabled.
   The default value is "false".
 
+--assets <bundle, standalone, systemwide>
+  Specifies where the game should expect asset files to be located.
+  * bundle: Assets are expected to be found two directory levels
+            above the executable, like in the following structure:
+            - bin/linux64
+            - bin/win64
+            - gfx/
+  * standalone: Assets are expected to be found in the same directory,
+                right next to the executable.
+  * systemwide: Assets are expected to be found in /usr/share/suve/colorful.
+  The default value is "standalone".
+
 --fpc FULL_PATH
   Use the Free Pascal Compiler located at FULL_PATH.
   The default is to use "fpc".
@@ -62,7 +74,7 @@ function parse_bool() {
 # Set defaults
 
 ANDROID="false"
-BUILD_FLAGS="-O2"
+ASSETS="standalone"
 FPC="fpc"
 USER_FLAGS=""
 OGG_QUALITY="10"
@@ -77,6 +89,12 @@ while [[ "${#}" -gt 0 ]]; do
 
 	if [[ "${1}" == "--android" ]]; then
 		ANDROID="$(parse_bool "--android" "${2}")"
+	elif [[ "${1}" == "--assets" ]]; then
+		if [[ "${2}" != "bundle" ]] && [[ "${2}" != "standalone" ]] && [[ "${2}" != "systemwide" ]]; then
+			echo "Error: The argument to --assets must be one of \"bundle\", \"standalone\" or \"systemwide\"" >&2
+			exit 1
+		fi
+		ASSETS="${2}"
 	elif [[ "${1}" == "--fpc" ]]; then
 		FPC="${2}"
 	elif [[ "${1}" == "--flags" ]]; then
@@ -98,6 +116,7 @@ done
 cat <<EOF
 Config values:
   ANDROID = ${ANDROID}
+  ASSETS = ${ASSETS}
   FPC = ${FPC}
   FLAGS = ${USER_FLAGS}
   OGG_QUALITY = ${OGG_QUALITY}
@@ -105,6 +124,8 @@ Config values:
 EOF
 
 # Calculate Makefile variables from arguments
+
+BUILD_FLAGS="-O2 -dLD25_ASSETS_${ASSETS}"
 
 if [[ "${ANDROID}" == "true" ]]; then
 	EXE_PREFIX="lib"
