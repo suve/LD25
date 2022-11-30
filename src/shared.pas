@@ -38,11 +38,11 @@ const
 	SWITCHES = 100;
 
 Type
-	TGameMode = (GM_TUTORIAL, GM_ORIGINAL, GM_NEWWORLD);
+	TGameMode = (GM_TUTORIAL, GM_ORIGINAL);
 
 Const
-	RespRoom:Array[TGameMode] of TSDL_Point = ((X:0; Y:0), (X:3; Y:3), (X:4;Y:4));
-	RespPos:Array[TGameMode] of TSDL_Point = ((X:1; Y:3), (X:10; Y:6), (X:10; Y:6));
+	RespRoom:Array[TGameMode] of TSDL_Point = ((X:0; Y:0), (X:3; Y:3));
+	RespPos:Array[TGameMode] of TSDL_Point = ((X:1; Y:3), (X:10; Y:6));
 
 	HERO_SPEED = TILE_S * 5; HERO_HEALTH = 50; HERO_FIREPOWER = 5; HERO_INVUL = 500;
 
@@ -260,35 +260,6 @@ Begin
 	end
 End;
 
-Procedure SetEnemySpawnProps(E: PEnemy; mapX, mapY, SwitchNum: sInt);
-Begin
-	E^.mX:=mapX; E^.mY:=mapY; E^.SwitchNum:=SwitchNum;
-	If (RoomPalette < 8) then E^.Col:=@PaletteColour[RoomPalette]
-End;
-
-Procedure SpawnSnek(mapX, mapY, SwitchNum:sInt);
-Const
-	SnekSegments = 5;
-Var
-	Snek: PSnek;
-	MobID, Idx: sInt;
-Begin
-	MobID := Length(Mob);
-	SetLength(Mob, MobID + SnekSegments);
-
-	New(Snek, Create(SnekSegments, -1));
-	SetEnemySpawnProps(Snek, mapX, mapY, SwitchNum);
-	Mob[MobID] := Snek;
-
-	For Idx := 1 to (SnekSegments - 1) do begin
-		New(Snek, Create(SnekSegments - Idx, MobID + Idx - 1));
-		SetEnemySpawnProps(Snek, mapX, mapY, -1);
-		Mob[MobID + Idx] := Snek;
-
-		Mob[MobID + Idx - 1]^.AddChild(MobID + Idx)
-	end;
-End;
-
 Procedure SpawnEnemy(Tp: TEnemyType; mapX, mapY:sInt; SwitchNum: sInt = -1);
 Var
 	Dron: PDrone;
@@ -312,10 +283,11 @@ Begin
 		ENEM_SPAMMER:   begin New(Spam,Create()); E:=Spam end;
 		ENEM_GENERATOR: begin New(Gene,Create()); E:=Gene end;
 		ENEM_TURRET:    begin New(Turr,Create()); E:=Turr end;
-		ENEM_SNEK:      begin SpawnSnek(mapX, mapY, SwitchNum); Exit() end;
 		otherwise Exit()
 	end;
-	SetEnemySpawnProps(E, mapX, mapY, SwitchNum);
+
+	E^.mX:=mapX; E^.mY:=mapY; E^.SwitchNum:=SwitchNum;
+	If (RoomPalette < 8) then E^.Col:=@PaletteColour[RoomPalette];
 
 	Len := Length(Mob);
 	SetLength(Mob, Len + 1);
@@ -361,7 +333,6 @@ Begin
 	Case GameMode of
 		GM_TUTORIAL: NoRoom:=(NX<0) or (NY<0) or (NX>=TUT_MAP_W) or (NY>=TUT_MAP_H) or (TutRoom[NX][NY]=NIL);
 		GM_ORIGINAL: NoRoom:=(NX<0) or (NY<0) or (NX>=ORG_MAP_W) or (NY>=ORG_MAP_H) or (OrgRoom[NX][NY]=NIL);
-		GM_NEWWORLD: NoRoom:=(NX<0) or (NY<0) or (NX>=NEW_MAP_W) or (NY>=NEW_MAP_H) or (NewRoom[NX][NY]=NIL);
 		otherwise Exit(False)
 	end;
 	If (NoRoom) then begin
@@ -376,7 +347,6 @@ Begin
 	Case GameMode of
 		GM_TUTORIAL: Room:=TutRoom[NX][NY];
 		GM_ORIGINAL: Room:=OrgRoom[NX][NY];
-		GM_NEWWORLD: Room:=NewRoom[NX][NY];
 	end;
 	Room^.RunScript();
 

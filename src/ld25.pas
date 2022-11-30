@@ -389,8 +389,7 @@ Function GameworldDialog(Const Load:Boolean):Char;
 Const
 	WorldName: Array[TGameMode] of AnsiString = (
 		'TUTORIAL',
-		'CLASSIC',
-		'NEW WORLD'
+		'CLASSIC'
 	);
 Var
 	Msg: AnsiString;
@@ -445,9 +444,6 @@ Begin
 			end else
 			If (Choice = 'C') then begin
 				If (Ok[GM_ORIGINAL]) then Result := 'C'
-			end else
-			If (Choice = 'N') then begin
-				If (Ok[GM_NEWWORLD]) then Result := 'N'
 			end else
 			If (Choice = CHOICE_QUIT) then begin
 				Shutdown := True;
@@ -883,7 +879,6 @@ begin
 				Case MenuChoice of
 					'T': begin NewGame(GM_TUTORIAL); PlayGame() end;
 					'C': begin NewGame(GM_ORIGINAL); PlayGame() end;
-					'N': begin NewGame(GM_NEWWORLD); PlayGame() end;
 				end;
 				MenuChoice:='N'
 			end;
@@ -892,7 +887,6 @@ begin
 				Case MenuChoice of
 					'T': If(GameloadRequest(GM_TUTORIAL)) then PlayGame();
 					'C': If(GameloadRequest(GM_ORIGINAL)) then PlayGame();
-					'N': If(GameloadRequest(GM_NEWWORLD)) then PlayGame();
 				end;
 				MenuChoice:='L'
 			end;

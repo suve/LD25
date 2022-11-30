@@ -54,7 +54,6 @@ Var
 
 	Sfx: Array[0..SOUNDS-1] of PMix_Chunk;
 	
-	NEWRoom:Array[0..(NEW_MAP_W-1), 0..(NEW_MAP_H-1)] of PRoom;
 	OrgRoom:Array[0..(ORG_MAP_W-1), 0..(ORG_MAP_H-1)] of PRoom;
 	TutRoom:Array[0..(TUT_MAP_W-1), 0..(TUT_MAP_H-1)] of PRoom;
 
@@ -216,16 +215,11 @@ Begin
 	For Y:=0 to (TUT_MAP_H-1) do
 		For X:=0 to (TUT_MAP_W-1) do
 			RegisterRoom('map/tut/' + IntToStr(X) + '-' + IntToStr(Y) + '.txt', @TutRoom[X][Y], X, Y);
-	
+
 	For Y:=0 to (ORG_MAP_H-1) do
 		For X:=0 to (ORG_MAP_W-1) do
 			RegisterRoom('map/org/' + IntToStr(X) + '-' + IntToStr(Y) + '.txt', @OrgRoom[X][Y], X, Y);
-	
-	For Y:=0 to (NEW_MAP_H-1) do
-		For X:=0 to (NEW_MAP_W-1) do
-			RegisterRoom('map/new/' + IntToStr(X) + '-' + IntToStr(Y) + '.txt', @NewRoom[X][Y], X, Y);
-	
-	
+
 	// ----- SOUNDS -----
 	If(NoSound) then Exit();
 	
