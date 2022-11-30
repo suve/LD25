@@ -52,7 +52,8 @@ Type
 Var
 	Visible: Boolean;
 
-	DPadX, DPadY, DPadSize: sInt;
+	DPadX, DPadY: sInt;
+	DPadSize, DeadZoneSize: uInt;
 	MovementButton: Array[0..7] of ButtonProps;
 	ShootLeftButton, ShootRightButton: ButtonProps;
 
@@ -64,6 +65,19 @@ Var
 	DPadExtraSize: sInt;
 	ShootLeftExtraPos, ShootRightExtraPos: TSDL_Rect;
 
+{$IFDEF LD25_DEBUG}
+Const
+	OUTLINE_STEPS = 5;
+	OUTLINE_POINTS = (OUTLINE_STEPS * 2) + 1;
+
+Type
+	MovementButtonOutlineData = Array[0..(OUTLINE_POINTS-1)] of TSDL_Point;
+	MovementButtonOutlinePtr = ^MovementButtonOutlineData;
+
+Var
+	MovBtnOutline, MovBtnExtraOutline: Array[0..7] of MovementButtonOutlineData;
+{$ENDIF}
+
 Function BoolToInt(Value: Boolean): uInt; Inline;
 Begin
 	If (Value) then
@@ -73,30 +87,32 @@ Begin
 End;
 
 {$IFDEF LD25_DEBUG}
-Procedure DrawDebug();
+Procedure DrawDebug(); Inline;
 Var
 	Idx: uInt;
-	WheelSize: uInt;
-	WheelRect: TSDL_REct;
+	WheelOutline: MovementButtonOutlinePtr;
 	LeftRect, RightRect: PSDL_Rect;
 Begin
-	WheelSize := DPadSize;
+	WheelOutline := MovBtnOutline;
 	For Idx := 0 to 7 do begin
 		If MovementButton[Idx].Touched then begin
-			WheelSize := DPadExtraSize;
+			WheelOutline := MovBtnExtraOutline;
 			Break
 		end
 	end;
 
-	With WheelRect do begin
-		X := DPadX - WheelSize;
-		Y := DPadY - WheelSize;
-		W := WheelSize * 2;
-		H := WheelSize * 2
-	end;
+	// Draw un-touched movement buttons in red.
+	SDL_SetRenderDrawColor(Renderer, 255, 0, 0, 255);
+	For Idx := 0 to 7 do
+		If Not MovementButton[Idx].Touched then
+			SDL_RenderDrawLines(Renderer, WheelOutline[Idx], OUTLINE_POINTS);
 
-	SDL_SetRenderDrawColor(Renderer, 255, 255, 0, 255);
-	SDL_RenderDrawRect(Renderer, @WheelRect);
+	// Draw currently touched buttons in green.
+	// This is done in two separate steps so the green pixels overwrite red ones.
+	SDL_SetRenderDrawColor(Renderer, 0, 255, 0, 255);
+	For Idx := 0 to 7 do
+		If MovementButton[Idx].Touched then
+			SDL_RenderDrawLines(Renderer, WheelOutline[Idx], OUTLINE_POINTS);
 
 	If (ShootLeftButton.Touched) or (ShootRightButton.Touched) then begin
 		LeftRect := @ShootLeftExtraPos;
@@ -120,7 +136,7 @@ Begin
 End;
 {$ENDIF}
 
-Procedure Draw();
+Procedure DrawGfx(); Inline;
 Const
 	MOVEMENT_BUTTON_SIZE = 60;
 	SHOOT_BUTTON_SIZE = 32;
@@ -128,9 +144,6 @@ Var
 	Idx: uInt;
 	Src: TSDL_Rect;
 Begin
-	{$IFDEF LD25_DEBUG} DrawDebug(); {$ENDIF}
-	If Not Visible then Exit;
-
 	Src.W := MOVEMENT_BUTTON_SIZE;
 	Src.H := MOVEMENT_BUTTON_SIZE;
 	For Idx := 0 to 7 do begin
@@ -148,6 +161,12 @@ Begin
 
 	Src.X := BoolToInt(ShootRightButton.Touched) * MOVEMENT_BUTTON_SIZE;
 	SDL_RenderCopyEx(Renderer, Assets.TouchControlsGfx^.Tex, @Src, @ShootRightButton.Position, 0, NIL, SDL_FLIP_HORIZONTAL)
+End;
+
+Procedure Draw();
+Begin
+	If Visible then DrawGfx();
+	{$IFDEF LD25_DEBUG} DrawDebug(); {$ENDIF}
 End;
 
 Procedure PressMovementKeys();
@@ -189,13 +208,11 @@ End;
 
 Function FingerPosToMovementButtonIdx(Const FingerX, FingerY: sInt; MaxDist: Double): sInt;
 Var
-	DeadZoneSize: sInt;
 	DiffX, DiffY: sInt;
 	Dist, Angle: Double;
 Begin
 	DiffX := (FingerX - DPadX);
 	DiffY := (FingerY - DPadY);
-	DeadZoneSize := DPadSize div 5;
 	If (DiffX = 0) then begin
 		If (DiffY > +DeadZoneSize) and (DiffY <= +DPadSize) then Exit(4);
 		If (DiffY < -DeadZoneSize) and (DiffY >= -DPadSize) then Exit(0);
@@ -291,6 +308,14 @@ Begin
 	end
 End;
 
+{$IFDEF LD25_DEBUG}
+Function ProjectPoint(OriginX, OriginY: sInt; Distance: uInt; Angle: Double): TSDL_Point;
+Begin
+	Result.X := Trunc(OriginX + 0.5 + (Cos(Angle) * Distance));
+	Result.Y := Trunc(OriginY + 0.5 + (Sin(Angle) * Distance))
+End;
+{$ENDIF}
+
 Function EnlargeRect(Const Source: TSDL_Rect; Const EnlargeX, EnlargeY: uInt): TSDL_Rect;
 Begin
 	Result.X := Source.X - EnlargeX;
@@ -304,6 +329,11 @@ Var
 	Idx: uInt;
 	BtnW, BtnH: uInt;
 	ExtraSize: uInt;
+
+	{$IFDEF LD25_DEBUG}
+	pt: uInt;
+	Angle: Double;
+	{$ENDIF}
 Begin
 	If (NewDPadPos <> NIL) then begin
 		If (NewDPadPos^.W <= NewDPadPos^.H) then
@@ -311,6 +341,7 @@ Begin
 		else
 			DPadSize := NewDPadPos^.H div 2;
 		DPadExtraSize := (DPadSize * 4) div 3; // +33%
+		DeadZoneSize := DPadSize div 5; // 20%
 
 		DPadX := NewDPadPos^.X + (NewDPadPos^.W) div 2;
 		DPadY := NewDPadPos^.Y + (NewDPadPos^.H) div 2;
@@ -332,7 +363,20 @@ Begin
 				Position.W := DPadSize;
 				Position.H := DPadSize;
 				MovementButton[Idx].Touched := False
-			end
+			end;
+
+			{$IFDEF LD25_DEBUG}
+			For pt := 0 to (OUTLINE_STEPS-1) do begin
+				Angle := 0 - (Pi / 2) - (Pi / 8) + (Pi * Idx / 4) + (Pi / 4 * pt / (OUTLINE_STEPS-1));
+				MovBtnOutline[Idx][1+pt] := ProjectPoint(DPadX, DPadY, DPadSize, Angle);
+				MovBtnExtraOutline[Idx][1+pt] := ProjectPoint(DPadX, DPadY, DPadExtraSize, Angle);
+
+				MovBtnOutline[Idx][OUTLINE_POINTS-1-pt] := ProjectPoint(DPadX, DPadY, DeadZoneSize, Angle);
+				MovBtnExtraOutline[Idx][OUTLINE_POINTS-1-pt] := MovBtnOutline[Idx][OUTLINE_POINTS-1-pt];
+			end;
+			MovBtnOutline[Idx][0] := MovBtnOutline[Idx][OUTLINE_POINTS-1];
+			MovBtnExtraOutline[Idx][0] := MovBtnExtraOutline[Idx][OUTLINE_POINTS-1];
+			{$ENDIF}
 		end;
 
 		// Mark virtual movement keys as not being pressed
