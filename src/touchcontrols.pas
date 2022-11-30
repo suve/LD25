@@ -49,11 +49,15 @@ Type
 		Finger: TSDL_FingerID
 	end;
 
+	MovementWheelProps = record
+		X, Y: sInt;
+		DeadZoneSize, TouchSize, TouchExtraSize: uInt;
+	end;
+
 Var
 	Visible: Boolean;
 
-	DPadX, DPadY: sInt;
-	DPadSize, DeadZoneSize: uInt;
+	MovementWheel: MovementWheelProps;
 	MovementButton: Array[0..7] of ButtonProps;
 	ShootLeftButton, ShootRightButton: ButtonProps;
 
@@ -62,7 +66,6 @@ Var
 	 * These here "extra" variables are used when processing finger-motion events
 	 * and describe the larger, extra-generous touch areas.
 	 *)
-	DPadExtraSize: sInt;
 	ShootLeftExtraPos, ShootRightExtraPos: TSDL_Rect;
 
 {$IFDEF LD25_DEBUG}
@@ -211,16 +214,16 @@ Var
 	DiffX, DiffY: sInt;
 	Dist, Angle: Double;
 Begin
-	DiffX := (FingerX - DPadX);
-	DiffY := (FingerY - DPadY);
+	DiffX := (FingerX - MovementWheel.X);
+	DiffY := (FingerY - MovementWheel.Y);
 	If (DiffX = 0) then begin
-		If (DiffY > +DeadZoneSize) and (DiffY <= +DPadSize) then Exit(4);
-		If (DiffY < -DeadZoneSize) and (DiffY >= -DPadSize) then Exit(0);
+		If (DiffY > +MovementWheel.DeadZoneSize) and (DiffY <= +MaxDist) then Exit(4);
+		If (DiffY < -MovementWheel.DeadZoneSize) and (DiffY >= -MaxDist) then Exit(0);
 		Exit(-1)
 	end;
 
 	Dist := Math.Hypot(DiffX, DiffY);
-	If (Dist < DeadZoneSize) or (Dist > MaxDist) then Exit(-1);
+	If (Dist < MovementWheel.DeadZoneSize) or (Dist > MaxDist) then Exit(-1);
 
 	Angle := Math.RadToDeg(ArcTan2(DiffY / Dist, DiffX / Dist));
 	Result := (Trunc(Angle + (360 * 10.5 / 8)) div 45) mod 8
@@ -243,7 +246,7 @@ Begin
 	FingerX := Trunc(Ev^.TFinger.X * Wnd_W);
 	FingerY := Trunc(Ev^.TFinger.Y * Wnd_H);
 
-	MovementWheelSize := DPadSize;
+	MovementWheelSize := MovementWheel.TouchSize;
 	ShootLeftRect := @ShootLeftButton.Position;
 	ShootRightRect := @ShootRightButton.Position;
 
@@ -267,7 +270,7 @@ Begin
 			ShootRightRect := @ShootRightExtraPos
 		end else
 		If (UFResult = UF_MOVEMENT) then begin
-			MovementWheelSize := DPadExtraSize
+			MovementWheelSize := MovementWheel.TouchExtraSize
 		end
 	end else begin
 		UFResult := UF_NONE
@@ -325,10 +328,25 @@ Begin
 End;
 
 Procedure SetPosition(NewDPadPos, NewShootBtnsPos: PSDL_Rect);
+Const
+	(*
+	 * The movement wheel has a dual nature: it is rendered as an octagon,
+	 * but treated as a circle for touch event purposes.
+	 *
+	 * When using the bounding box's width/height as the circle radius,
+	 * the circle touches the octagon only at the center of each piece;
+	 * the octagon's vertices are actually outside the circle!
+	 *
+	 * Multiplying the radius by this factor makes it so it's the vertices
+	 * that touch the circle, instead. This, in turn, means that the touch
+	 * area is actually slightly larger than what's visible.
+	 *)
+	HEXAGON_TO_CIRCLE_RATIO = 1.0 / Sin(Pi * 3 / 8);
 Var
 	Idx: uInt;
 	BtnW, BtnH: uInt;
-	ExtraSize: uInt;
+	WheelRenderSize: uInt;
+	BtnExtraSize: uInt;
 
 	{$IFDEF LD25_DEBUG}
 	pt: uInt;
@@ -337,41 +355,43 @@ Var
 Begin
 	If (NewDPadPos <> NIL) then begin
 		If (NewDPadPos^.W <= NewDPadPos^.H) then
-			DPadSize := NewDPadPos^.W div 2
+			WheelRenderSize := NewDPadPos^.W div 2
 		else
-			DPadSize := NewDPadPos^.H div 2;
-		DPadExtraSize := (DPadSize * 4) div 3; // +33%
-		DeadZoneSize := DPadSize div 5; // 20%
+			WheelRenderSize := NewDPadPos^.H div 2;
 
-		DPadX := NewDPadPos^.X + (NewDPadPos^.W) div 2;
-		DPadY := NewDPadPos^.Y + (NewDPadPos^.H) div 2;
+		MovementWheel.TouchSize := Trunc(WheelRenderSize * HEXAGON_TO_CIRCLE_RATIO);
+		MovementWheel.TouchExtraSize := (MovementWheel.TouchSize * 5) div 4; // +25%
+		MovementWheel.DeadZoneSize := MovementWheel.TouchSize div 5; // 20%
+
+		MovementWheel.X := NewDPadPos^.X + (NewDPadPos^.W) div 2;
+		MovementWheel.Y := NewDPadPos^.Y + (NewDPadPos^.H) div 2;
 
 		For Idx := 0 to 7 do begin
 			With MovementButton[Idx] do begin
-				Position.X := DPadX;
+				Position.X := MovementWheel.X;
 				If (Idx = 0) or (Idx = 4) then
-					Position.X -= (DPadSize div 2)
+					Position.X -= (WheelRenderSize div 2)
 				else If (Idx > 4) then
-					Position.X -= DPadSize;
+					Position.X -= WheelRenderSize;
 
-				Position.Y := DPadY;
+				Position.Y := MovementWheel.Y;
 				If (Idx = 2) or (Idx = 6) then
-					Position.Y -= (DPadSize div 2)
+					Position.Y -= (WheelRenderSize div 2)
 				else If (Idx < 2) or (Idx = 7) then
-					Position.Y -= DPadSize;
+					Position.Y -= WheelRenderSize;
 
-				Position.W := DPadSize;
-				Position.H := DPadSize;
+				Position.W := WheelRenderSize;
+				Position.H := WheelRenderSize;
 				MovementButton[Idx].Touched := False
 			end;
 
 			{$IFDEF LD25_DEBUG}
 			For pt := 0 to (OUTLINE_STEPS-1) do begin
 				Angle := 0 - (Pi / 2) - (Pi / 8) + (Pi * Idx / 4) + (Pi / 4 * pt / (OUTLINE_STEPS-1));
-				MovBtnOutline[Idx][1+pt] := ProjectPoint(DPadX, DPadY, DPadSize, Angle);
-				MovBtnExtraOutline[Idx][1+pt] := ProjectPoint(DPadX, DPadY, DPadExtraSize, Angle);
+				MovBtnOutline[Idx][1+pt] := ProjectPoint(MovementWheel.X, MovementWheel.Y, MovementWheel.TouchSize, Angle);
+				MovBtnExtraOutline[Idx][1+pt] := ProjectPoint(MovementWheel.X, MovementWheel.Y, MovementWheel.TouchExtraSize, Angle);
 
-				MovBtnOutline[Idx][OUTLINE_POINTS-1-pt] := ProjectPoint(DPadX, DPadY, DeadZoneSize, Angle);
+				MovBtnOutline[Idx][OUTLINE_POINTS-1-pt] := ProjectPoint(MovementWheel.X, MovementWheel.Y, MovementWheel.DeadZoneSize, Angle);
 				MovBtnExtraOutline[Idx][OUTLINE_POINTS-1-pt] := MovBtnOutline[Idx][OUTLINE_POINTS-1-pt];
 			end;
 			MovBtnOutline[Idx][0] := MovBtnOutline[Idx][OUTLINE_POINTS-1];
@@ -405,9 +425,9 @@ Begin
 			Touched := False
 		end;
 
-		ExtraSize := (NewShootBtnsPos^.H - (BtnH * 2)) div 2;
-		ShootLeftExtraPos := EnlargeRect(ShootLeftButton.Position, ExtraSize, ExtraSize);
-		ShootRightExtraPos := EnlargeRect(ShootRightButton.Position, ExtraSize, ExtraSize);
+		BtnExtraSize := (NewShootBtnsPos^.H - (BtnH * 2)) div 2;
+		ShootLeftExtraPos := EnlargeRect(ShootLeftButton.Position, BtnExtraSize, BtnExtraSize);
+		ShootRightExtraPos := EnlargeRect(ShootRightButton.Position, BtnExtraSize, BtnExtraSize);
 
 		// Mark virtual "shoot" keys as not being pressed
 		Key[KEY_SHOOTLEFT] := False;
