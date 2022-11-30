@@ -554,6 +554,9 @@ Begin
 			If (Choice = 'C') then begin
 				If (GameOn) then Result := 'C'
 			end else
+			If (Choice = 'L') then begin
+				If (IHasSaves) then Result := 'L'
+			end else
 			If (Choice <> CHOICE_NONE) then Result := Choice
 		end
 	end;
