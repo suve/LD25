@@ -57,16 +57,13 @@ Type
 Var
 	Visible: Boolean;
 
-	MovementWheel: MovementWheelProps;
+	// Note: the "position" field in these records is used purely for rendering.
 	MovementButton: Array[0..7] of ButtonProps;
 	ShootLeftButton, ShootRightButton: ButtonProps;
 
-	(*
-	 * The above variables are used for rendering and finger-down events.
-	 * These here "extra" variables are used when processing finger-motion events
-	 * and describe the larger, extra-generous touch areas.
-	 *)
-	ShootLeftExtraPos, ShootRightExtraPos: TSDL_Rect;
+	MovementWheel: MovementWheelProps;
+	ShootLeftTouchArea, ShootLeftExtraTouchArea: TSDL_Rect;
+	ShootRightTouchArea, ShootRightExtraTouchArea: TSDL_Rect;
 
 {$IFDEF LD25_DEBUG}
 Const
@@ -118,11 +115,11 @@ Begin
 			SDL_RenderDrawLines(Renderer, WheelOutline[Idx], OUTLINE_POINTS);
 
 	If (ShootLeftButton.Touched) or (ShootRightButton.Touched) then begin
-		LeftRect := @ShootLeftExtraPos;
-		RightRect := @ShootRightExtraPos
+		LeftRect := @ShootLeftExtraTouchArea;
+		RightRect := @ShootRightExtraTouchArea
 	end else begin
-		LeftRect := @ShootLeftButton.Position;
-		RightRect := @ShootRightButton.Position
+		LeftRect := @ShootLeftTouchArea;
+		RightRect := @ShootRightTouchArea
 	end;
 
 	If ShootLeftButton.Touched then
@@ -247,8 +244,8 @@ Begin
 	FingerY := Trunc(Ev^.TFinger.Y * Wnd_H);
 
 	MovementWheelSize := MovementWheel.TouchSize;
-	ShootLeftRect := @ShootLeftButton.Position;
-	ShootRightRect := @ShootRightButton.Position;
+	ShootLeftRect := @ShootLeftTouchArea;
+	ShootRightRect := @ShootRightTouchArea;
 
 	If (Ev^.Type_ = SDL_FingerMotion) then begin
 		(*
@@ -266,8 +263,8 @@ Begin
 		 *   use a larger wheel than what's actually shown on the screen.
 		 *)
 		If (UFResult = UF_SHOOT) then begin
-			ShootLeftRect := @ShootLeftExtraPos;
-			ShootRightRect := @ShootRightExtraPos
+			ShootLeftRect := @ShootLeftExtraTouchArea;
+			ShootRightRect := @ShootRightExtraTouchArea
 		end else
 		If (UFResult = UF_MOVEMENT) then begin
 			MovementWheelSize := MovementWheel.TouchExtraSize
@@ -425,9 +422,13 @@ Begin
 			Touched := False
 		end;
 
+		BtnExtraSize := BtnW div 4;
+		ShootLeftTouchArea := EnlargeRect(ShootLeftButton.Position, BtnExtraSize, BtnExtraSize);
+		ShootRightTouchArea := EnlargeRect(ShootRightButton.Position, BtnExtraSize, BtnExtraSize);
+
 		BtnExtraSize := (NewShootBtnsPos^.H - (BtnH * 2)) div 2;
-		ShootLeftExtraPos := EnlargeRect(ShootLeftButton.Position, BtnExtraSize, BtnExtraSize);
-		ShootRightExtraPos := EnlargeRect(ShootRightButton.Position, BtnExtraSize, BtnExtraSize);
+		ShootLeftExtraTouchArea := EnlargeRect(ShootLeftButton.Position, BtnExtraSize, BtnExtraSize);
+		ShootRightExtraTouchArea := EnlargeRect(ShootRightButton.Position, BtnExtraSize, BtnExtraSize);
 
 		// Mark virtual "shoot" keys as not being pressed
 		Key[KEY_SHOOTLEFT] := False;
