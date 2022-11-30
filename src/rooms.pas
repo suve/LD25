@@ -142,7 +142,7 @@ Function LoadRoom(Const rX, rY: sInt; Const Name:AnsiString):PRoom;
 
 Implementation
 Uses
-	StrUtils, SysUtils,
+	ctypes, StrUtils, SysUtils,
 	Assets, Colours, FloatingText, MathUtils;
 
 Function TRoom.ParseScript_If(Const LineNo: sInt; Const Tokens:Array of AnsiString; Out rsi:TRoomScriptInstruction):Boolean;
@@ -151,33 +151,32 @@ Var
 	Negative: Boolean;
 Begin
 	If(Length(Tokens)<2) then begin
-		Writeln(
-			'Error in room ',X,':',Y,' at line ',LineNo,
-			': "if" command requires at least one argument.'
+		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+			'Error in room %d:%d on line %d: "if" command requires at least one argument',
+			[cint(X), cint(Y), cint(LineNo)]
 		);
 		Exit(False)
 	end;
-	
+
 	SwitchNo := StrToInt(Tokens[1]);
 	If(Not InRange(SwitchNo, 0, SWITCHES-1)) then begin
-		Writeln(
-			'Error in room ',X,':',Y,' at line ',LineNo,
-			': switch number passed to "if" command is out of range ',
-			'(expected 0 - ',(SWITCHES-1),', got ',SwitchNo,').'
+		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+			'Error in room %d:%d on line %d: switch number passed to "if" command is out of range (expected 0 - %d, got %d)',
+			[cint(X), cint(Y), cint(LineNo), cint(SWITCHES-1), cint(SwitchNo)]
 		);
 		Exit(False)
 	end;
-	
+
 	Negative := False;
 	If(Length(Tokens)>=3) then begin
 		If(Tokens[2] <> 'not') then begin
-			Writeln(
-			'Error in room ',X,':',Y,' at line ',LineNo,
-			': second argument to "if" command must be either "not" or omitted.'
-		);
-		Exit(False)
+			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+				'Error in room %d:%d on line %d: second argument to "if" command must be either "not", or omitted',
+				[cint(X), cint(Y), cint(LineNo)]
+			);
+			Exit(False)
 		end;
-		
+
 		Negative := True
 	end;
 	
@@ -193,9 +192,9 @@ Var
 	CrystalColour: sInt;
 Begin
 	If (Length(Tokens)<>4) then begin
-		Writeln(
-			'Error in room ',X,':',Y,' at line ',LineNo,
-			': "colour" command requires exactly three arguments.'
+		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+			'Error in room %d:%d on line %d: "colour" command requires exactly three arguments',
+			[cint(X), cint(Y), cint(LineNo)]
 		);
 		Exit(False)
 	end;
@@ -210,11 +209,11 @@ Begin
 		'yellow': CrystalColour:=6;
 		'white':  CrystalColour:=7;
 		'woman':  CrystalColour:=8;
-		
+
 		otherwise begin
-			Writeln(
-				'Error in room ',X,':',Y,' at line ',LineNo,
-				': unknown crystal "',Tokens[1],'".'
+			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+				'Error in room %d:%d on line %d: unknown colour "%s"',
+				[cint(X), cint(Y), cint(LineNo), PChar(Tokens[1])]
 			);
 			Exit(False)
 		end
@@ -233,13 +232,13 @@ Var
 	Colour: sInt;
 Begin
 	If (Length(Tokens)<2) then begin
-		Writeln(
-			'Error in room ',X,':',Y,' at line ',LineNo,
-			': "palette" command requires an argument.'
+		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+			'Error in room %d:%d on line %d: "palette" command requires an argument',
+			[cint(X), cint(Y), cint(LineNo)]
 		);
 		Exit(False)
 	end;
-	
+
 	Case(Tokens[1]) of
 		'black':   Colour := 0;
 		'navy':    Colour := 1;
@@ -250,16 +249,16 @@ Begin
 		'yellow':  Colour := 6;
 		'white':   Colour := 7;
 		'central': Colour := 8;
-		
+
 		otherwise begin
-			Writeln(
-				'Error in room ',X,':',Y,' at line ',LineNo,
-				': unknown colour "',Tokens[1],'".'
+			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+				'Error in room %d:%d on line %d: unknown palette "%s"',
+				[cint(X), cint(Y), cint(LineNo), PChar(Tokens[1])]
 			);
 			Exit(False)
 		end
 	end;
-	
+
 	rsi.Opcode := RSOP_PALETTE;
 	rsi.Palette.Colour := Colour;
 	Exit(True)
@@ -271,9 +270,9 @@ Var
 	EnemType: TEnemyType;
 Begin
 	If (Length(Tokens)<4) then begin
-		Writeln(
-			'Error in room ',X,':',Y,' at line ',LineNo,
-			': "spawn" command requires at least three arguments.'
+		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+			'Error in room %d:%d on line %d: "spawn" command requires at least three arguments',
+			[cint(X), cint(Y), cint(LineNo)]
 		);
 		Exit(False)
 	end;
@@ -286,30 +285,29 @@ Begin
 		'spammer':   EnemType:=ENEM_SPAMMER;
 		'generator': EnemType:=ENEM_GENERATOR;
 		'turret':    EnemType:=ENEM_TURRET;
-		
+
 		otherwise begin
-			Writeln(
-				'Error in room ',X,':',Y,' at line ',LineNo,
-				': unknown spawn type "',Tokens[1],'"'
+			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+				'Error in room %d:%d on line %d: unknown spawn type "%s"',
+				[cint(X), cint(Y), cint(LineNo), PChar(Tokens[1])]
 			);
 			Exit(False)
 		end
 	end;
-	
+
 	// If there is a fifth token, use that as "flick this switch when enemy dies"
 	If (Length(Tokens)>=5) then begin
 		SwitchNo := StrToInt(Tokens[4]);
 		If(Not InRange(SwitchNo, 0, SWITCHES-1)) then begin
-			Writeln(
-				'Error in room ',X,':',Y,' at line ',LineNo,
-				': switch number passed to "spawn" command is out of range ',
-				'(expected 0 - ',(SWITCHES-1),', got ',SwitchNo,').'
+			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+				'Error in room %d:%d on line %d: switch number passed to "spawn" command is out of range (expected 0 - %d, got %d)',
+				[cint(X), cint(Y), cint(LineNo), cint(SWITCHES-1), cint(SwitchNo)]
 			);
 			Exit(False)
 		end
 	end else
 		SwitchNo := -1;
-	
+
 	// Enemy spawn coords are 1-20 rather than 0-19, so we'll have to subtract 1
 	rsi.Opcode := RSOP_SPAWN;
 	rsi.Spawn.X := StrToInt(Tokens[2]) - 1;
@@ -325,13 +323,13 @@ Var
 	Text: AnsiString;
 Begin
 	If (Length(Tokens)<5) then begin
-		Writeln(
-			'Error in room ',X,':',Y,' at line ',LineNo,
-			': "text" command requires at least four arguments.'
+		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+			'Error in room %d:%d on line %d: "text" command requires at least four arguments"',
+			[cint(X), cint(Y), cint(LineNo)]
 		);
 		Exit(False)
 	end;
-	
+
 	Case(Tokens[1]) of
 		'black':  Colour := 0;
 		'navy':   Colour := 1;
@@ -344,23 +342,22 @@ Begin
 		'grey':   Colour := 8;
 		
 		otherwise begin
-			Writeln(
-				'Error in room ',X,':',Y,' at line ',LineNo,
-				': unknown colour "',Tokens[1],'".'
+			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+				'Error in room %d:%d on line %d: unknown text colour "%s"',
+				[cint(X), cint(Y), cint(LineNo), PChar(Tokens[1])]
 			);
 			Exit(False)
 		end
 	end;
-	
+
 	Text := Tokens[4];
 	If (Length(Tokens)>5) then
 		For tk:=5 to High(Tokens) do Text += ' ' + Tokens[tk];
-	
+
 	TextLen := Length(Text);
 	If(TextLen > (MAX_TEXT_SIZE-1)) then 
 		TextLen := (MAX_TEXT_SIZE-1);
-	
-	
+
 	// FloatText position is given in pixels, no need to convert from 1-20 to 0-19
 	rsi.Opcode := RSOP_TEXT;
 	rsi.Text.X := StrToInt(Tokens[2]);
@@ -376,21 +373,20 @@ Var
 	TileChar: Char;
 Begin
 	If (Length(Tokens)<3) then begin
-		Writeln(
-			'Error in room ',X,':',Y,' at line ',LineNo,
-			': "tile" command requires at least two arguments.'
+		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+			'Error in room %d:%d on line %d: "tile" command requires at least two arguments',
+			[cint(X), cint(Y), cint(LineNo)]
 		);
 		Exit(False)
 	end;
-	
+
 	// A command setting a tile to an empty tile will have less tokens than the others,
 	// as the space (representing the empty tile) gets consumed during parsing. 
 	If (Length(Tokens)>=4) then
 		TileChar := Tokens[3][1]
 	else
 		TileChar := ' ';
-	
-	
+
 	// Tile coords in script are 1-20 rather than 0-19, so we'll have to subtract 1
 	rsi.Opcode := RSOP_TILE;
 	rsi.Tile.X := StrToInt(Tokens[1]) - 1;
@@ -450,18 +446,19 @@ Var
 	rsi: TRoomScriptInstruction;
 	Condition: Boolean;
 	{$IFDEF LD25_DEBUG}
-		CondStr: AnsiString;
+		DebugStr, CondStr: AnsiString;
 	{$ENDIF}
 Begin
 	{$IFDEF LD25_DEBUG}
-		Writeln(StdErr, 'RoomScript(', Self.X, ',', Self.Y, ') --- BEGIN');
+		SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, 'RoomScript(%d:%d) --- BEGIN', [cint(X), cint(Y)]);
 	{$ENDIF}
 
 	Idx := 0;
 	Count := Length(Scri);
 	While((Idx >= 0) and (Idx < Count)) do begin
 		{$IFDEF LD25_DEBUG}
-			Writeln(StdErr, 'RoomScript: #', Shared.IntToStr(Idx, 2), ' ', Scri[Idx].Opcode);
+			WriteStr(DebugStr, 'RoomScript: #', Shared.IntToStr(Idx, 2), ' ', Scri[Idx].Opcode);
+			SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, '%s', [PChar(DebugStr)]);
 		{$ENDIF}
 
 		rsi := Scri[Idx];
@@ -483,19 +480,20 @@ Begin
 				
 				If(Not Condition) then begin
 					{$IFDEF LD25_DEBUG}
-						Writeln(StdErr, 'RoomScript:     Condition not met (', CondStr, '); jumping to #', Shared.IntToStr(rsi.If_.ElseJumpTo, 2));
+						WriteStr(DebugStr, 'RoomScript:     Condition not met (', CondStr, '); jumping to #', Shared.IntToStr(rsi.If_.ElseJumpTo, 2));
+						SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, '%s', [PChar(DebugStr)]);
 					{$ENDIF}
 					Idx := rsi.If_.ElseJumpTo
 				end else begin
 					{$IFDEF LD25_DEBUG}
-						Writeln(StdErr, 'RoomScript:     Condition satisfied (', CondStr, ')');
+						SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, 'RoomScript:     Condition satisfied (%s)', [PChar(CondStr)])
 					{$ENDIF}
 				end
 			end;
 
 			RSOP_ELSE: begin
 				{$IFDEF LD25_DEBUG}
-					Writeln(StdErr, 'RoomScript:     Jumping to ', rsi.Else_.JumpTo);
+					SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, 'RoomScript:     Jumping to #%d', [cint(rsi.Else_.JumpTo)]);
 				{$ENDIF}
 				Idx := rsi.Else_.JumpTo
 			end;
@@ -509,7 +507,7 @@ Begin
 	end;
 
 	{$IFDEF LD25_DEBUG}
-		Writeln(StdErr, 'RoomScript(', Self.X, ',', Self.Y, ') --- END');
+		SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, 'RoomScript(%d:%d) --- END', [cint(X), cint(Y)]);
 	{$ENDIF}
 End;
 
@@ -658,9 +656,9 @@ Begin
 		Case(Tokens[0]) of
 			'if': begin
 				If(IfNest = MAX_IF_NEST) then begin
-					Writeln(
-						'Error in room ',X,':',Y,' at line ',LineNo,
-						': conditionals ("if") can be nested up to ',MAX_IF_NEST,' times.'
+					SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+						'Error in room %d:%d on line %d: conditionals ("if") can be nested up to %d times',
+						[cint(X), cint(Y), cint(LineNo), cint(MAX_IF_NEST)]
 					);
 					InstrOK := False
 				end else begin
@@ -677,16 +675,16 @@ Begin
 			
 			'else': begin
 				If(IfNest = 0) then begin
-					Writeln(
-						'Error in room ',X,':',Y,' at line ',LineNo,
-						': "else" without matching "if".'
+					SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+						'Error in room %d:%d on line %d: "else" without matching "if"',
+						[cint(X), cint(Y), cint(LineNo)]
 					);
 					InstrOK := False
 				end else begin
 					If(IfStack[IfNest].ElseLine >= 0) then begin
-						Writeln(
-							'Error in room ',X,':',Y,' at line ',LineNo,
-							': a second "else" for "if".'
+						SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+							'Error in room %d:%d on line %d: a second "else" for "if"',
+							[cint(X), cint(Y), cint(LineNo)]
 						);
 						InstrOK := False
 					end else begin
@@ -702,9 +700,9 @@ Begin
 			'fi': begin
 				InstrOK := False;
 				If(IfNest = 0) then begin
-					Writeln(
-						'Error in room ',X,':',Y,' at line ',LineNo,
-						': "fi" outside of "if".'
+					SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+						'Error in room %d:%d on line %d: "fi" outside of "if"',
+						[cint(X), cint(Y), cint(LineNo)]
 					);
 				end else begin
 					If(IfStack[IfNest].ElseInstr >= 0) then begin
@@ -723,10 +721,11 @@ Begin
 			'text': InstrOK := Self.ParseScript_Text(LineNo, Tokens, Instruction);
 			'tile': InstrOK := Self.ParseScript_Tile(LineNo, Tokens, Instruction);
 			
-			otherwise Writeln(
-				'Error in room ', Self.X, ':' , Self.Y,' at line ', LineNo,
-				': unknown command "', Tokens[0], '"'
-			);
+			otherwise
+				SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+					'Error in room %d:%d on line %d: unknown command "%s"',
+					[cint(X), cint(Y), cint(LineNo), PChar(Tokens[0])]
+				);
 		end;
 		
 		If(InstrOK) then begin
