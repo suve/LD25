@@ -18,12 +18,14 @@ jobs:
       - checkout
       - run:
           name: Checkout git submodules
-          command: >
-            git submodule init && git submodule update
+          command: |
+            git submodule init
+            git submodule update
       - run:
           name: make executable
-          command: >
-            make -j1 executable-debug
+          command: |
+            ./configure.sh
+            make -j1 executable
 
 workflows:
   build:
