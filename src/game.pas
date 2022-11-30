@@ -51,7 +51,7 @@ Var
 	PauseTxt: TSDL_Point;
 	Paused, WantToQuit: Boolean;
 	RoomChange: TRoomChange;
-{$IFDEF DEVELOPER} 
+{$IFDEF LD25_DEBUG}
 	debugY,debugU,debugI:Boolean;
 {$ENDIF}
 
@@ -74,7 +74,7 @@ Begin
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_VolDown]) then ChgVol(-1) else
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_VolUp])	then ChgVol(+1) else
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_Pause])	then Paused:=(Not Paused) else
-			{$IFDEF DEVELOPER}
+			{$IFDEF LD25_DEBUG}
 				If (Ev.Key.Keysym.Sym = SDLK_H) then begin 
 					If (DeadTime <= 0) then Hero^.HP:=Hero^.MaxHP 
 				end else
@@ -113,7 +113,7 @@ End;
 
 Procedure Animate(Const Ticks:uInt);
 Begin
-	{$IFNDEF DEVELOPER}
+	{$IFNDEF LD25_DEBUG}
 	AniFra:=(Ticks div AnimTime) mod 2;
 	{$ELSE}
 	If (Not debugY) 
@@ -135,7 +135,7 @@ Begin
 		
 		// In developer mode, debugI allows for noclip.
 		// Outside developer builds (or with disabled debugI), we need to check hero collisions.
-		{$IFDEF DEVELOPER}
+		{$IFDEF LD25_DEBUG}
 		If (Not debugI) then begin
 		{$ENDIF}
 			If (XDif<>0) then begin
@@ -151,7 +151,7 @@ Begin
 				If (Not Room^.Collides(Hero^.X,ChkY+YDif)) and (Not Room^.Collides(Hero^.X+Hero^.W-1,ChkY+YDif)) then
 					Hero^.Y:=Hero^.Y+YDif
 			end;
-		{$IFDEF DEVELOPER}
+		{$IFDEF LD25_DEBUG}
 		end else begin 
 			Hero^.X:=Hero^.X+XDif; Hero^.Y:=Hero^.Y+YDif 
 		end {$ENDIF}
@@ -402,7 +402,7 @@ Begin
 	CalculateRoomChange();
 	
 	CalculatePlayerBullets(Time);
-	{$IFDEF DEVELOPER} If (Not debugY) then {$ENDIF} CalculateMonsters(Time);
+	{$IFDEF LD25_DEBUG} If (Not debugY) then {$ENDIF} CalculateMonsters(Time);
 	CalculateEnemyBullets(Time);
 	CalculateGibs(Time);
 End;
@@ -648,7 +648,7 @@ Begin
 	
 	If (Length(FloatTxt)>0) then DrawFloatingTexts();
 
-	{$IFDEF DEVELOPER} If Not (debugU) then {$ENDIF} DrawUI();
+	{$IFDEF LD25_DEBUG} If Not (debugU) then {$ENDIF} DrawUI();
 
 	Rendering.FinishFrame()
 end;
@@ -741,7 +741,7 @@ Begin
 	PauseTxt.X:=PAUSETXT_W div 2; PauseTxt.Y:=PAUSETXT_H div 2;
 	Font^.Scale := 1;
 	
-	{$IFDEF DEVELOPER} debugY:=False; debugU:=False; debugI:=False; {$ENDIF}
+	{$IFDEF LD25_DEBUG} debugY:=False; debugU:=False; debugI:=False; {$ENDIF}
 	Repeat
 		If (RoomChange <> RCHANGE_NONE) then PerformRoomChange();
 		

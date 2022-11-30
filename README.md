@@ -9,13 +9,13 @@ enhancements and bug fixes.
 
 ## Building the game
 
-To build colorful, you'll need the following dependencies:
+To build Colorful, you'll need the following dependencies:
 
 - [Free Pascal Compiler](https://freepascal.org)
 - [Make](https://www.gnu.org/software/make/)
-- [optipng](https://optipng.sourceforge.net/)
-- [oggenc](https://github.com/xiph/vorbis-tools)
-- [SDL libraries](https://libsdl.org) - SDL2, SDL2\_image, SDL2\_mixer
+- [optipng](https://optipng.sourceforge.net/) - for optimizing images
+- [oggenc](https://github.com/xiph/vorbis-tools) - for encoding `.wav` sound effects to `.ogg`
+- [SDL libraries](https://libsdl.org): SDL2, SDL2\_image, SDL2\_mixer
 - Pascal units for SDL2
 
 
@@ -27,7 +27,7 @@ The recommended version to use can be found in the
 repository, although you're free to try compiling the game using any others.
 
 The repo links to aforementioned headers by the means of a git submodule,
-so if you don't want to experiment, run:
+so if you don't want to experiment, run the following commands:
 
     $ git submodule init
     $ git submodule update
@@ -58,6 +58,10 @@ The script takes the following options:
   in `/usr/share/suve/colorful`.
 
   The default value is `standalone`.
+
+- `--debug`
+  Controls whether debugging features are enabled.
+  The default value is `false`.
 
 - `--fpc PATH`    
   Use the Free Pascal Compiler located at `PATH`.

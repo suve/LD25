@@ -38,6 +38,10 @@ Accepted options:
   * systemwide: Assets are expected to be found in /usr/share/suve/colorful.
   The default value is "standalone".
 
+--debug BOOLEAN
+  Controls whether debugging features are enabled.
+  The default value is "false".
+
 --fpc FULL_PATH
   Use the Free Pascal Compiler located at FULL_PATH.
   The default is to use "fpc".
@@ -75,6 +79,7 @@ function parse_bool() {
 
 ANDROID="false"
 ASSETS="standalone"
+DEBUG="false"
 FPC="fpc"
 USER_FLAGS=""
 OGG_QUALITY="10"
@@ -95,6 +100,8 @@ while [[ "${#}" -gt 0 ]]; do
 			exit 1
 		fi
 		ASSETS="${2}"
+	elif [[ "${1}" == "--debug" ]]; then
+		DEBUG="$(parse_bool "--debug" "${2}")"
 	elif [[ "${1}" == "--fpc" ]]; then
 		FPC="${2}"
 	elif [[ "${1}" == "--flags" ]]; then
@@ -117,6 +124,7 @@ cat <<EOF
 Config values:
   ANDROID = ${ANDROID}
   ASSETS = ${ASSETS}
+  DEBUG = ${DEBUG}
   FPC = ${FPC}
   FLAGS = ${USER_FLAGS}
   OGG_QUALITY = ${OGG_QUALITY}
@@ -125,7 +133,7 @@ EOF
 
 # Calculate Makefile variables from arguments
 
-BUILD_FLAGS="-O2 -dLD25_ASSETS_${ASSETS}"
+BUILD_FLAGS="-dLD25_ASSETS_${ASSETS}"
 
 if [[ "${ANDROID}" == "true" ]]; then
 	EXE_PREFIX="lib"
@@ -136,6 +144,13 @@ else
 	EXE_PREFIX=""
 	EXE_SUFFIX=""
 	GFX_FILTER="gfx/touch-controls.png"
+fi
+
+if [[ "${DEBUG}" == "true" ]]; then
+	# Note: No -O1/-O2/-O3/-O4 flag - no optimisations!
+	BUILD_FLAGS="${BUILD_FLAGS} -dLD25_DEBUG"
+else
+	BUILD_FLAGS="${BUILD_FLAGS} -O3"
 fi
 
 if [[ "${STRIP}" == "true" ]]; then

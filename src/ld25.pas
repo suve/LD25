@@ -36,7 +36,7 @@ Var
 Procedure DrawTitle();
 Const
 	VersionText = 'V.' + GAMEVERS
-		{$IFDEF DEVELOPER} + ' # DEVEL # ' + {$INCLUDE %DATE%} + ', ' + {$INCLUDE %TIME%}{$ENDIF}
+		{$IFDEF LD25_DEBUG} + ' // DEBUG @ ' + {$INCLUDE %DATE%} + ', ' + {$INCLUDE %TIME%}{$ENDIF}
 	;
 Var
 	Dst: TSDL_Rect;

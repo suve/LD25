@@ -449,18 +449,18 @@ Var
 	Idx, Count: sInt;
 	rsi: TRoomScriptInstruction;
 	Condition: Boolean;
-	{$IFDEF DEVELOPER}
+	{$IFDEF LD25_DEBUG}
 		CondStr: AnsiString;
 	{$ENDIF}
 Begin
-	{$IFDEF DEVELOPER}
+	{$IFDEF LD25_DEBUG}
 		Writeln(StdErr, 'RoomScript(', Self.X, ',', Self.Y, ') --- BEGIN');
 	{$ENDIF}
 
 	Idx := 0;
 	Count := Length(Scri);
 	While((Idx >= 0) and (Idx < Count)) do begin
-		{$IFDEF DEVELOPER}
+		{$IFDEF LD25_DEBUG}
 			Writeln(StdErr, 'RoomScript: #', Shared.IntToStr(Idx, 2), ' ', Scri[Idx].Opcode);
 		{$ENDIF}
 
@@ -471,30 +471,30 @@ Begin
 			RSOP_IF: begin
 				Condition := Shared.Switch[rsi.If_.SwitchNo];
 				If(rsi.If_.Negative) then begin
-					{$IFDEF DEVELOPER}
+					{$IFDEF LD25_DEBUG}
 						WriteStr(CondStr, 'switchNo: ~', Shared.IntToStr(rsi.If_.SwitchNo, 2));
 					{$ENDIF}
 					Condition := Not Condition;
 				end else begin
-					{$IFDEF DEVELOPER}
+					{$IFDEF LD25_DEBUG}
 						WriteStr(CondStr, 'switchNo: ', Shared.IntToStr(rsi.If_.SwitchNo, 2));
 					{$ENDIF}
 				end;
 				
 				If(Not Condition) then begin
-					{$IFDEF DEVELOPER}
+					{$IFDEF LD25_DEBUG}
 						Writeln(StdErr, 'RoomScript:     Condition not met (', CondStr, '); jumping to #', Shared.IntToStr(rsi.If_.ElseJumpTo, 2));
 					{$ENDIF}
 					Idx := rsi.If_.ElseJumpTo
 				end else begin
-					{$IFDEF DEVELOPER}
+					{$IFDEF LD25_DEBUG}
 						Writeln(StdErr, 'RoomScript:     Condition satisfied (', CondStr, ')');
 					{$ENDIF}
 				end
 			end;
 
 			RSOP_ELSE: begin
-				{$IFDEF DEVELOPER}
+				{$IFDEF LD25_DEBUG}
 					Writeln(StdErr, 'RoomScript:     Jumping to ', rsi.Else_.JumpTo);
 				{$ENDIF}
 				Idx := rsi.Else_.JumpTo
@@ -508,7 +508,7 @@ Begin
 		end
 	end;
 
-	{$IFDEF DEVELOPER}
+	{$IFDEF LD25_DEBUG}
 		Writeln(StdErr, 'RoomScript(', Self.X, ',', Self.Y, ') --- END');
 	{$ENDIF}
 End;
