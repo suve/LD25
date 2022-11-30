@@ -152,7 +152,7 @@ Var
 Begin
 	If(Length(Tokens)<2) then begin
 		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-			'Error in room %d:%d on line %d: "if" command requires at least one argument',
+			'RoomScript: error in room %d:%d on line %d: "if" command requires at least one argument',
 			[cint(X), cint(Y), cint(LineNo)]
 		);
 		Exit(False)
@@ -161,7 +161,7 @@ Begin
 	SwitchNo := StrToInt(Tokens[1]);
 	If(Not InRange(SwitchNo, 0, SWITCHES-1)) then begin
 		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-			'Error in room %d:%d on line %d: switch number passed to "if" command is out of range (expected 0 - %d, got %d)',
+			'RoomScript: error in room %d:%d on line %d: switch number passed to "if" command is out of range (expected 0 - %d, got %d)',
 			[cint(X), cint(Y), cint(LineNo), cint(SWITCHES-1), cint(SwitchNo)]
 		);
 		Exit(False)
@@ -171,7 +171,7 @@ Begin
 	If(Length(Tokens)>=3) then begin
 		If(Tokens[2] <> 'not') then begin
 			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-				'Error in room %d:%d on line %d: second argument to "if" command must be either "not", or omitted',
+				'RoomScript: error in room %d:%d on line %d: second argument to "if" command must be either "not", or omitted',
 				[cint(X), cint(Y), cint(LineNo)]
 			);
 			Exit(False)
@@ -193,7 +193,7 @@ Var
 Begin
 	If (Length(Tokens)<>4) then begin
 		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-			'Error in room %d:%d on line %d: "colour" command requires exactly three arguments',
+			'RoomScript: error in room %d:%d on line %d: "colour" command requires exactly three arguments',
 			[cint(X), cint(Y), cint(LineNo)]
 		);
 		Exit(False)
@@ -212,7 +212,7 @@ Begin
 
 		otherwise begin
 			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-				'Error in room %d:%d on line %d: unknown colour "%s"',
+				'RoomScript: error in room %d:%d on line %d: unknown colour "%s"',
 				[cint(X), cint(Y), cint(LineNo), PChar(Tokens[1])]
 			);
 			Exit(False)
@@ -233,7 +233,7 @@ Var
 Begin
 	If (Length(Tokens)<2) then begin
 		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-			'Error in room %d:%d on line %d: "palette" command requires an argument',
+			'RoomScript: error in room %d:%d on line %d: "palette" command requires an argument',
 			[cint(X), cint(Y), cint(LineNo)]
 		);
 		Exit(False)
@@ -252,7 +252,7 @@ Begin
 
 		otherwise begin
 			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-				'Error in room %d:%d on line %d: unknown palette "%s"',
+				'RoomScript: error in room %d:%d on line %d: unknown palette "%s"',
 				[cint(X), cint(Y), cint(LineNo), PChar(Tokens[1])]
 			);
 			Exit(False)
@@ -271,7 +271,7 @@ Var
 Begin
 	If (Length(Tokens)<4) then begin
 		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-			'Error in room %d:%d on line %d: "spawn" command requires at least three arguments',
+			'RoomScript: error in room %d:%d on line %d: "spawn" command requires at least three arguments',
 			[cint(X), cint(Y), cint(LineNo)]
 		);
 		Exit(False)
@@ -288,7 +288,7 @@ Begin
 
 		otherwise begin
 			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-				'Error in room %d:%d on line %d: unknown spawn type "%s"',
+				'RoomScript: error in room %d:%d on line %d: unknown spawn type "%s"',
 				[cint(X), cint(Y), cint(LineNo), PChar(Tokens[1])]
 			);
 			Exit(False)
@@ -300,7 +300,7 @@ Begin
 		SwitchNo := StrToInt(Tokens[4]);
 		If(Not InRange(SwitchNo, 0, SWITCHES-1)) then begin
 			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-				'Error in room %d:%d on line %d: switch number passed to "spawn" command is out of range (expected 0 - %d, got %d)',
+				'RoomScript: error in room %d:%d on line %d: switch number passed to "spawn" command is out of range (expected 0 - %d, got %d)',
 				[cint(X), cint(Y), cint(LineNo), cint(SWITCHES-1), cint(SwitchNo)]
 			);
 			Exit(False)
@@ -324,7 +324,7 @@ Var
 Begin
 	If (Length(Tokens)<5) then begin
 		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-			'Error in room %d:%d on line %d: "text" command requires at least four arguments"',
+			'RoomScript: error in room %d:%d on line %d: "text" command requires at least four arguments"',
 			[cint(X), cint(Y), cint(LineNo)]
 		);
 		Exit(False)
@@ -343,7 +343,7 @@ Begin
 		
 		otherwise begin
 			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-				'Error in room %d:%d on line %d: unknown text colour "%s"',
+				'RoomScript: error in room %d:%d on line %d: unknown text colour "%s"',
 				[cint(X), cint(Y), cint(LineNo), PChar(Tokens[1])]
 			);
 			Exit(False)
@@ -374,7 +374,7 @@ Var
 Begin
 	If (Length(Tokens)<3) then begin
 		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-			'Error in room %d:%d on line %d: "tile" command requires at least two arguments',
+			'RoomScript: error in room %d:%d on line %d: "tile" command requires at least two arguments',
 			[cint(X), cint(Y), cint(LineNo)]
 		);
 		Exit(False)
@@ -657,7 +657,7 @@ Begin
 			'if': begin
 				If(IfNest = MAX_IF_NEST) then begin
 					SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-						'Error in room %d:%d on line %d: conditionals ("if") can be nested up to %d times',
+						'RoomScript: error in room %d:%d on line %d: conditionals ("if") can be nested up to %d times',
 						[cint(X), cint(Y), cint(LineNo), cint(MAX_IF_NEST)]
 					);
 					InstrOK := False
@@ -676,14 +676,14 @@ Begin
 			'else': begin
 				If(IfNest = 0) then begin
 					SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-						'Error in room %d:%d on line %d: "else" without matching "if"',
+						'RoomScript: error in room %d:%d on line %d: "else" without matching "if"',
 						[cint(X), cint(Y), cint(LineNo)]
 					);
 					InstrOK := False
 				end else begin
 					If(IfStack[IfNest].ElseLine >= 0) then begin
 						SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-							'Error in room %d:%d on line %d: a second "else" for "if"',
+							'RoomScript: error in room %d:%d on line %d: a second "else" for "if"',
 							[cint(X), cint(Y), cint(LineNo)]
 						);
 						InstrOK := False
@@ -701,7 +701,7 @@ Begin
 				InstrOK := False;
 				If(IfNest = 0) then begin
 					SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-						'Error in room %d:%d on line %d: "fi" outside of "if"',
+						'RoomScript: error in room %d:%d on line %d: "fi" outside of "if"',
 						[cint(X), cint(Y), cint(LineNo)]
 					);
 				end else begin
@@ -723,7 +723,7 @@ Begin
 			
 			otherwise
 				SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-					'Error in room %d:%d on line %d: unknown command "%s"',
+					'RoomScript: error in room %d:%d on line %d: unknown command "%s"',
 					[cint(X), cint(Y), cint(LineNo), PChar(Tokens[0])]
 				);
 		end;

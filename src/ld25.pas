@@ -868,6 +868,10 @@ Function ld25main(argc: cint; argv: Pointer): cint; cdecl;
 
 begin
 	SDL_Log(GAMENAME + ' v.' + GAMEVERS + ' by ' + GAMEAUTH, []);
+	{$IFDEF LD25_DEBUG}
+		SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_DEBUG);
+	{$ENDIF}
+
 	Startup();
 	Repeat
 		MenuChoice:=MainMenu();

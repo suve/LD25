@@ -69,6 +69,54 @@ Begin
 		Result := 0
 End;
 
+{$IFDEF LD25_DEBUG}
+Procedure DrawDebug();
+Var
+	Idx: uInt;
+	WheelSize: uInt;
+	WheelRect: TSDL_REct;
+	LeftRect, RightRect: PSDL_Rect;
+Begin
+	WheelSize := DPadSize;
+	For Idx := 0 to 7 do begin
+		If MovementButton[Idx].Touched then begin
+			WheelSize := DPadExtraSize;
+			Break
+		end
+	end;
+
+	With WheelRect do begin
+		X := DPadX - WheelSize;
+		Y := DPadY - WheelSize;
+		W := WheelSize * 2;
+		H := WheelSize * 2
+	end;
+
+	SDL_SetRenderDrawColor(Renderer, 255, 255, 0, 255);
+	SDL_RenderDrawRect(Renderer, @WheelRect);
+
+	If (ShootLeftButton.Touched) or (ShootRightButton.Touched) then begin
+		LeftRect := @ShootLeftExtraPos;
+		RightRect := @ShootRightExtraPos
+	end else begin
+		LeftRect := @ShootLeftButton.Position;
+		RightRect := @ShootRightButton.Position
+	end;
+
+	If ShootLeftButton.Touched then
+		SDL_SetRenderDrawColor(Renderer, 0, 255, 0, 255)
+	else
+		SDL_SetRenderDrawColor(Renderer, 255, 0, 0, 255);
+	SDL_RenderDrawRect(Renderer, LeftRect);
+
+	If ShootRightButton.Touched then
+		SDL_SetRenderDrawColor(Renderer, 0, 255, 0, 255)
+	else
+		SDL_SetRenderDrawColor(Renderer, 255, 0, 0, 255);
+	SDL_RenderDrawRect(Renderer, RightRect);
+End;
+{$ENDIF}
+
 Procedure Draw();
 Const
 	MOVEMENT_BUTTON_SIZE = 60;
@@ -77,6 +125,8 @@ Var
 	Idx: uInt;
 	Src: TSDL_Rect;
 Begin
+	{$IFDEF LD25_DEBUG} DrawDebug(); {$ENDIF}
+
 	Src.W := MOVEMENT_BUTTON_SIZE;
 	Src.H := MOVEMENT_BUTTON_SIZE;
 	For Idx := 0 to 7 do begin

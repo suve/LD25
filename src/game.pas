@@ -117,7 +117,7 @@ Begin
 	AniFra:=(Ticks div AnimTime) mod 2;
 	{$ELSE}
 	If (Not debugY) 
-		then AniFra:=(Ticks div AnimTime) mod 2
+		then AniFra:=(Ticks div (AnimTime * 2)) mod 2
 		else AniFra:=0;
 	{$ENDIF}
 End;
