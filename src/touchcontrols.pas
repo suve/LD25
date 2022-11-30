@@ -27,6 +27,7 @@ Procedure Draw();
 Procedure HandleEvent(ev: PSDL_Event);
 
 Procedure SetPosition(NewDPadPos, NewShootBtnsPos: PSDL_Rect);
+Procedure SetVisibility(NewVisible: Boolean);
 
 
 Implementation
@@ -49,6 +50,8 @@ Type
 	end;
 
 Var
+	Visible: Boolean;
+
 	DPadX, DPadY, DPadSize: sInt;
 	MovementButton: Array[0..7] of ButtonProps;
 	ShootLeftButton, ShootRightButton: ButtonProps;
@@ -126,6 +129,7 @@ Var
 	Src: TSDL_Rect;
 Begin
 	{$IFDEF LD25_DEBUG} DrawDebug(); {$ENDIF}
+	If Not Visible then Exit;
 
 	Src.W := MOVEMENT_BUTTON_SIZE;
 	Src.H := MOVEMENT_BUTTON_SIZE;
@@ -364,6 +368,18 @@ Begin
 		// Mark virtual "shoot" keys as not being pressed
 		Key[KEY_SHOOTLEFT] := False;
 		Key[KEY_SHOOTRIGHT] := False;
+	end
+End;
+
+Procedure SetVisibility(NewVisible: Boolean);
+Var
+	Idx: uInt;
+Begin
+	Visible := NewVisible;
+	If Not Visible then begin
+		ShootLeftButton.Touched := False;
+		ShootRightButton.Touched := False;
+		For Idx := 0 to 7 do MovementButton[Idx].Touched := False
 	end
 End;
 

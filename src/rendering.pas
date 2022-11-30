@@ -283,8 +283,7 @@ Begin
 
 	{$IFDEF ANDROID}
 		SDL_RenderCopy(Renderer, Display, NIL, @GameArea);
-		// TODO: Draw these only when in game
-		If (GameOn) then TouchControls.Draw();
+		TouchControls.Draw();
 	{$ELSE}
 		SDL_RenderCopy(Renderer, Display, NIL, NIL);
 	{$ENDIF}

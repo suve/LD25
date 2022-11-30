@@ -730,9 +730,13 @@ End;
 Function PlayGame():Boolean;
 Var
 	Time, Ticks: uInt;
+	pk: TPlayerKey;
 Begin
 	GetDeltaTime(Time);
 	SDL_ShowCursor(0);
+	
+	For pk := Low(TPlayerKey) to High(TPlayerKey) do Key[pk]:=False;
+	{$IFDEF ANDROID} TouchControls.SetVisibility(True); {$ENDIF}
 	
 	RoomChange:=RCHANGE_NONE;
 	Paused:=False; WantToQuit:=False; 
@@ -740,7 +744,7 @@ Begin
 	
 	PauseTxt.X:=PAUSETXT_W div 2; PauseTxt.Y:=PAUSETXT_H div 2;
 	Font^.Scale := 1;
-	
+
 	{$IFDEF LD25_DEBUG} debugY:=False; debugU:=False; debugI:=False; {$ENDIF}
 	Repeat
 		If (RoomChange <> RCHANGE_NONE) then PerformRoomChange();
@@ -755,7 +759,9 @@ Begin
 		CountFrames(Time);
 
 	Until WantToQuit;
-	
+
+	{$IFDEF ANDROID} TouchControls.SetVisibility(False); {$ENDIF}
+
 	SDL_ShowCursor(1);
 	Exit(Given >= 8)
 End;
