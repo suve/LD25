@@ -728,11 +728,13 @@ Begin
 End;
 
 Function PlayGame():Boolean;
+Const
+	DELTA_MAXIMUM = 100; // Limit timestep to 100ms (10 updates/s)
 Var
-	Time, Ticks: uInt;
+	DeltaTime, Ticks, Timestep: uInt;
 	pk: TPlayerKey;
 Begin
-	GetDeltaTime(Time);
+	GetDeltaTime(DeltaTime);
 	SDL_ShowCursor(0);
 	
 	For pk := Low(TPlayerKey) to High(TPlayerKey) do Key[pk]:=False;
@@ -749,14 +751,21 @@ Begin
 	Repeat
 		If (RoomChange <> RCHANGE_NONE) then PerformRoomChange();
 		
-		GetDeltaTime(Time, Ticks);
+		GetDeltaTime(DeltaTime, Ticks);
 		Animate(Ticks);
 		GatherInput();
 
-		If (Not Paused) then CalculateGameCycle(Time);
+		If (Not Paused) then begin
+			Timestep := DeltaTime;
+			While Timestep > DELTA_MAXIMUM do begin
+				CalculateGameCycle(DELTA_MAXIMUM);
+				Timestep -= DELTA_MAXIMUM
+			end;
+			CalculateGameCycle(Timestep)
+		end;
 
 		DrawFrame();
-		CountFrames(Time);
+		CountFrames(DeltaTime);
 
 	Until WantToQuit;
 
