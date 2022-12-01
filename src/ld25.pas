@@ -475,8 +475,11 @@ Begin
 			If (Ev.Type_ = SDL_QuitEv) then begin
 				Shutdown:=True; Exit(False)
 			end else
+			{$IFDEF ANDROID}
+			If (Ev.Type_ = SDL_FingerDown) then Q:=1 else
+			{$ENDIF}
 			If (Ev.Type_ = SDL_KeyDown) then begin
-				If (Ev.Key.Keysym.Sym = SDLK_ESCAPE) then
+				If (Ev.Key.Keysym.Sym = SDLK_ESCAPE) or (Ev.Key.Keysym.Sym = SDLK_AC_BACK) then
 					Q:=-1 
 				else
 					Q:=1
