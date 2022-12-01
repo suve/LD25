@@ -518,6 +518,7 @@ Begin
 	else
 		ContinueColour := @GreyColour;
 
+	IHasSaves := False;
 	For GM:=Low(GM) to High(GM) do If (SaveExists[GM]) then begin
 		IHasSaves:=True;
 		Break
