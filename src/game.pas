@@ -64,7 +64,6 @@ Begin
 		end else
 		If (Ev.Type_ = SDL_KeyDown) then begin
 			If (Ev.Key.Keysym.Sym = SDLK_Escape) then WantToQuit:=True else
-			If (Ev.Key.Keysym.Sym = SDLK_AC_BACK) then WantToQuit:=True else
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_Up]        ) then Key[KEY_UP   ]     :=True else
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_RIGHT]     ) then Key[KEY_RIGHT]     :=True else
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_DOWN]      ) then Key[KEY_DOWN ]     :=True else
@@ -74,6 +73,12 @@ Begin
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_VolDown]) then ChgVol(-1) else
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_VolUp])	then ChgVol(+1) else
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_Pause])	then Paused:=(Not Paused) else
+			If (Ev.Key.Keysym.Sym = SDLK_AC_BACK) then begin
+				If (Paused) then
+					Paused:=False
+				else
+					WantToQuit:=True
+			end else
 			{$IFDEF LD25_DEBUG}
 				If (Ev.Key.Keysym.Sym = SDLK_H) then begin 
 					If (DeadTime <= 0) then Hero^.HP:=Hero^.MaxHP 
