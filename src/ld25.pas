@@ -695,6 +695,33 @@ Begin
 	Halt(1)
 End;
 
+Function InitSDL2(): Boolean;
+Begin
+	(*
+	 * Configure the behaviour of the SDL2 library.
+	 * Some of the values we set here are the same as the default ones,
+	 * but it is always better to be explicit.
+	 *)
+	SDL_SetHint(SDL_HINT_APP_NAME, GAMENAME);
+
+	SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, '0');
+	SDL_SetHint(SDL_HINT_SCREENSAVER_INHIBIT_ACTIVITY_NAME, 'Playing a game');
+
+	SDL_SetHint(SDL_HINT_RENDER_BATCHING, '1');
+	SDL_SetHint(SDL_HINT_RENDER_LOGICAL_SIZE_MODE, 'letterbox');
+	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, 'nearest');
+
+	SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, '0');
+	SDL_SetHint(SDL_HINT_QUIT_ON_LAST_WINDOW_CLOSE, '1');
+	SDL_SetHint(SDL_HINT_WINDOWS_NO_CLOSE_ON_ALT_F4, '0');
+
+	SDL_SetHint(SDL_HINT_ANDROID_TRAP_BACK_BUTTON, '1');
+	SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, '0');
+	SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, '1');
+
+	Result := SDL_Init(SDL_Init_Video or SDL_Init_Timer) = 0
+End;
+
 Procedure Startup();
 Var
 	Timu: Comp;
@@ -721,7 +748,7 @@ Begin
 	Math.SetExceptionMask(NewMask);
 
 	SDL_Log('Initializing SDL2...', []);
-	If (SDL_Init(SDL_Init_Video or SDL_Init_Timer)<>0) then
+	If (Not InitSDL2()) then
 		FatalError('Failed to initialize SDL2! Error details: %s', [SDL_GetError()])
 	else
 		SDL_Log('SDL2 initialized successfully.', []);
@@ -769,7 +796,6 @@ Begin
 		FatalError('Failed to create renderer! Error details: %s', [SDL_GetError()])
 	end else begin
 		SDL_Log('Renderer created successfully. (%s)', [PChar(Rendering.GetRendererInfo())]);
-		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, 'nearest');
 		SDL_RenderSetLogicalSize(Renderer, RESOL_W, RESOL_H)
 	end;
 
