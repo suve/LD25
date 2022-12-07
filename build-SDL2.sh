@@ -7,6 +7,23 @@ set -eu -o pipefail
 cd "$(dirname "$0")"
 SCRIPT_DIR="$(pwd)"
 
+# -- parse args
+
+CLEAN=0
+DEBUG=0
+
+while [[ "$#" -gt 0 ]]; do
+	if [[ "$1" == "--clean" ]]; then
+		CLEAN=1
+	elif [[ "$1" == "--debug" ]]; then
+		DEBUG=1
+	else
+		echo "Unknown option \"${1}\"" >&2
+		exit 1
+	fi
+	shift 1
+done
+
 # -- check env vars
 
 if [[ -z "${ANDROID_NDK_ROOT+isset}" ]]; then
@@ -24,6 +41,24 @@ fi
 BUILD_DIR="${SCRIPT_DIR}/build"
 mkdir -p "${BUILD_DIR}"
 
+# -- clean, if requested
+
+if [[ "${CLEAN}" -eq 1 ]]; then
+	rm -f "${BUILD_DIR}/lib/"{armeabi-v7a,arm64-v8a,x86_64}/libSDL2{,_image,_mixer}.so
+	rm -f "${BUILD_DIR}/obj/local/"{armeabi-v7a,arm64-v8a,x86_64}/libSDL2{,_image,_mixer}.so
+	rm -rf "${BUILD_DIR}/obj/local/"{armeabi-v7a,arm64-v8a,x86_64}/objs/SDL2{,_image,_mixer}/
+fi
+
+# -- set up some debug/release values
+
+if [[ "${DEBUG}" -eq 1 ]]; then
+	OPT_OPTIM="debug"
+	OPT_STRIP_MODE="none"
+else
+	OPT_OPTIM="release"
+	OPT_STRIP_MODE="--strip-unneeded"
+fi
+
 # -- build the SDL2 libraries
 
 "${ANDROID_NDK_ROOT}/ndk-build" \
@@ -35,6 +70,8 @@ mkdir -p "${BUILD_DIR}"
 	APP_ABI="armeabi-v7a arm64-v8a x86_64" \
 	APP_PLATFORM="android-${ANDROID_API}" \
 	APP_MODULES="SDL2 SDL2_main SDL2_mixer SDL2_image" \
+	APP_OPTIM="${OPT_OPTIM}" \
+	APP_STRIP_MODE="${OPT_STRIP_MODE}" \
 	SUPPORT_WAV=false \
 	SUPPORT_DRFLAC=false \
 	SUPPORT_FLAC_LIBFLAC=false \

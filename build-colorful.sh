@@ -7,10 +7,34 @@ set -eu -o pipefail
 cd "$(dirname "$0")"
 SCRIPT_DIR="$(pwd)"
 
+# -- parse args
+
+CLEAN=0
+DEBUG="false"
+
+while [[ "$#" -gt 0 ]]; do
+	if [[ "$1" == "--clean" ]]; then
+		CLEAN=1
+	elif [[ "$1" == "--debug" ]]; then
+		DEBUG="true"
+	else
+		echo "Unknown option \"${1}\"" >&2
+		exit 1
+	fi
+	shift 1
+done
+
 # -- prepare the build directory
 
 BUILD_DIR="${SCRIPT_DIR}/build"
 mkdir -p "${BUILD_DIR}"
+
+# -- clean, if requested
+
+if [[ "${CLEAN}" -eq 1 ]]; then
+	rm -f "${BUILD_DIR}/lib/"{armeabi-v7a,arm64-v8a,x86_64}/libcolorful.so
+	rm -rf "${BUILD_DIR}/obj/local/"{armeabi-v7a,arm64-v8a,x86_64}/objs/colorful/
+fi
 
 # -- build the game .so
 
@@ -25,7 +49,7 @@ function fpcbuild() {
 		--flags="-Fl${BUILD_DIR}/lib/${NDK_ARCH}" \
 		--flags="-FE${BUILD_DIR}/lib/${NDK_ARCH}" \
 		--flags="-FU${BUILD_DIR}/obj/local/${NDK_ARCH}/objs/colorful/" \
-		--debug=true \
+		--debug="${DEBUG}" \
 		--android=true
 	make executable
 }

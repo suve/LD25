@@ -36,9 +36,18 @@ The straightforward way is to call:
 
     $ ./build.sh
 
+The build script can, optionally, the the following arguments:
+
+* `--clean`    
+  Forces removal of any old files before the build.
+
+* `--debug`    
+  Performs a debug build.
+
 This main build script will call all the sub-scripts in proper order for you.
 Unless you want to perform a partial build, there's no need to call the
-individual sub-scripts manually.
+individual sub-scripts manually. All the sub-scripts accept the `--clean`
+and `--debug` options, as well.
 
 
 ### build-SDL2.sh

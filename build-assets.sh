@@ -7,8 +7,31 @@ set -eu -o pipefail
 cd "$(dirname "$0")"
 SCRIPT_DIR="$(pwd)"
 
+# -- parse args
+
+CLEAN=0
+DEBUG=false
+
+while [[ "$#" -gt 0 ]]; do
+	if [[ "$1" == "--clean" ]]; then
+		CLEAN=1
+	elif [[ "$1" == "--debug" ]]; then
+		DEBUG="true"
+	else
+		echo "Unknown option \"${1}\"" >&2
+		exit 1
+	fi
+	shift 1
+done
+
+# -- clean up, if requested
+
+if [[ "${CLEAN}" -eq 1 ]]; then
+	rm -rf "${SCRIPT_DIR}"/colorful/build/{gfx,map,sfx,slide}
+fi
+
 # -- build the game assets
 
 cd "${SCRIPT_DIR}/colorful"
-./configure.sh --android=true
+./configure.sh --android=true --debug="${DEBUG}"
 make "-j$(nproc)" assets
