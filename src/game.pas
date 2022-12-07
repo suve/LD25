@@ -55,9 +55,19 @@ Var
 	debugY,debugU,debugI:Boolean;
 {$ENDIF}
 
+Procedure SetAllowScreensaver(Allow: Boolean);
+Begin
+	If(Allow) then
+		SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, '1')
+	else
+		SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, '0')
+end;
 
 Procedure GatherInput();
+Var
+	NewPaused: Boolean;
 Begin
+	NewPaused := Paused;
 	While (SDL_PollEvent(@Ev)>0) do begin
 		If (Ev.Type_ = SDL_QuitEv) then begin
 			Shutdown:=True; WantToQuit:=True 
@@ -72,10 +82,10 @@ Begin
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_ShootRight]) then Key[KEY_ShootRight]:=True else
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_VolDown]) then ChgVol(-1) else
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_VolUp])	then ChgVol(+1) else
-			If (Ev.Key.Keysym.Sym = KeyBind[Key_Pause])	then Paused:=(Not Paused) else
+			If (Ev.Key.Keysym.Sym = KeyBind[Key_Pause])	then NewPaused:=(Not NewPaused) else
 			If (Ev.Key.Keysym.Sym = SDLK_AC_BACK) then begin
 				If (Paused) then
-					Paused:=False
+					NewPaused:=False
 				else
 					WantToQuit:=True
 			end else
@@ -104,15 +114,20 @@ Begin
 		If (Ev.Type_ = SDL_WindowEvent) then begin
 			If (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then begin
 				HandleWindowResizedEvent(@Ev);
-				Paused:=True
+				NewPaused:=True
 			end else
 			If (Ev.Window.Event = SDL_WINDOWEVENT_FOCUS_LOST) then begin
-				Paused:=True
+				NewPaused:=True
 			end else
 			If (Ev.Window.Event = SDL_WINDOWEVENT_CLOSE) then begin
 				Shutdown:=True; WantToQuit:=True
 			end
 		end
+	end;
+
+	If(NewPaused <> Paused) then begin
+		SetAllowScreensaver(Not Paused);
+		Paused := NewPaused
 	end
 End;
 
@@ -740,6 +755,7 @@ Var
 	pk: TPlayerKey;
 Begin
 	GetDeltaTime(DeltaTime);
+	SetAllowScreensaver(False);
 	SDL_ShowCursor(0);
 	
 	For pk := Low(TPlayerKey) to High(TPlayerKey) do Key[pk]:=False;
@@ -776,6 +792,7 @@ Begin
 
 	{$IFDEF ANDROID} TouchControls.SetVisibility(False); {$ENDIF}
 
+	SetAllowScreensaver(True);
 	SDL_ShowCursor(1);
 	Exit(Given >= 8)
 End;
