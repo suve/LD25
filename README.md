@@ -78,6 +78,9 @@ The script takes the following options:
   Controls whether the built executable should be stripped of debug symbols.
   The default value is `false`.
 
+The option syntax is `--option=value`. Passing `--option value` will result in an error.
+For boolean options, the value can be omitted; it will be treated as `true`.
+
 The script generates a `Makefile`, so once you've configured everything
 to your liking (or just decided to go with the defaults), you can build
 the game through the usual method:
