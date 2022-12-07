@@ -60,11 +60,15 @@ function fpcbuild() {
 	local FPC_ARCH="$1"
 	local NDK_ARCH="$2"
 
+	mkdir -p "${BUILD_DIR}/obj/local/${NDK_ARCH}/objs/colorful/"
+
 	./configure.sh \
-		--flags "-P${FPC_ARCH}" \
-		--flags "-Fl${SCRIPT_DIR}/build/lib/${NDK_ARCH}" \
-		--flags "-FE${SCRIPT_DIR}/build/lib/${NDK_ARCH}" \
-		--android true
+		--flags="-P${FPC_ARCH}" \
+		--flags="-Fl${BUILD_DIR}/lib/${NDK_ARCH}" \
+		--flags="-FE${BUILD_DIR}/lib/${NDK_ARCH}" \
+		--flags="-FU${BUILD_DIR}/obj/local/${NDK_ARCH}/objs/colorful/" \
+		--debug=true \
+		--android=true
 	make executable
 }
 
