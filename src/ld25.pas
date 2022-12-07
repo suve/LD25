@@ -631,7 +631,7 @@ Begin
 			SDL_Log('Configuration file loaded successfully.', []);
 			Exit()
 		end else
-			SDL_Log('Failed to load configuration file!', []);
+			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, 'Failed to load configuration file!', [])
 	end else
 		SDL_Log('Configuration file not found.', []);
 
@@ -642,7 +642,7 @@ Begin
 				SDL_Log('Legacy configuration file loaded successfully.', []);
 				Exit()
 			end else
-				SDL_Log('Failed to load legacy configuration file!', [])
+				SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, 'Failed to load legacy configuration file!', [])
 		end else
 			SDL_Log('Legacy v1.x configuration file not found.', []);
 	{$ENDIF}
@@ -734,7 +734,7 @@ Begin
 
 	SDL_Log('Initializing SDL2 audio subsystem...', []);
 	If (SDL_InitSubSystem(SDL_Init_Audio)<>0) then begin
-		SDL_Log('Failed to initialize SDL2 audio subsystem! Error details: %s', [SDL_GetError()]);
+		SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 'Failed to initialize SDL2 audio subsystem! Error details: %s', [SDL_GetError()]);
 		NoSound:=True
 	end else
 		SDL_Log('SDL2 audio subsystem initialized successfully.', []);
@@ -742,11 +742,11 @@ Begin
 	If (Not NoSound) then begin
 		SDL_Log('Initializing SDL2_mixer...', []);
 		If(Mix_Init(0) <> 0) then begin
-			SDL_Log('Failed to initialize SDL2_mixer! Error details: %s', [Mix_GetError()]);
+			SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 'Failed to initialize SDL2_mixer! Error details: %s', [Mix_GetError()]);
 			NoSound:=True
 		end else
 		If (Mix_OpenAudio(AUDIO_FREQ, AUDIO_TYPE, AUDIO_CHAN, AUDIO_CSIZ)<>0) then begin
-			SDL_Log('Failed to initialize SDL2_mixer! Error details: %s', [Mix_GetError()]);
+			SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 'Failed to initialize SDL2_mixer! Error details: %s', [Mix_GetError()]);
 			NoSound:=True
 		end else begin
 			Mix_AllocateChannels(SFXCHANNELS);
@@ -817,7 +817,7 @@ Begin
 	If(Result) then
 		SDL_Log('Game loaded successfully.', [])
 	else
-		SDL_Log('Failed to load the game!', [])
+		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, 'Failed to load the game!', [])
 End;
 
 Procedure QuitProg();

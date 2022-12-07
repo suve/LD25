@@ -324,10 +324,10 @@ Begin
 		IconSurf:=IMG_Load(PChar({$IFNDEF ANDROID} DataPath + {$ENDIF} ICON_FILE));
 		
 		If (IconSurf = NIL) then begin
-			{$IFDEF LD25_ASSETS_SYSTEMWIDE}
-			SDL_Log('Failed to load file: %s%s', [PChar(DataPath), PChar(ICON_FILE)]);
+			{$IFDEF LD25_ASSETS_STANDALONE}
+			SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 'Failed to load file: ' + ICON_FILE, []);
 			{$ELSE}
-			SDL_Log('Failed to load file: ' + ICON_FILE, []);
+			SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 'Failed to load file: %s%s', [PChar(DataPath), PChar(ICON_FILE)]);
 			{$ENDIF}
 			Exit()
 		end

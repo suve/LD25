@@ -337,7 +337,7 @@ Begin
 	end;
 	If (NoRoom) then begin
 		WriteStr(ErrStr, 'Room ',GameMode,':',NX,':',NY,' not found!');
-		SDL_Log('%s', [PChar(ErrStr)]);
+		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, '%s', [PChar(ErrStr)]);
 		Exit(False)
 	end;
 
@@ -405,7 +405,7 @@ Begin
 	If SaveGame(GameMode) then
 		SDL_Log('Game saved successfully.', [])
 	else
-		SDL_Log('Failed to save the game!', [])
+		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, 'Failed to save the game!', [])
 End;
 
 
