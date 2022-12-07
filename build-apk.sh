@@ -42,12 +42,12 @@ fi
 
 mkdir -p android/app/src/main/assets
 for TYPE in gfx sfx map slides; do
-	ln -srf "colorful/build/${TYPE}" "android/app/src/main/assets/${TYPE}"
+	ln -srnf "colorful/build/${TYPE}" "android/app/src/main/assets/${TYPE}"
 done
 
-ln -srf SDL2/android-project/app/src/main/java/org \
+ln -srnf SDL2/android-project/app/src/main/java/org \
 	android/app/src/main/java/org
-ln -srf build/lib \
+ln -srnf build/lib \
 	android/app/src/main/jniLibs
 
 # -- trigger a Gradle build
