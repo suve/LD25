@@ -110,7 +110,8 @@ Procedure GetDeltaTime(Out Time:uInt);
 Procedure GetDeltaTime(Out Time,Ticks:uInt);
 
 // Mainly used in initialization, as we later switch to SDL ticks
-Function GetMSecs:Comp;
+Function GetTimeStamp(): TTimeStamp;
+Function TimestampDiffMillis(Const First, Second: TTimeStamp): sInt;
 
 // Draw primitives using SDL
 Procedure DrawColouredRect(Const Rect: PSDL_Rect; Const Colour: PSDL_Colour);
@@ -174,9 +175,25 @@ Begin
 	Ticks := Tikku
 End;
 
-Function GetMSecs():Comp;
+Function GetTimeStamp(): TTimeStamp;
 Begin
-	Exit(TimeStampToMSecs(DateTimeToTimeStamp(Now())))
+	Result := DateTimeToTimeStamp(Now())
+End;
+
+Function TimestampDiffMillis(Const First, Second: TTimeStamp): sInt;
+Var
+	Diff: Comp;
+Begin
+	Diff := TimeStampToMSecs(Second) - TimeStampToMSecs(First);
+	{$IFDEF CPUI386}
+		(*
+		 * On i386, the Comp type cannot be cast to an sInt, resulting in a compilation error.
+		 * As a (rather dirty) workaround, force a cast to a floating-point value and then cast back to integer.
+		 *)
+		Result := Trunc(Extended(Diff))
+	{$ELSE}
+		Result := sInt(Diff)
+	{$ENDIF}
 End;
 
 Procedure DrawColouredRect(Const Rect: PSDL_Rect; Const Colour: PSDL_Colour);

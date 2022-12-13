@@ -724,12 +724,12 @@ End;
 
 Procedure Startup();
 Var
-	Timu: Comp;
+	StartTime: TTimeStamp;
 	GM: TGameMode;
 	OldMask, NewMask: TFPUExceptionMask;
 	Assload: Assets.TLoadingResult;
 Begin
-	Timu:=GetMSecs(); Randomize();
+	StartTime:=GetTimeStamp(); Randomize();
 
 	ConfigFiles.SetPaths();
 	{$IFNDEF ANDROID}
@@ -821,7 +821,7 @@ Begin
 		SDL_Log('All assets loaded successfully.', []);
 
 	SetLength(Mob,0); SetLength(EBul,0); SetLength(PBul,0); SetLength(Gib,0); Hero:=NIL;
-	SDL_Log('All done! Initialization finished in %ld ms.', [clong(GetMSecs() - Timu)])
+	SDL_Log('All done! Initialization finished in %ld ms.', [clong(TimeStampDiffMillis(StartTime, GetTimeStamp()))])
 End;
 
 Procedure NewGame(Const GM:TGameMode);
@@ -847,9 +847,10 @@ Begin
 End;
 
 Procedure QuitProg();
-Var Timu:Comp;
+Var
+	StartTime: TTimeStamp;
 Begin
-	Timu:=GetMSecs();
+	StartTime := GetTimeStamp();
 	SDL_HideWindow(Window);
 
 	SaveCurrentGame();
@@ -882,7 +883,7 @@ Begin
 		SDL_Quit();
 	SDL_Log('SDL2 closed.', []);
 
-	SDL_Log('Finalization finished in %ld ms.', [clong(GetMSecs() - Timu)]);
+	SDL_Log('Finalization finished in %ld ms.', [clong(TimeStampDiffMillis(StartTime, GetTimeStamp()))]);
 	SDL_Log('Thanks for playing and have a nice day!', [])
 End;
 
