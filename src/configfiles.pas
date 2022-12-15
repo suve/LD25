@@ -351,19 +351,20 @@ End;
 Procedure CopyFile(OldPath, NewPath: AnsiString);
 Const
 	BufferSize = 4096;
+	ErroneousHandle = THandle(-1);
 Var
 	Buffer: Array[0 .. (BufferSize - 1)] of Char;
 	ReadHandle, WriteHandle: THandle;
 	Count: sInt;
 Begin
 	ReadHandle := FileOpen(OldPath, fmOpenRead);
-	If ReadHandle = -1 then Exit();
+	If ReadHandle = ErroneousHandle then Exit();
 
 	// FPC does not have a "create file if it does not exist yet" function,
 	// so let's just do this and try to live with the TOCTTOU issue.
 	If FileExists(NewPath) then Exit();
 	WriteHandle := FileCreate(NewPath, fmOpenWrite, &660);
-	If WriteHandle = -1 then Exit();
+	If WriteHandle = ErroneousHandle then Exit();
 
 	While True do begin
 		Count := FileRead(ReadHandle, Buffer, BufferSize);
