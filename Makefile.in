@@ -41,7 +41,7 @@ install: all
 	install -m 755 -p -D "$(EXECUTABLE)" "$(DESTDIR)/usr/bin/colorful"
 	# Data files
 	install -m 755 -d "$(DESTDIR)/usr/share/suve/colorful"
-	cp -t "$(DESTDIR)/usr/share/suve/colorful/" -a gfx map sfx slides
+	cp -t "$(DESTDIR)/usr/share/suve/colorful/" -a build/gfx build/map build/sfx build/slides
 	# Icons
 	install -m 644 -p -D "pkg/colorful.svg"         "$(DESTDIR)/usr/share/icons/hicolor/scalable/apps/colorful.svg"
 	install -m 644 -p -D "pkg/colorful-32x32.png"   "$(DESTDIR)/usr/share/icons/hicolor/32x32/apps/colorful.png"
