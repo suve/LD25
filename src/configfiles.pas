@@ -286,12 +286,15 @@ Begin
 	KeyBind[KEY_SHOOTLEFT]:=SDLK_Z;   KeyBind[KEY_SHOOTRIGHT]:=SDLK_X;
 	KeyBind[KEY_VOLDOWN]:=SDLK_MINUS; KeyBind[KEY_VOLUP]:=SDLK_EQUALS;
 	KeyBind[KEY_PAUSE]:=SDLK_P;
-	
+
 	// Window size
 	Wnd_W:=WINDOW_W; Wnd_H:=WINDOW_H; Wnd_F:=False;
-	
+
 	// Audio volume
-	SetVol(VolLevel_MAX,False) 
+	SetVol(VolLevel_MAX,False);
+
+	// Colour values
+	ResetMapColoursToDefault()
 End;
 
 {$IFNDEF ANDROID}

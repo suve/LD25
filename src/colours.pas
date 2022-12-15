@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2018 Artur Iwicki
+ * Copyright (C) 2012-2022 suve (a.k.a. Artur Frenszek-Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -86,7 +86,7 @@ Begin
 	Result.G := RGB mod 256;
 	RGB := RGB div 256;
 	Result.R := RGB mod 256;
-	
+
 	Result.A := 255
 End;
 
@@ -96,11 +96,11 @@ Var
 Begin
 	Str:=LowerCase(Str);
 	If(Str[1] = '#') then Delete(Str, 1, 1);
-	
+
 	rstr := Copy(Str, 1, 2);
 	gstr := Copy(Str, 3, 2);
 	bstr := Copy(Str, 5, 2);
-	
+
 	Result.R := Hex2Dec(rstr);
 	Result.G := Hex2Dec(gstr);
 	Result.B := Hex2Dec(bstr);
@@ -113,9 +113,5 @@ Var
 Begin
 	For C:=Low(MapColour) to High(MapColour) do MapColour[C]:=DefaultMapColour[C]
 End;
-
-
-Initialization
-	ResetMapColoursToDefault()
 
 End.
