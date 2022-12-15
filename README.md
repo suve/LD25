@@ -59,7 +59,7 @@ The script takes the following options:
 
   The default value is `standalone`.
 
-- `--debug`
+- `--debug`    
   Controls whether debugging features are enabled.
   The default value is `false`.
 
@@ -78,17 +78,36 @@ The script takes the following options:
   Controls whether the built executable should be stripped of debug symbols.
   The default value is `false`.
 
-The option syntax is `--option=value`. Passing `--option value` will result in an error.
+The option syntax is `--option=value`.
+Passing `--option value` will result in an error.
 For boolean options, the value can be omitted; it will be treated as `true`.
 
-The script generates a `Makefile`, so once you've configured everything
+The script generates a Makefile, so once you've configured everything
 to your liking (or just decided to go with the defaults), you can build
 the game through the usual method:
 
     $ make all
 
 
-### Building for Android
+### Installing the game
+
+If you set `assets` to `standalone` (the default value) during the
+configuration phase, the game is ready to go. You can launch the executable
+found at `build/colorful` and enjoy yourself. Since the game stores
+its configuration file and savestates inside the user's home directory,
+it should continue to work even if moved to a non-writeable location.
+
+If you're trying to package the game for Linux, go back and ensure you've
+configured `assets` to `systemwide`. If everything checks out, you can
+go ahead and use the `install` target defined in the Makefile.
+
+    $ make install [DESTDIR=]
+
+Note that, currently, there is no support for specifying the installation prefix;
+it is hard-coded to `/usr`.
+
+
+## Building for Android
 
 Android is a bit of a tough cookie.
 You can find all the extra code (Java/JNI glue, manifests, etc.)

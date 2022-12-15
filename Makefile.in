@@ -1,3 +1,7 @@
+# User-configurable variables
+
+DESTDIR ?=
+
 # Convenience variables
 
 FLAGS_SDL2 = -Fu./SDL2/units/
@@ -21,7 +25,7 @@ SLIDE_TARGETS := $(SLIDE_SOURCES:slides/%.png=build/slides/%.png)
 
 ## -- .PHONY targets
 
-.PHONY = all assets clean executable
+.PHONY = all assets clean executable install
 
 all: assets executable
 
@@ -31,6 +35,24 @@ executable: $(EXECUTABLE)
 
 clean:
 	rm -rf build/
+
+install: all
+	# Executable
+	install -m 755 -p -D "$(EXECUTABLE)" "$(DESTDIR)/usr/bin/colorful"
+	# Data files
+	install -m 755 -d "$(DESTDIR)/usr/share/suve/colorful"
+	cp -t "$(DESTDIR)/usr/share/suve/colorful/" -a gfx map sfx slides
+	# Icons
+	install -m 644 -p -D "pkg/colorful.svg"         "$(DESTDIR)/usr/share/icons/hicolor/scalable/apps/colorful.svg"
+	install -m 644 -p -D "pkg/colorful-32x32.png"   "$(DESTDIR)/usr/share/icons/hicolor/32x32/apps/colorful.png"
+	install -m 644 -p -D "pkg/colorful-64x64.png"   "$(DESTDIR)/usr/share/icons/hicolor/64x64/apps/colorful.png"
+	install -m 644 -p -D "pkg/colorful-128x128.png" "$(DESTDIR)/usr/share/icons/hicolor/128x128/apps/colorful.png"
+	# Desktop file and AppStream metadata
+	install -m 644 -p -D "pkg/colorful.desktop"     "$(DESTDIR)/usr/share/applications/colorful.desktop"
+	install -m 644 -p -D "pkg/colorful.appdata.xml" "$(DESTDIR)/usr/share/appdata/colorful.appdata.xml"
+	# Man pages
+	install -m 644 -p -D "pkg/colorful-english.man" "$(DESTDIR)/usr/share/man/man6/colorful.6"
+	install -m 644 -p -D "pkg/colorful-polish.man"  "$(DESTDIR)/usr/share/man/pl/man6/colorful.6"
 
 # -- Real targets
 
