@@ -63,6 +63,10 @@ The script takes the following options:
   Controls whether debugging features are enabled.
   The default value is `false`.
 
+- `--donate`    
+  Controls whether the "Donate" option appears in the main menu.
+  The default value is `true`.
+
 - `--fpc PATH`    
   Use the Free Pascal Compiler located at `PATH`.
   The default is to use `fpc`.

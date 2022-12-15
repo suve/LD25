@@ -314,6 +314,7 @@ Begin
 	Menu.Destroy()
 End;
 
+{$IFDEF LD25_DONATE}
 Procedure DonateScreen();
 Const
 	GitHubText = 'G - GITHUB SPONSORS';
@@ -384,6 +385,7 @@ Begin
 		end;
 	until BackToMenu
 End;
+{$ENDIF}
 
 Function GameworldDialog(Const Load:Boolean):Char;
 Const
@@ -536,9 +538,11 @@ Begin
 	Menu.AddItem('L', 'LOAD GAME', LoadColour);
 	Menu.AddItem('S', 'SET COLOURS', @WhiteColour);
 	{$IFNDEF ANDROID}
-	Menu.AddItem('B', 'BIND KEYS', @WhiteColour);
+		Menu.AddItem('B', 'BIND KEYS', @WhiteColour);
 	{$ENDIF}
-	Menu.AddItem('D', 'DONATE', @WhiteColour);
+	{$IFDEF LD25_DONATE}
+		Menu.AddItem('D', 'DONATE', @WhiteColour);
+	{$ENDIF}
 	Menu.AddItem('Q', 'QUIT', @WhiteColour);
 
 	Result := '?';
@@ -930,8 +934,12 @@ begin
 				MenuChoice:='L'
 			end;
 			'S': SetColours();
-			'D': DonateScreen();
-			{$IFNDEF ANDROID} 'B': BindKeys(); {$ENDIF}
+			{$IFNDEF ANDROID}
+				'B': BindKeys();
+			{$ENDIF}
+			{$IFDEF LD25_DONATE}
+				'D': DonateScreen();
+			{$ENDIF}
 		end;
 		If (GameOn) and (GameMode <> GM_TUTORIAL) and (Given >= 8) then begin
 			GameOn:=False; Outro()

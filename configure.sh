@@ -43,6 +43,10 @@ Accepted options:
   Controls whether debugging features are enabled.
   The default value is "false".
 
+--donate BOOLEAN
+  Controls whether the "Donate" option appears in the main menu.
+  The default value is "true".
+
 --fpc FULL_PATH
   Use the Free Pascal Compiler located at FULL_PATH.
   The default is to use "fpc".
@@ -84,6 +88,7 @@ function parse_bool() {
 ANDROID="false"
 ASSETS="standalone"
 DEBUG="false"
+DONATE="true"
 FPC="fpc"
 USER_FLAGS=""
 OGG_QUALITY="10"
@@ -111,6 +116,8 @@ while [[ "${#}" -gt 0 ]]; do
 		ASSETS="${val}"
 	elif [[ "${opt}" == "--debug" ]]; then
 		DEBUG="$(parse_bool "--debug" "${val}")"
+	elif [[ "${opt}" == "--donate" ]]; then
+		DONATE="$(parse_bool "--donate" "${val}")"
 	elif [[ "${opt}" == "--fpc" ]]; then
 		FPC="${val}"
 	elif [[ "${opt}" == "--flags" ]]; then
@@ -132,6 +139,7 @@ Config values:
   ANDROID = ${ANDROID}
   ASSETS = ${ASSETS}
   DEBUG = ${DEBUG}
+  DONATE = ${DONATE}
   FPC = ${FPC}
   FLAGS =${USER_FLAGS}
   OGG_QUALITY = ${OGG_QUALITY}
@@ -158,6 +166,10 @@ if [[ "${DEBUG}" == "true" ]]; then
 	BUILD_FLAGS="${BUILD_FLAGS} -dLD25_DEBUG"
 else
 	BUILD_FLAGS="${BUILD_FLAGS} -O3"
+fi
+
+if [[ "${DONATE}" == true ]]; then
+	BUILD_FLAGS="${BUILD_FLAGS} -dLD25_DONATE"
 fi
 
 if [[ "${STRIP}" == "true" ]]; then
