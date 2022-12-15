@@ -10,7 +10,7 @@ android {
 		applicationId "pl.suve.colorful.android"
 		minSdkVersion 21
 		targetSdkVersion 29
-		versionCode 200
+		versionCode 2000
 		versionName "2.0"
 	}
 

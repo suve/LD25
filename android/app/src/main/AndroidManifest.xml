@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
 	package="pl.suve.colorful.android"
-	android:versionCode="200"
+	android:versionCode="2000"
 	android:versionName="2.0"
 	android:installLocation="auto">
 
