@@ -1,0 +1,31 @@
+.\" Manpage for colorful
+.\" Contact veg@svgames.pl to correct errors or typos.
+.TH COLORFUL 6 "2017-10-01" "1.2" "Spel handleiding"
+.SH NAAM
+colorful - eenvoudige 2D zijaanzicht Shooter
+.SH INHOUD
+\fBcolorful\fR
+.SH BESCHRIJVING
+Colorful is een simpel schiet spel, waarin de hoofdrolspeler
+door een doolhof van grotten en gangen reist om kleurartefacten te verzamelen.
+.SH BESTURING
+Het spel wordt gespeeld met alleen het toetsenbord. Standaard besturing:
+.TP
+\fBPijltjestoetsen\fR
+Bewegen
+.TP
+\fBZ\fR/\fBX\fR
+Schiet links / rechts
+.TP
+\fB\-\fR/\fB+\fR
+Volume omlaag / omhoog
+.TP
+\fBP\fR
+Pauze / hervatten
+.TP
+Deze toetsenbordindeling kan volledig worden aangepast.
+.SH DIRECTORIES
+Spel data bestanden bevinden zich in: \fB/usr/share/suve/colorful\fR. 
+Het spel bewaart zijn instellingen en opgeslagen spellen in: \fB~/.suve/colorful/\fR.
+.SH AUTEUR
+suve (veg@svgames.pl)

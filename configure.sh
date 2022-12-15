@@ -1,0 +1,204 @@
+#!/bin/bash
+#
+# colorful - simple 2D sideview shooter
+# Copyright (C) 2022 suve (a.k.a. Artur Frenszek-Iwicki)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License, version 3,
+# as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+set -eu -o pipefail
+
+function show_help() {
+	cat <<EOF
+configure.sh for colorful
+Accepted options:
+
+--android BOOLEAN
+  Controls whether Android-specific build settings are enabled.
+  The default value is "false".
+
+--assets <bundle, standalone, systemwide>
+  Specifies where the game should expect asset files to be located.
+  * bundle: Assets are expected to be found two directory levels
+            above the executable, like in the following structure:
+            - bin/linux64
+            - bin/win64
+            - gfx/
+  * standalone: Assets are expected to be found in the same directory,
+                right next to the executable.
+  * systemwide: Assets are expected to be found in /usr/share/suve/colorful.
+  The default value is "standalone".
+  This setting is ignored in Android builds.
+
+--debug BOOLEAN
+  Controls whether debugging features are enabled.
+  The default value is "false".
+
+--donate BOOLEAN
+  Controls whether the "Donate" option appears in the main menu.
+  The default value is "true".
+
+--fpc FULL_PATH
+  Use the Free Pascal Compiler located at FULL_PATH.
+  The default is to use "fpc".
+
+--flags FLAGS
+  Pass FLAGS to fpc. Can be specified multiple times.
+
+--ogg-quality QUALITY
+  Encode sound effects to .ogg with this quality setting.
+  The default value is "10".
+
+--strip BOOLEAN
+  Controls whether the built executable should be stripped of debug symbols.
+  The default value is "false".
+
+Option syntax is "--option=value". "--option" "value" will not work.
+For BOOLEAN options, the value can be omitted; it will be treated as \"true\".
+EOF
+}
+
+# Helper functions
+
+function parse_bool() {
+	local flag="${1}"
+	local value="${2}"
+
+	if [[ -z "${value}" ]] || [[ "${value}" == "true" ]] || [[ "${value}" == "yes" ]] || [[ "${value}" == "1" ]]; then
+		echo "true"
+	elif [[ "${value}" == "false" ]] || [[ "${value}" == "no" ]] || [[ "${value}" == "0" ]]; then
+		echo "false"
+	else
+		echo "Error: The argument to ${flag} must be one of \"true\", \"yes\", \"1\", \"false\", \"no\", or \"0\"" >&2
+		exit 1
+	fi
+}
+
+# Set defaults
+
+ANDROID="false"
+ASSETS="standalone"
+DEBUG="false"
+DONATE="true"
+FPC="fpc"
+USER_FLAGS=""
+OGG_QUALITY="10"
+PLATFORM="desktop"
+STRIP="false"
+
+while [[ "${#}" -gt 0 ]]; do
+	if [[ "${1}" == "--help" ]]; then
+		show_help
+		exit
+	fi
+
+	opt="${1%%=*}"
+	val="${1:${#opt}}"
+	val="${val:1}"
+	shift
+
+	if [[ "${opt}" == "--android" ]]; then
+		ANDROID="$(parse_bool "--android" "${val}")"
+	elif [[ "${opt}" == "--assets" ]]; then
+		if [[ "${val}" != "bundle" ]] && [[ "${val}" != "standalone" ]] && [[ "${val}" != "systemwide" ]]; then
+			echo "Error: The argument to --assets must be one of \"bundle\", \"standalone\" or \"systemwide\"" >&2
+			exit 1
+		fi
+		ASSETS="${val}"
+	elif [[ "${opt}" == "--debug" ]]; then
+		DEBUG="$(parse_bool "--debug" "${val}")"
+	elif [[ "${opt}" == "--donate" ]]; then
+		DONATE="$(parse_bool "--donate" "${val}")"
+	elif [[ "${opt}" == "--fpc" ]]; then
+		FPC="${val}"
+	elif [[ "${opt}" == "--flags" ]]; then
+		USER_FLAGS="${USER_FLAGS} ${val}"
+	elif [[ "${opt}" == "--ogg-quality" ]]; then
+		OGG_QUALITY="${val}"
+	elif [[ "${opt}" == "--strip" ]]; then
+		STRIP="$(parse_bool "--strip" "${val}")"
+	else
+		echo "Unknown option \"${opt}\"" >&2
+		exit 1
+	fi
+done
+
+# Print out used values
+
+cat <<EOF
+Config values:
+  ANDROID = ${ANDROID}
+  ASSETS = ${ASSETS}
+  DEBUG = ${DEBUG}
+  DONATE = ${DONATE}
+  FPC = ${FPC}
+  FLAGS =${USER_FLAGS}
+  OGG_QUALITY = ${OGG_QUALITY}
+  STRIP = ${STRIP}
+EOF
+
+# Calculate Makefile variables from arguments
+
+BUILD_FLAGS="-vewnh -dLD25_ASSETS_${ASSETS}"
+
+if [[ "${ANDROID}" == "true" ]]; then
+	EXE_PREFIX="lib"
+	EXE_SUFFIX=".so"
+	GFX_FILTER=""
+	BUILD_FLAGS="-Tandroid ${BUILD_FLAGS}"
+else
+	EXE_PREFIX=""
+	EXE_SUFFIX=""
+	GFX_FILTER="gfx/touch-controls.png"
+fi
+
+if [[ "${DEBUG}" == "true" ]]; then
+	# Note: No -O1/-O2/-O3/-O4 flag - no optimisations!
+	BUILD_FLAGS="${BUILD_FLAGS} -dLD25_DEBUG"
+else
+	BUILD_FLAGS="${BUILD_FLAGS} -O3"
+fi
+
+if [[ "${DONATE}" == true ]]; then
+	BUILD_FLAGS="${BUILD_FLAGS} -dLD25_DONATE"
+fi
+
+if [[ "${STRIP}" == "true" ]]; then
+	BUILD_FLAGS="${BUILD_FLAGS} -CX -XX -Xs"
+else
+	BUILD_FLAGS="${BUILD_FLAGS} -gl -gw"
+fi
+
+FPC_FLAGS="${BUILD_FLAGS}${USER_FLAGS}"
+
+# cd to this script's directory and create the Makefile
+cd "$(dirname "${0}")"
+
+echo 'Generating Makefile...'
+
+{ cat <<EOF
+# !
+# ! This file has been generated by "configure.sh".
+# ! Do not edit manually.
+# !
+
+EXE_PREFIX := ${EXE_PREFIX}
+EXE_SUFFIX := ${EXE_SUFFIX}
+FPC := ${FPC}
+FPC_FLAGS := ${FPC_FLAGS}
+GFX_FILTER := ${GFX_FILTER}
+OGG_QUALITY := ${OGG_QUALITY}
+
+EOF
+} | cat - Makefile.in > Makefile
+
+echo 'Done.'

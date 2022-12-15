@@ -1,3 +1,19 @@
+(*
+ * colorful - simple 2D sideview shooter
+ * Copyright (C) 2012-2022 suve (a.k.a. Artur Frenszek Iwicki)
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 3,
+ * as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *)
 Unit game; {$INCLUDE defines.inc}
 
 
@@ -11,8 +27,10 @@ Function PlayGame():Boolean;
 
 Implementation
 Uses
-	SDL,
-	ConfigFiles, FloatingText, Objects, Rooms, Shared, Sour;
+	SDL2,
+	{$IFDEF ANDROID} ctypes, TouchControls, {$ENDIF}
+	Assets, Colours, ConfigFiles, Entities, FloatingText, Fonts, Images,
+	MathUtils, Rendering, Rooms, Shared, Sprites;
 
 Type
 	TRoomChange = (
@@ -30,16 +48,26 @@ Const
 Var
 	Frames, FrameTime, AniFra: uInt;
 	FrameStr: ShortString;
-	PauseTxt: Sour.TCrd;
+	PauseTxt: TSDL_Point;
 	Paused, WantToQuit: Boolean;
 	RoomChange: TRoomChange;
-{$IFDEF DEVELOPER} 
+{$IFDEF LD25_DEBUG}
 	debugY,debugU,debugI:Boolean;
 {$ENDIF}
 
+Procedure SetAllowScreensaver(Allow: Boolean);
+Begin
+	If(Allow) then
+		SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, '1')
+	else
+		SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, '0')
+end;
 
 Procedure GatherInput();
+Var
+	NewPaused: Boolean;
 Begin
+	NewPaused := Paused;
 	While (SDL_PollEvent(@Ev)>0) do begin
 		If (Ev.Type_ = SDL_QuitEv) then begin
 			Shutdown:=True; WantToQuit:=True 
@@ -54,8 +82,14 @@ Begin
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_ShootRight]) then Key[KEY_ShootRight]:=True else
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_VolDown]) then ChgVol(-1) else
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_VolUp])	then ChgVol(+1) else
-			If (Ev.Key.Keysym.Sym = KeyBind[Key_Pause])	then Paused:=(Not Paused) else
-			{$IFDEF DEVELOPER}
+			If (Ev.Key.Keysym.Sym = KeyBind[Key_Pause])	then NewPaused:=(Not NewPaused) else
+			If (Ev.Key.Keysym.Sym = SDLK_AC_BACK) then begin
+				If (Paused) then
+					NewPaused:=False
+				else
+					WantToQuit:=True
+			end else
+			{$IFDEF LD25_DEBUG}
 				If (Ev.Key.Keysym.Sym = SDLK_H) then begin 
 					If (DeadTime <= 0) then Hero^.HP:=Hero^.MaxHP 
 				end else
@@ -72,23 +106,38 @@ Begin
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_ShootLeft] ) then Key[KEY_ShootLeft] :=False else
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_ShootRight]) then Key[KEY_ShootRight]:=False else
 		end else
-		If (Ev.Type_ = SDL_VideoResize) then begin
-			Shared.ResizeWindow(Ev.Resize.W,Ev.Resize.H,False);
-			Paused:=True
+		{$IFDEF ANDROID}
+		If (Ev.Type_ = SDL_FingerUp) or (Ev.Type_ = SDL_FingerDown) or (Ev.Type_ = SDL_FingerMotion) then begin
+			TouchControls.HandleEvent(@Ev)
 		end else
-		If (Ev.Type_ = SDL_ActiveEvent) then begin
-			If (Ev.Active.State <> SDL_APPMOUSEFOCUS) and (Ev.Active.Gain = 0) then Paused:=True
+		{$ENDIF}
+		If (Ev.Type_ = SDL_WindowEvent) then begin
+			If (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then begin
+				HandleWindowResizedEvent(@Ev);
+				NewPaused:=True
+			end else
+			If (Ev.Window.Event = SDL_WINDOWEVENT_FOCUS_LOST) then begin
+				NewPaused:=True
+			end else
+			If (Ev.Window.Event = SDL_WINDOWEVENT_CLOSE) then begin
+				Shutdown:=True; WantToQuit:=True
+			end
 		end
+	end;
+
+	If(NewPaused <> Paused) then begin
+		SetAllowScreensaver(Not Paused);
+		Paused := NewPaused
 	end
 End;
 
 Procedure Animate(Const Ticks:uInt);
 Begin
-	{$IFNDEF DEVELOPER}
+	{$IFNDEF LD25_DEBUG}
 	AniFra:=(Ticks div AnimTime) mod 2;
 	{$ELSE}
 	If (Not debugY) 
-		then AniFra:=(Ticks div AnimTime) mod 2
+		then AniFra:=(Ticks div (AnimTime * 2)) mod 2
 		else AniFra:=0;
 	{$ENDIF}
 End;
@@ -106,7 +155,7 @@ Begin
 		
 		// In developer mode, debugI allows for noclip.
 		// Outside developer builds (or with disabled debugI), we need to check hero collisions.
-		{$IFDEF DEVELOPER}
+		{$IFDEF LD25_DEBUG}
 		If (Not debugI) then begin
 		{$ENDIF}
 			If (XDif<>0) then begin
@@ -122,7 +171,7 @@ Begin
 				If (Not Room^.Collides(Hero^.X,ChkY+YDif)) and (Not Room^.Collides(Hero^.X+Hero^.W-1,ChkY+YDif)) then
 					Hero^.Y:=Hero^.Y+YDif
 			end;
-		{$IFDEF DEVELOPER}
+		{$IFDEF LD25_DEBUG}
 		end else begin 
 			Hero^.X:=Hero^.X+XDif; Hero^.Y:=Hero^.Y+YDif 
 		end {$ENDIF}
@@ -142,11 +191,8 @@ Begin
 				If (ColState[C]=STATE_PICKED) then
 					ColState[C]:=STATE_NONE;
 			Carried:=0;
-			
-			Write('Saving game upon death... ');
-			If (SaveGame(GameMode))
-				then Writeln('Success!')
-				else Writeln('Failed!')
+
+			SaveCurrentGame('upon death')
 		end 
 	end
 End;
@@ -167,28 +213,21 @@ Begin
 	end else If (Carried>0) then begin
 		PlaySfx(SFX_EXTRA+1);
 		Given+=Carried; Carried:=0;
+		Hero^.Level := Given;
 		
 		For C:=0 to 7 do begin
 			If (ColState[C]=STATE_PICKED) then begin
 				CentralPalette[C]:=PaletteColour[C];
 				PaletteColour[C]:=GreyColour;
 				ColState[C]:=STATE_GIVEN
-			end;
-			
-			Hero^.MaxHP:=HERO_HEALTH*(1+(Given/14)); Hero^.HP:=Hero^.MaxHP;
-			Hero^.FirePower:=HERO_FIREPOWER*(1+(Given/14));
-			Hero^.InvLength:=Trunc(HERO_INVUL*(1+(Given/14)));
+			end
 		end;
 		
 		// If this is the last crystal, switch the quit-flag so we exit to outro after this game cycle.
 		If (Given >= 8) then
 			WantToQuit:=True 
-		else begin
-			Write('Saving game upon progress... '); 
-			If (SaveGame(GameMode)) 
-				then Writeln('Success!')
-				else Writeln('Failed!')
-		end
+		else
+			SaveCurrentGame('upon progress')
 	end;
 End;
 
@@ -258,41 +297,46 @@ Begin
 	end
 End;
 
+Procedure CalculateBulletMovement(Const Bullet:PBullet; Const Time: uInt);
+Var
+	XDif, YDif, ChkX, ChkY: Double;
+Begin
+	XDif:=Bullet^.XVel*Time/1000; YDif:=Bullet^.YVel*Time/1000;
+	If (XDif<>0) then begin
+		If (XDif<0) then ChkX:=Bullet^.X else ChkX:=Bullet^.X+Bullet^.W-1;
+		
+		If (Room^.CollidesOrOutside(ChkX+XDif,Bullet^.Y)) then begin
+			Room^.HitSfx(ChkX+XDif,Bullet^.Y); Bullet^.HP:=-10 
+		end else
+		If (Room^.CollidesOrOutside(ChkX+XDif,Bullet^.Y+Bullet^.H-1)) then begin 
+			Room^.HitSfx(ChkX+XDif,Bullet^.Y+Bullet^.H-1); Bullet^.HP:=-10
+		end else
+			Bullet^.X:=Bullet^.X+XDif
+	end;
+		
+	If (YDif<>0) then begin
+		If (YDif<0) then ChkY:=Bullet^.Y else ChkY:=Bullet^.Y+Bullet^.H-1;
+		
+		If (Room^.CollidesOrOutside(Bullet^.X,ChkY+YDif)) then begin 
+			Room^.HitSfx(Bullet^.X,ChkY+YDif); Bullet^.HP:=-10 
+		end else
+		If (Room^.CollidesOrOutside(Bullet^.X+Bullet^.W-1,ChkY+YDif)) then begin 
+			Room^.HitSfx(Bullet^.X+Bullet^.W-1,ChkY+YDif); Bullet^.HP:=-10
+		end else
+			Bullet^.Y:=Bullet^.Y+YDif
+	end;
+End;
+
 Procedure CalculatePlayerBullets(Const Time:uInt);
 Var
 	B, M: sInt;
-	XDif, YDif, ChkX, ChkY: Double;
 Begin
 	If (Length(PBul)=0) then Exit;
 	
 	For B:=Low(PBul) to High(PBul) do begin
 		If (PBul[B]=NIL) then Continue;
 		
-		XDif:=PBul[B]^.XVel*Time/1000; YDif:=PBul[B]^.YVel*Time/1000;
-		If (XDif<>0) then begin
-			If (XDif<0) then ChkX:=PBul[B]^.X else ChkX:=PBul[B]^.X+PBul[B]^.W-1;
-			
-			If (Room^.CollidesOrOutside(ChkX+XDif,PBul[B]^.Y)) then begin
-				Room^.HitSfx(ChkX+XDif,PBul[B]^.Y); PBul[B]^.HP:=-10 
-			end else
-			If (Room^.CollidesOrOutside(ChkX+XDif,PBul[B]^.Y+PBul[B]^.H-1)) then begin 
-				Room^.HitSfx(ChkX+XDif,PBul[B]^.Y+PBul[B]^.H-1); PBul[B]^.HP:=-10
-			end else
-				PBul[B]^.X:=PBul[B]^.X+XDif
-		end;
-			
-		If (YDif<>0) then begin
-			If (YDif<0) then ChkY:=PBul[B]^.Y else ChkY:=PBul[B]^.Y+PBul[B]^.H-1;
-			
-			If (Room^.CollidesOrOutside(PBul[B]^.X,ChkY+YDif)) then begin 
-				Room^.HitSfx(PBul[B]^.X,ChkY+YDif); PBul[B]^.HP:=-10 
-			end else
-			If (Room^.CollidesOrOutside(PBul[B]^.X+PBul[B]^.W-1,ChkY+YDif)) then begin 
-				Room^.HitSfx(PBul[B]^.X+PBul[B]^.W-1,ChkY+YDif); PBul[B]^.HP:=-10
-			end else
-				PBul[B]^.Y:=PBul[B]^.Y+YDif
-		end;
-		
+		CalculateBulletMovement(PBul[B], Time);
 		If (PBul[B]^.HP <= 0) then begin
 			Dispose(PBul[B],Destroy()); PBul[B]:=NIL; 
 			Continue 
@@ -317,40 +361,13 @@ End;
 Procedure CalculateEnemyBullets(Const Time:uInt);
 Var
 	B: sInt;
-	XDif, YDif, ChkX, ChkY: Double;
 Begin
 	If (Length(EBul)=0) then Exit;
 	
 	For B:=Low(EBul) to High(EBul) do begin
 		If (EBul[B]=NIL) then Continue;
 		
-		XDif:=EBul[B]^.XVel*Time/1000; 
-		YDif:=EBul[B]^.YVel*Time/1000;
-		
-		If (XDif<>0) then begin
-			If (XDif<0) then ChkX:=EBul[B]^.X else ChkX:=EBul[B]^.X+EBul[B]^.W-1;
-			
-			If (Room^.CollidesOrOutside(ChkX+XDif,EBul[B]^.Y)) then begin 
-				Room^.HitSfx(ChkX+XDif,EBul[B]^.Y); EBul[B]^.HP:=-10 
-			end else
-			If (Room^.CollidesOrOutside(ChkX+XDif,EBul[B]^.Y+EBul[B]^.H-1)) then begin
-				Room^.HitSfx(ChkX+XDif,EBul[B]^.Y+EBul[B]^.H-1); EBul[B]^.HP:=-10 
-			end else
-				EBul[B]^.X:=EBul[B]^.X+XDif
-		end;
-		
-		If (YDif<>0) then begin
-			If (YDif<0) then ChkY:=EBul[B]^.Y else ChkY:=EBul[B]^.Y+EBul[B]^.H-1;
-			
-			If (Room^.CollidesOrOutside(EBul[B]^.X,ChkY+YDif)) then begin 
-				Room^.HitSfx(EBul[B]^.X,ChkY+YDif); EBul[B]^.HP:=-10 
-			end else
-			If (Room^.CollidesOrOutside(EBul[B]^.X+EBul[B]^.W-1,ChkY+YDif)) then begin 
-				Room^.HitSfx(EBul[B]^.X+EBul[B]^.W-1,ChkY+YDif); EBul[B]^.HP:=-10
-			end else
-				EBul[B]^.Y:=EBul[B]^.Y+YDif
-		end;
-		
+		CalculateBulletMovement(EBul[B], Time);
 		If (EBul[B]^.HP <= 0) then begin
 			Dispose(EBul[B],Destroy()); EBul[B]:=NIL;
 			Continue 
@@ -405,7 +422,7 @@ Begin
 	CalculateRoomChange();
 	
 	CalculatePlayerBullets(Time);
-	{$IFDEF DEVELOPER} If (Not debugY) then {$ENDIF} CalculateMonsters(Time);
+	{$IFDEF LD25_DEBUG} If (Not debugY) then {$ENDIF} CalculateMonsters(Time);
 	CalculateEnemyBullets(Time);
 	CalculateGibs(Time);
 End;
@@ -413,7 +430,7 @@ End;
 Procedure DrawRoom();
 Var
 	X, Y: sInt;
-	Src, Dst: Sour.TRect;
+	Src, Dst: TSDL_Rect;
 Begin
 	// All tiles have the same size, no need to set this in the loop 
 	Src.W:=TILE_W; Src.H:=TILE_H; 
@@ -423,84 +440,85 @@ Begin
 	For Y:=0 to (ROOM_H-1) do For X:=0 to (ROOM_W-1) do begin
 		If (Room^.Tile[X][Y]=TILE_NONE) then Continue;
 		Dst.X:=X*TILE_W; Dst.Y:=Y*TILE_H;
-		Src.Y:=Room^.Tile[X][Y]*TILE_H;
-		Sour.DrawImage(TileGfx,@Src,@Dst,Room^.TCol[X][Y])
+		Src.Y:=Ord(Room^.Tile[X][Y])*TILE_H;
+		DrawImage(TileGfx,@Src,@Dst,Room^.TCol[X][Y])
 	end
 End;
 
 Procedure DrawGibs();
 Var
 	G: sInt;
-	Rect: Sour.TRect;
+	Rect: TSDL_Rect;
 Begin
 	For G:=Low(Gib) to High(Gib) do
 		If (Gib[G]<>NIL) then begin
-			Sour.SetRect(Rect,Gib[G]^.iX,Gib[G]^.iY,Gib[G]^.Rect.W,Gib[G]^.Rect.H);
-			Sour.DrawImage(Gib[G]^.Gfx,@Gib[G]^.Rect,@Rect,Gib[G]^.Col)
+			Rect.X := Gib[G]^.iX;
+			Rect.Y := Gib[G]^.iY;
+			Rect.W := Gib[G]^.Rect.W;
+			Rect.H := Gib[G]^.Rect.H;
+			
+			DrawImage(EntityGfx, @Gib[G]^.Rect, @Rect, Gib[G]^.Col)
 		end
+End;
+
+Procedure SetEntityDrawRects(Const E: PEntity; Const Sprite: PSprite; Out Src, Dst: TSDL_Rect);
+Begin
+	Dst.X := E^.iX;
+	Dst.Y := E^.iY;
+	Dst.W := E^.W;
+	Dst.H := E^.H;
+
+	Src := Sprite^.GetFrame(AniFra, E^.Face)
+End;
+
+Procedure DrawEntity(Const E:PEntity; Const Sprite: PSprite);
+Var
+	Src, Dst: TSDL_Rect;
+Begin
+	SetEntityDrawRects(E, Sprite, Src, Dst);
+	DrawImage(EntityGfx, @Src, @Dst, E^.Col)
 End;
 
 Procedure DrawMonsters();
 Var
 	M: sInt;
-	E: PEntity;
-	Crd: Sour.TCrd;
-	Rect: Sour.TRect;
 Begin
 	For M:=Low(Mob) to High(Mob) do
-		If (Mob[M]<>NIL) then begin
-			E:=Mob[M]; Crd:=E^.GetCrd;
-			Rect:=Sour.MakeRect(AniFra*E^.W,E^.Face*E^.H,E^.W,E^.H);
-			Sour.DrawImage(E^.Gfx,@Rect,@Crd,E^.Col)
-		end
+		If (Mob[M]<>NIL) then
+			DrawEntity(Mob[M], Mob[M]^.Sprite)
 End;
 
 Procedure DrawPlayerBullets();
 Var
 	B: sInt;
-	E: PEntity;
-	Crd: Sour.TCrd;
-	Rect: Sour.TRect;
 Begin
 	For B:=Low(PBul) to High(PBul) do
-		If (PBul[B]<>NIL) then begin
-			E:=PBul[B]; Crd:=E^.GetCrd;
-			Rect:=Sour.MakeRect(AniFra*E^.W,E^.Face*E^.H,E^.W,E^.H);
-			Sour.DrawImage(E^.Gfx,@Rect,@Crd,E^.Col)
-		end
+		If (PBul[B]<>NIL) then
+			DrawEntity(PBul[B], PBul[B]^.Sprite)
 End;
 
 Procedure DrawEnemyBullets();
 Var
 	B: sInt;
-	E: PEntity;
-	Crd: Sour.TCrd;
-	Rect: Sour.TRect;
 Begin
 	For B:=Low(EBul) to High(EBul) do
-		If (EBul[B]<>NIL) then begin
-			E:=EBul[B]; Crd:=E^.GetCrd;
-			Rect:=Sour.MakeRect(AniFra*E^.W,E^.Face*E^.H,E^.W,E^.H);
-			Sour.DrawImage(E^.Gfx,@Rect,@Crd,E^.Col)
-		end
+		If (EBul[B]<>NIL) then
+			DrawEntity(EBul[B], EBul[B]^.Sprite)
 End;
 
 Procedure DrawHero();
 Var
-	Crd: Sour.TCrd;
-	Rect: Sour.TRect;
 	C, X: sInt;
-	Col: Sour.TColour;
+	Src, Dst: TSDL_Rect;
+	Col: TSDL_Colour;
 Begin
 	If (Hero^.HP <= 0.0) then Exit;
 	
-	// Set target drawing coord and source rect
-	Sour.SetCrd(Crd, Hero^.iX, Hero^.iY);
-	Sour.SetRect(Rect, AniFra*Hero^.W, Hero^.Face*Hero^.H, Hero^.W, Hero^.H);
-	
+	SetEntityDrawRects(Hero, @HeroSprite, Src, Dst);
 	// If hero has taken damage recently, randomly move target position to make a "damage shake" effect
 	If (Hero^.InvTimer > 0) then begin
-		Crd.X+=Random(-1,1); Crd.Y+=Random(-1,1) 
+		Dst.X += Random(-1, +1);
+		Dst.Y += Random(-1, +1) 
 	end;
 	
 	// If hero is carrying a colour, randomly colourise the bastard
@@ -518,22 +536,29 @@ Begin
 	end else
 		Col:=GreyColour;
 	
-	Sour.DrawImage(Hero^.Gfx, @Rect, @Crd, @Col)
+	DrawImage(EntityGfx, @Src, @Dst, @Col)
 End;
 
 Procedure DrawCrystal();
 Var
-	Crd: Sour.TCrd;
-	Src: Sour.TRect;
+	Src, Dst: TSDL_Rect;
 Begin
 	If(Not Crystal.IsSet) then Exit;
 	
-	Sour.SetRect(Src,AniFra*TILE_W,Crystal.Col*TILE_H,TILE_W,TILE_H);
-	Sour.SetCrd(Crd,Crystal.mX*TILE_W,Crystal.mY*TILE_H);
+	Src.X := AniFra * TILE_W;
+	Src.Y := Crystal.Col * TILE_H;
+	Src.W := TILE_W;
+	Src.H := TILE_H;
 	
-	If (Crystal.Col <> WOMAN)
-		then Sour.DrawImage(ColGfx,@Src,@Crd)
-		else Sour.DrawImage(ColGfx,@Src,@Crd,@CentralPalette[FrameTime div (1000 div 8)])
+	Dst.X := Crystal.mX * TILE_W;
+	Dst.Y := Crystal.mY * TILE_H;
+	Dst.W := TILE_W;
+	Dst.H := TILE_H;
+	
+	If (Crystal.Col <> WOMAN) then
+		DrawImage(ColourGfx, @Src, @Dst, @WhiteColour)
+	else
+		DrawImage(ColourGfx, @Src, @Dst, @CentralPalette[FrameTime div (1000 div 8)])
 End;
 
 Procedure DrawFloatingTexts();
@@ -542,91 +567,95 @@ Var
 Begin
 	For ft:=Low(FloatTxt) to High(FloatTxt) do
 		If (FloatTxt[ft]<>NIL) then
-			Sour.PrintText(FloatTxt[ft]^.Text,Font,FloatTxt[ft]^.X,FloatTxt[ft]^.Y,FloatTxt[ft]^.Col)
+			PrintText(FloatTxt[ft]^.Text, Font, FloatTxt[ft]^.X, FloatTxt[ft]^.Y, ALIGN_LEFT, ALIGN_TOP, FloatTxt[ft]^.Colour)
 End;
 
 Procedure DrawUI();
 Const
-	HPrect: Sour.TRect = (X: 0; Y:0; W:16; H:16);
-	ColRect: Sour.TRect = (X: 16; Y:0; W:16; H:16);
-	FPSRect: Sour.TRect = (X: 32; Y:0; W:16; H:16);
-	VolRect: Sour.TRect = (X: 48; Y:0; W:16; H:16);
+	HP_src: TSDL_Rect = (X: 0; Y:0; W:16; H:16);
+	HP_dst: TSDL_Rect = (X: 0; Y:0; W:16; H:16);
+	
+	Col_src: TSDL_Rect = (X: 16; Y:0; W:16; H:16);
+	Col_dst: TSDL_Rect = (X: RESOL_W-16; Y:0; W:16; H:16);
+	
+	FPS_src: TSDL_Rect = (X: 32; Y:0; W:16; H:16);
+	FPS_dst: TSDL_Rect = (X: RESOL_W-16; Y:RESOL_H-16; W:16; H:16);
+	
+	Vol_src: TSDL_Rect = (X: 48; Y:0; W:16; H:16);
+	Vol_dst: TSDL_Rect = (X: 0; Y:RESOL_H-16; W:16; H:16);
+	
+	PauseRect: TSDL_Rect = (X: (RESOL_W - 64) div 2; Y: (RESOL_H - 32) div 2; W: 64; H: 32);
 Var
-	Crd: Sour.TCrd;
-	Rect, PauseRect: Sour.TRect;
-	C: sInt;
+	Dst, DstCpy: TSDL_Rect;
+	C, d: sInt;
 Begin
 	// Health indicator
-	Crd:=Sour.MakeCrd(0,0);
-	Sour.DrawImage(UIgfx,@HPrect,@Crd);
+	DrawImage(UIgfx, @HP_src, @HP_dst, NIL);
 	If (Hero^.HP > 0) then begin
-		Sour.SetRect(Rect,3,9,1+Trunc(9*Hero^.HP/Hero^.MaxHP),4);
-		If (Hero^.InvTimer <= 0)
-			then Sour.FillRect(@Rect,@WhiteColour)
-			else Sour.FillRect(@Rect,@GreyColour)
+		Dst.X := 3;
+		Dst.Y := 9;
+		Dst.W := 1+Trunc(9*Hero^.HP/Hero^.MaxHP);
+		Dst.H := 4;
+		If (Hero^.InvTimer <= 0) then
+			DrawColouredRect(@Dst, @WhiteColour)
+		else
+			DrawColouredRect(@Dst, @GreyColour)
 	end;
 
 	// Colour indicator
-	Crd:=Sour.MakeCrd(RESOL_W-16,0);
-	Sour.DrawImage(UIgfx,@ColRect,@Crd);
+	DrawImage(UIgfx, @Col_src, @Col_dst, NIL);
 	For C:=0 to 7 do begin
 		If (ColState[C]=STATE_NONE) then Continue;
 		
-		Rect.X:=RESOL_W-14+((C mod 4)*3); 
-		If ((C mod 4)>1) then Rect.X+=1;
+		Dst.X:=RESOL_W-14+((C mod 4)*3); 
+		If ((C mod 4)>1) then Dst.X+=1;
 		
-		Rect.Y:=09; 
-		If (C>=4) then Rect.Y+=3;
+		Dst.Y:=9; 
+		If (C>=4) then Dst.Y+=3;
 		
 		// For given colours, draw a 2x2 rectangle.
 		// For carried colours, draw two (randomly selected) pixels in the 2x2 rectangle area.
 		If (ColState[C]=STATE_GIVEN) then begin
-			Rect.W:=2; Rect.H:=2;
-			Sour.FillRect(@Rect,UIcolour[C])
+			Dst.W:=2; Dst.H:=2;
+			DrawColouredRect(@Dst, @UIcolour[C])
 		end else begin
-			Rect.W:=1; Rect.H:=1;
-			Crd.X:=Rect.X; Crd.Y:=Rect.Y;
-			Rect.X+=Random(2); Rect.Y+=Random(2);
-			Sour.FillRect(@Rect,UIcolour[C]);
-			Rect.X:=Crd.X+1-Random(2); Rect.Y:=Crd.Y+1-Random(2);
-			Sour.FillRect(@Rect,UIcolour[C])
+			Dst.W:=1; Dst.H:=1;
+			For d:=0 to 1 do begin
+				dstcpy := Dst;
+				dstcpy.X += Random(0, 1);
+				dstcpy.Y += Random(0, 1);
+				DrawColouredRect(@dstcpy, @UIcolour[C])
+			end
 		end
 	end;
 
 	// Volume indicator
-	Crd:=Sour.MakeCrd(0,RESOL_H-16);
-	Sour.DrawImage(UIgfx,@VolRect,@Crd);
+	DrawImage(UIgfx, @Vol_src, @Vol_dst, NIL);
 	For C:=GetVol() downto 1 do begin
-		Rect.X:=(C*2); Rect.Y:=RESOL_H-2-C;
-		Rect.W:=2; Rect.H:=C;
-		Sour.FillRect(@Rect,@WhiteColour)
+		Dst.X := C*2;              Dst.W := 2;
+		Dst.Y := RESOL_H - 2 - C;  Dst.H := C;
+		DrawColouredRect(@Dst, @WhiteColour)
 	end;
 
 	// Frames per second indicator
-	Crd:=Sour.MakeCrd(RESOL_W-16,RESOL_H-16);
-	Sour.DrawImage(UIgfx,@FPSrect,@Crd);
-	Sour.PrintText(FrameStr,NumFont,(RESOL_W-8),(RESOL_H-7),ALIGN_CENTER);
+	DrawImage(UIgfx, @FPS_src, @FPS_dst, NIL);
+	PrintText(FrameStr, NumFont, (RESOL_W-8), (RESOL_H-7), ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
 
 	// If paused, draw frame with "PAUSED" bouncing
 	If (Paused) then begin
-		PauseRect.X := ((RESOL_W - 64) div 2); 
-		PauseRect.Y := ((RESOL_H - 32) div 2); 
-		PauseRect.W := 64; 
-		PauseRect.H := 32;
+		Dst := PauseRect;
+		DrawColouredRect(@Dst, @WhiteColour);
 		
-		Sour.FillRect(@PauseRect,@WhiteColour);
+		With Dst do begin X+=1; Y+=1; W-=2; H-=2 end;
+		DrawColouredRect(@Dst, @BlackColour);
 		
-		With PauseRect do begin X+=1; Y+=1; W-=2; H-=2 end;
-		Sour.FillRect(@PauseRect,@BlackColour);
-		
-		Sour.PrintText('PAUSED',Font,PauseRect.X+PauseTxt.X,PauseRect.Y+PauseTxt.Y);
+		PrintText('PAUSED', Font, Dst.X+PauseTxt.X, Dst.Y+PauseTxt.Y, ALIGN_LEFT, ALIGN_TOP, @WhiteColour)
 	end
 End;
 
 Procedure DrawFrame();
-begin
-	Sour.BeginFrame();
-
+Begin
+	Rendering.BeginFrame();
 	DrawRoom();
 
 	If (Length(Gib)>0) then DrawGibs();
@@ -639,10 +668,9 @@ begin
 	
 	If (Length(FloatTxt)>0) then DrawFloatingTexts();
 
-	{$IFDEF DEVELOPER} If Not (debugU) then {$ENDIF} DrawUI();
+	{$IFDEF LD25_DEBUG} If Not (debugU) then {$ENDIF} DrawUI();
 
-	// Swap OGL buffers, sending the current frame to video display.
-	Sour.FinishFrame()
+	Rendering.FinishFrame()
 end;
 
 Procedure CountFrames(Const Time:uInt);
@@ -656,8 +684,7 @@ Begin
 		
 		WriteStr(FrameStr,Frames);
 		FrameTime-=1000; Frames:=0
-	end;
-	// Count frames, duh
+	end
 End;
 
 Procedure PerformRoomChange();
@@ -685,61 +712,87 @@ End;
 
 
 Procedure DamageMob(Const mID:uInt; Const Power:Double);
+Var
+	Idx, ChildID: sInt;
 Begin
 	Mob[mID]^.HP-=Power;
 	If (Mob[mID]^.HP <= 0) then begin
 		If (Mob[mID]^.SwitchNum >= 0) then Switch[Mob[mID]^.SwitchNum]:=True;
 
-		PlaceGibs(Mob[mID]); 
+		PlaceGibs(Mob[mID], Mob[mID]^.Sprite^.GetFrame(AniFra, Mob[mID]^.Face));
 		PlaySfx(Mob[mID]^.SfxID);
-		
+
+		If (Length(Mob[mID]^.Children) > 0) then begin
+			For Idx := Low(Mob[mID]^.Children) to High(Mob[mID]^.Children) do begin
+				ChildID := Mob[mID]^.Children[Idx];
+				If Mob[ChildID] <> NIL then DamageMob(ChildID, 1000);
+			end;
+		end;
+
 		Dispose(Mob[mID],Destroy()); Mob[mID]:=NIL
 	end 
 End;
 
 Procedure DamagePlayer(Const Power:Double);
 Begin
-	Hero^.HP-=Power;
+	PlaySfx(SFX_HIT);
+	Hero^.HP -= Power;
 	Hero^.InvTimer := Hero^.InvLength;
 	
 	If (Hero^.HP <= 0) then begin
 		DeadTime:=DeathLength;
-		PlaceGibs(Hero);
+		PlaceGibs(Hero, HeroSprite.GetFrame(AniFra, Hero^.Face));
 		
 		PlaySfx(SFX_EXTRA+2)
-	end else
-		PlaySfx(SFX_HIT)
+	end
 End;
 
 Function PlayGame():Boolean;
+Const
+	DELTA_MAXIMUM = 100; // Limit timestep to 100ms (10 updates/s)
 Var
-	Time, Ticks: uInt;
+	DeltaTime, Ticks, Timestep: uInt;
+	pk: TPlayerKey;
 Begin
-	GetDeltaTime(Time);
+	GetDeltaTime(DeltaTime);
+	SetAllowScreensaver(False);
 	SDL_ShowCursor(0);
+	
+	For pk := Low(TPlayerKey) to High(TPlayerKey) do Key[pk]:=False;
+	{$IFDEF ANDROID} TouchControls.SetVisibility(True); {$ENDIF}
 	
 	RoomChange:=RCHANGE_NONE;
 	Paused:=False; WantToQuit:=False; 
 	Frames:=0; FrameTime:=0; FrameStr:='???';
 	
 	PauseTxt.X:=PAUSETXT_W div 2; PauseTxt.Y:=PAUSETXT_H div 2;
-	Sour.SetFontScaling(Font,1); 
-	
-	{$IFDEF DEVELOPER} debugY:=False; debugU:=False; debugI:=False; {$ENDIF}
+	Font^.Scale := 1;
+
+	{$IFDEF LD25_DEBUG} debugY:=False; debugU:=False; debugI:=False; {$ENDIF}
 	Repeat
 		If (RoomChange <> RCHANGE_NONE) then PerformRoomChange();
 		
-		GetDeltaTime(Time, Ticks);
+		GetDeltaTime(DeltaTime, Ticks);
 		Animate(Ticks);
 		GatherInput();
 
-		If (Not Paused) then CalculateGameCycle(Time);
+		If (Not Paused) then begin
+			Timestep := DeltaTime;
+			While Timestep > DELTA_MAXIMUM do begin
+				CalculateGameCycle(DELTA_MAXIMUM);
+				Timestep -= DELTA_MAXIMUM
+			end;
+			CalculateGameCycle(Timestep)
+		end;
 
 		DrawFrame();
-		CountFrames(Time);
+		CountFrames(DeltaTime);
 
 	Until WantToQuit;
-	
+
+	{$IFDEF ANDROID} TouchControls.SetVisibility(False); {$ENDIF}
+
+	SetAllowScreensaver(True);
 	SDL_ShowCursor(1);
 	Exit(Given >= 8)
 End;

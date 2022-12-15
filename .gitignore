@@ -9,5 +9,7 @@
 *.patch
 
 *.*~
+build/*
 var/*
 
+Makefile

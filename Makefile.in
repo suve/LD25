@@ -1,0 +1,77 @@
+# User-configurable variables
+
+DESTDIR ?=
+
+# Convenience variables
+
+FLAGS_SDL2 = -Fu./SDL2/units/
+
+## -- Sources
+
+SOURCES := $(filter-out src/ld25.pas, $(wildcard src/*.pas src/*.inc))
+EXECUTABLE := build/$(EXE_PREFIX)colorful$(EXE_SUFFIX)
+
+GFX_SOURCES := $(filter-out $(GFX_FILTER), $(wildcard gfx/*.png))
+GFX_TARGETS := $(GFX_SOURCES:gfx/%.png=build/gfx/%.png)
+
+MAP_SOURCES := $(wildcard map/*/*.txt)
+MAP_TARGETS := $(MAP_SOURCES:map/%.txt=build/map/%.txt)
+
+SFX_SOURCES := $(wildcard sfx/*.wav)
+SFX_TARGETS := $(SFX_SOURCES:sfx/%.wav=build/sfx/%.ogg)
+
+SLIDE_SOURCES := $(wildcard slides/*.png)
+SLIDE_TARGETS := $(SLIDE_SOURCES:slides/%.png=build/slides/%.png)
+
+## -- .PHONY targets
+
+.PHONY = all assets clean executable install
+
+all: assets executable
+
+assets: $(GFX_TARGETS) $(MAP_TARGETS) $(SFX_TARGETS) $(SLIDE_TARGETS)
+
+executable: $(EXECUTABLE)
+
+clean:
+	rm -rf build/
+
+install: all
+	# Executable
+	install -m 755 -p -D "$(EXECUTABLE)" "$(DESTDIR)/usr/bin/colorful"
+	# Data files
+	install -m 755 -d "$(DESTDIR)/usr/share/suve/colorful"
+	cp -t "$(DESTDIR)/usr/share/suve/colorful/" -a gfx map sfx slides
+	# Icons
+	install -m 644 -p -D "pkg/colorful.svg"         "$(DESTDIR)/usr/share/icons/hicolor/scalable/apps/colorful.svg"
+	install -m 644 -p -D "pkg/colorful-32x32.png"   "$(DESTDIR)/usr/share/icons/hicolor/32x32/apps/colorful.png"
+	install -m 644 -p -D "pkg/colorful-64x64.png"   "$(DESTDIR)/usr/share/icons/hicolor/64x64/apps/colorful.png"
+	install -m 644 -p -D "pkg/colorful-128x128.png" "$(DESTDIR)/usr/share/icons/hicolor/128x128/apps/colorful.png"
+	# Desktop file and AppStream metadata
+	install -m 644 -p -D "pkg/colorful.desktop"     "$(DESTDIR)/usr/share/applications/colorful.desktop"
+	install -m 644 -p -D "pkg/colorful.appdata.xml" "$(DESTDIR)/usr/share/appdata/colorful.appdata.xml"
+	# Man pages
+	install -m 644 -p -D "pkg/colorful-english.man" "$(DESTDIR)/usr/share/man/man6/colorful.6"
+	install -m 644 -p -D "pkg/colorful-polish.man"  "$(DESTDIR)/usr/share/man/pl/man6/colorful.6"
+
+# -- Real targets
+
+build/gfx/%.png: gfx/%.png
+	mkdir -p "$(dir $@)"
+	optipng -clobber -out "$@" "$<" >/dev/null 2>/dev/null
+
+build/map/%.txt: map/%.txt
+	mkdir -p "$(dir $@)"
+	sed -e 's|\r$$||g' -e 's|^[\t]*||g' -e 's| 0*\([0-9][0-9]*\)| \1|g' < "$<" > "$@"
+
+build/sfx/%.ogg: sfx/%.wav
+	mkdir -p "$(dir $@)"
+	oggenc --quiet "--quality=$(OGG_QUALITY)" -o "$@" "$<"
+
+build/slides/%.png: slides/%.png
+	mkdir -p "$(dir $@)"
+	optipng -clobber -out "$@" "$<" >/dev/null 2>/dev/null
+
+$(EXECUTABLE): src/ld25.pas $(SOURCES)
+	mkdir -p "$(dir $@)/obj"
+	$(FPC) $(FLAGS_SDL2) -FUbuild/obj/ -o'$@' $(FPC_FLAGS) '$<'

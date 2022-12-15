@@ -1,424 +1,956 @@
-program ld25; 
+(*
+ * colorful - simple 2D sideview shooter
+ * Copyright (C) 2012-2022 suve (a.k.a. Artur Frenszek-Iwicki)
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 3,
+ * as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *)
+{$IFNDEF ANDROID}
+	program ld25;
+{$ELSE}
+	library ld25;
+{$ENDIF}
 
 {$INCLUDE defines.inc}
 
 uses
-	SysUtils, SDL, Sour, GL, 
-
-	{$IF FPC_FULLVERSION >= 30000}
-		SDL_Mixer_nosmpeg,
-	{$ELSE}
-		SDL_Mixer_bundled,
-	{$ENDIF}
-
-	Shared, Objects, FloatingText, configfiles, Game
+	SysUtils, Math, ctypes,
+	SDL2, SDL2_image, SDL2_mixer,
+	Assets, Colours, ConfigFiles, FloatingText, Fonts, Game, Images, Objects,
+	MathUtils, Menus, Rendering, Rooms, Shared
 ;
 
 
-Var MenuChoice:Char;
+Var
+	MenuChoice:Char;
 
 Procedure DrawTitle();
-   begin
-   Sour.DrawImage(TitleGfx,NIL);
-   Sour.SetFontScaling(Font,1);
-   Sour.PrintText(UpperCase('V.'+GAMEVERS+' (build '+GAMEDATE+')')
-                  {$IFDEF DEVELOPER}+' DEVELOPER'{$ENDIF},
-                  Font,(RESOL_W div 2),82,ALIGN_CENTER,ALIGN_MIDDLE)
-   end;
-
-Procedure PrintMenuText(Const Text:AnsiString; Const X, Y:sInt; Const AlignX: Sour.HorizontalAlign; Const Colour: Sour.PColour; Out Rect: Sour.TRect);
+Const
+	VersionText = 'V.' + GAMEVERS
+		{$IFDEF LD25_DEBUG} + ' // DEBUG @ ' + {$INCLUDE %DATE%} + ', ' + {$INCLUDE %TIME%}{$ENDIF}
+	;
 Var
-	TextLen: sInt;
+	Dst: TSDL_Rect;
 Begin
-	Sour.PrintText(Text, Shared.Font, X, Y, AlignX, Colour);
+	Dst.X := 0; Dst.Y := 0;
+	Dst.W := TitleGfx^.W; Dst.H := TitleGfx^.H;
+	DrawImage(TitleGfx, NIL, @Dst, NIL);
 	
-	TextLen := Length(Text);
-	Rect.W := Trunc(Shared.Font^.Scale * (TextLen * Shared.Font^.SpaX));
-	Rect.H := Trunc(Shared.Font^.Scale * Shared.Font^.ChrW);
+	Font^.Scale := 1;
+	PrintText(VersionText, Assets.Font, (RESOL_W div 2), 82, ALIGN_CENTRE, ALIGN_MIDDLE, @WhiteColour)
+End;
+
+Procedure PrintMenuText(Const Text:AnsiString; Const X, Y:sInt; Const AlignX: THorizontalAlign; Const Colour: PSDL_Colour; Out Rect: TSDL_Rect);
+Var
+	W, H: sInt;
+Begin
+	PrintText(Text, Assets.Font, X, Y, AlignX, ALIGN_TOP, Colour);
+	
+	Fonts.GetTextSize(Text, Assets.Font, W, H);
+	Rect.W := W; Rect.H := H;
 	
 	Rect.Y := Y;
 	Case (AlignX) of
-		Sour.ALIGN_LEFT:   Rect.X := X;
-		Sour.ALIGN_CENTER: Rect.X := X - (Rect.W div 2);
-		Sour.ALIGN_RIGHT:  Rect.X := X - Rect.W;
+		ALIGN_LEFT:   Rect.X := X;
+		ALIGN_CENTRE: Rect.X := X - (Rect.W div 2);
+		ALIGN_RIGHT:  Rect.X := X - Rect.W;
 	end
 End;
 
-Function MouseInRect(Const Rect: Sour.TRect):Boolean;
-Var
-	MouseX, MouseY: Double;
+Function MouseInRect(Const Rect: TSDL_Rect):Boolean;
 Begin
-	// The mouse coordinates inside SDL_Event are given in window-size terms.
-	// We need to convert them to game-resolution terms first.
-	MouseX := Ev.Button.X * (RESOL_W / Screen^.W);
-	MouseY := Ev.Button.Y * (RESOL_H / Screen^.H);
-	
-	Exit(Overlap(Rect.X, Rect.Y, Rect.W, Rect.H, MouseX, MouseY, 1, 1))
+	Result := Overlap(Rect.X, Rect.Y, Rect.W, Rect.H, Ev.Button.X, Ev.Button.Y, 1, 1)
 End;
 
 Procedure LoadUpdate(Name:AnsiString;Perc:Double);
-   Const STARTX = RESOL_W div 32; SIZEX = RESOL_W - (STARTX*2);
-         SIZEY = RESOL_H div 32; STARTY = RESOL_H - (SIZEY*3);
-   Var Rect:Sour.TRect; Col:Sour.TColour;
-   begin 
-   Sour.BeginFrame(); DrawTitle();
-   Sour.SetFontScaling(Font,2);
-   Sour.PrintText(UpperCase(Name),Font,(RESOL_W div 2),STARTY-(Font^.ChrW*2),ALIGN_CENTER,ALIGN_MIDDLE);
-   Rect:=Sour.MakeRect(STARTX,STARTY,SIZEX,SIZEY);
-   Sour.FillRect(@Rect);
-   Rect:=Sour.MakeRect(STARTX,STARTY,Trunc(SIZEX*Perc),SIZEY);
-   Col:=Sour.MakeColour(64+Random(128),64+Random(128),64+Random(128),255);
-   Sour.FillRect(@Rect,@Col);
-   Sour.FinishFrame();
-   end;
-
-Procedure BindKeys();
-   Const KeyName : Array[TPlayerKey] of AnsiString = (
-         'MOVE UP','MOVE RIGHT','MOVE DOWN','MOVE LEFT','SHOOT LEFT','SHOOT RIGHT',
-         'PAUSE','VOLUME DOWN','VOLUME UP');
-   Var K:TPlayerKey; NewBind:Array[TPlayerKey] of TSDLKey; dt:uInt; Finito,Bound:Boolean;
-   begin
-   Finito:=False; Bound:=False; K:=Low(TPlayerKey);
-   Repeat
-       Sour.BeginFrame(); DrawTitle();
-       Sour.SetFontScaling(Font,2);
-       Sour.PrintText('SET KEY BINDINGS',Font,(RESOL_W div 2),TitleGfx^.H,ALIGN_CENTER);
-       Sour.PrintText(KeyName[K],Font,(RESOL_W div 2),(RESOL_H + TitleGfx^.H) div 2,ALIGN_CENTER,ALIGN_MIDDLE);
-       Sour.FinishFrame();
-       GetDeltaTime(dt);
-       While (SDL_PollEvent(@Ev)>0) do begin
-          If (Ev.Type_ = SDL_QuitEv) then begin
-             Shutdown:=True; Exit() end else
-          If (Ev.Type_ = SDL_KeyDown) then begin
-             If (Ev.Key.Keysym.Sym = SDLK_Escape) then Exit() else begin
-                NewBind[K]:=Ev.Key.Keysym.Sym; Bound:=True end
-             end else
-          If (Ev.Type_ = SDL_VideoResize) then
-            Shared.ResizeWindow(Ev.Resize.W,Ev.Resize.H,False) else
-          end;
-       If (Bound) then begin
-          If (K<High(TPlayerKey)) then Inc(K) else Finito:=True;
-          Bound:=False
-          end;
-       until Finito;
-   For K:=Low(TPlayerKey) to High(TPlayerKey)
-       do KeyBind[K]:=NewBind[K]
-   end;
-
-Function GameworldDialog(Load:Boolean):Char;
 Const
-	WorldNames:Array[TGameMode] of AnsiString = (
-		'T - TUTORIAL',
-		'N - NORMAL  '
-	);
+	STARTX = RESOL_W div 32; SIZEX = RESOL_W - (STARTX*2);
+	SIZEY = RESOL_H div 32; STARTY = RESOL_H - (SIZEY*3);
 Var
-	WorldRect:Array[TGameMode] of Sour.TRect;
+	Rect:TSDL_Rect; Col:TSDL_Colour;
+Begin 
+	If(TitleGfx = NIL) or (Font = NIL) then Exit();
 	
-	Msg:AnsiString;
-	OK:Array[TGameMode] of Boolean; GM:TGameMode;
-	Choice:Char; YPos:uInt; Col:Sour.PColour; dt:uInt;
-Begin
-	If Load then begin Msg:='LOAD GAME';
-		For GM:=Low(GM) to High(GM) do Ok[GM]:=SaveExists[GM]
-	end else begin Msg:='NEW GAME';
-		For GM:=Low(GM) to High(GM) do Ok[GM]:=True
-	end;
-   
-	Choice:=#$20;
-	While (Choice = #$20) do begin
-		Sour.BeginFrame(); DrawTitle();
-		Sour.SetFontScaling(Font,2.0);
-		Sour.PrintText([Msg,'','SELECT GAMEWORLD'],Font,(RESOL_W div 2),TitleGfx^.H,ALIGN_CENTER);
-		
-		YPos:=((RESOL_H * 3) div 5);
-		For GM:=Low(GM) to High(GM) do begin
-			If (OK[GM]) then Col:=@WhiteColour else Col:=@GreyColour;
-			PrintMenuText(WorldNames[GM], (RESOL_W div 2), YPos, ALIGN_CENTER, Col, WorldRect[GM]);
-			YPos+=Trunc(Font^.SpaY*2*Font^.Scale)
-		end;
-		
-		Sour.FinishFrame();
-		GetDeltaTime(dt);
-		While (SDL_PollEvent(@Ev)>0) do begin
-			If (Ev.Type_ = SDL_QuitEv) then begin
-				Shutdown:=True; Exit('Q') end else
-			If (Ev.Type_ = SDL_KeyDown) then begin
-				If (Ev.Key.Keysym.Sym = SDLK_Escape) then Choice:='Q' else
-				If (Ev.Key.Keysym.Sym = SDLK_T) then begin
-					If (OK[GM_TUTORIAL]) then Choice:='T' 
-				end else
-				If (Ev.Key.Keysym.sym = SDLK_N) then begin
-					If (Ok[GM_ORIGINAL]) then Choice:='N'
-				end else
-			end else
-			If(Ev.Type_ = SDL_MouseButtonDown) then begin
-				If (MouseInRect(WorldRect[GM_TUTORIAL])) then begin
-					If (OK[GM_TUTORIAL]) then Choice:='T' 
-				end else
-				If (MouseInRect(WorldRect[GM_ORIGINAL])) then begin
-					If (Ok[GM_ORIGINAL]) then Choice:='N'
-				end else
-			end else
-			If (Ev.Type_ = SDL_VideoResize) then
-				Shared.ResizeWindow(Ev.Resize.W,Ev.Resize.H,False)
-		end;
-	end;
-	Exit(Choice)
+	Rendering.BeginFrame();
+	DrawTitle();
+	
+	Font^.Scale := 2;
+	PrintText(UpperCase(Name),Font,(RESOL_W div 2),STARTY-(Font^.CharW*2),ALIGN_CENTRE,ALIGN_MIDDLE,NIL);
+	
+	With Rect do begin X:=STARTX; Y:=STARTY; W:=SIZEX; H:=SIZEY end;
+	DrawColouredRect(@Rect, @WhiteColour);
+	
+	Col.R := 64+Random(128);
+	Col.G := 64+Random(128);
+	Col.B := 64+Random(128);
+	Col.A := 255;
+	Rect.W := Trunc(SIZEX*Perc);
+	DrawColouredRect(@Rect, @Col);
+	
+	Rendering.FinishFrame()
 End;
 
-Function ShowSlide(Img:Sour.PImage):Boolean;
-   Var Q:sInt; dt:uInt;
-   begin
-   Q:=0;
-   While (Q = 0) do begin
-      Sour.BeginFrame();
-      Sour.DrawImage(Img,NIL);
-      Sour.FinishFrame();
-      GetDeltaTime(dt);
-      While (SDL_PollEvent(@Ev)>0) do begin
-         If (Ev.Type_ = SDL_QuitEv) then begin
-            Shutdown:=True; Exit(False) end else
-         If (Ev.Type_ = SDL_KeyDown) then begin
-            If (Ev.Key.Keysym.Sym = SDLK_ESCAPE) then Q:=-1 else Q:=1
-            end else
-         If (Ev.Type_ = SDL_VideoResize) then
-            Shared.ResizeWindow(Ev.Resize.W,Ev.Resize.H,False) else
-         end;
-      end;
-   Exit(Q >= 0)
-   end;
-
-Function Intro():Boolean;
-   Var C:uInt;
-   begin
-   For C:=Low(SlideIn) to High(SlideIn) do
-       If (Not ShowSlide(SlideIn[C])) then Exit(False);
-   If (Not ShowSlide(TitleGfx)) then Exit(False);
-   Exit(True)
-   end;
-
-Function Menu():Char;
+{$IFNDEF ANDROID}
+Procedure BindKeys();
+Const
+	KeyName : Array[TPlayerKey] of AnsiString = (
+		'MOVE UP','MOVE RIGHT','MOVE DOWN','MOVE LEFT','SHOOT LEFT','SHOOT RIGHT',
+		'PAUSE','VOLUME DOWN','VOLUME UP'
+	);
 Var
-	Choice:Char;
-	dt, XPos, YPos:uInt; Col:Sour.PColour; 
-	IHasSaves:Boolean; GM:TGameMode;
-	
-	IntroRect, ContinueRect, NewGameRect, LoadGameRect, BindRect, QuitRect: Sour.TRect;
+	K:TPlayerKey; NewBind:Array[TPlayerKey] of TSDL_Keycode;
+	dt:uInt; Finito,Bound:Boolean;
 Begin
-	XPos:=Length('I - INTRODUCTION');
-	XPos:=((Font^.SpaX*(XPos-1))+Font^.ChrW)*2;
-	XPos:=(RESOL_W - XPos) div 2;
-   
-	IHasSaves:=False;
-	For GM:=Low(GM) to High(GM) do If (SaveExists[GM]) then IHasSaves:=True;
-   
-	Choice:=#$20;
-	While (Choice = #32) do begin
-		Sour.BeginFrame(); DrawTitle();
-		Sour.SetFontScaling(Font,2); YPos:=TitleGfx^.H;
-		PrintMenuText('I - INTRODUCTION', XPos, YPos, ALIGN_LEFT, @WhiteColour, IntroRect);
+	Finito:=False; Bound:=False; K:=Low(TPlayerKey);
+	Repeat
+		Rendering.BeginFrame();
+		DrawTitle();
 		
-		YPos+=Trunc(Font^.ChrH * 2 * Font^.Scale);
-		If (GameOn) then Col:=@WhiteColour else Col:=@GreyColour;
-		PrintMenuText('C - CONTINUE', XPos, YPos, ALIGN_LEFT, Col, ContinueRect);
+		Font^.Scale := 2;
+		PrintText('SET KEY BINDINGS',Font,(RESOL_W div 2),TitleGfx^.H,ALIGN_CENTRE,ALIGN_TOP,NIL);
 		
-		YPos+=Trunc(Font^.ChrH * 2 * Font^.Scale);
-		PrintMenuText('N - NEW GAME', XPos, YPos, ALIGN_LEFT, @WhiteColour, NewGameRect);
+		PrintText(KeyName[K],Font,(RESOL_W div 2),(RESOL_H + TitleGfx^.H) div 2,ALIGN_CENTRE,ALIGN_MIDDLE,NIL);
 		
-		YPos+=Trunc(Font^.ChrH * 2 * Font^.Scale);
-		If (IHasSaves) then Col:=@WhiteColour else Col:=@GreyColour;
-		PrintMenuText('L - LOAD GAME', XPos, YPos, ALIGN_LEFT, Col, LoadGameRect);
-		
-		YPos+=Trunc(Font^.ChrH * 2 * Font^.Scale);
-		PrintMenuText('B - BIND KEYS', XPos, YPos, ALIGN_LEFT, @WhiteColour, BindRect);
-		
-		YPos+=Trunc(Font^.ChrH * 2 * Font^.Scale);
-		PrintMenuText('Q - QUIT', XPos, YPos, ALIGN_LEFT, @WhiteColour, QuitRect);
-		
-		Sour.FinishFrame();
+		Rendering.FinishFrame();
 		GetDeltaTime(dt);
 		While (SDL_PollEvent(@Ev)>0) do begin
 			If (Ev.Type_ = SDL_QuitEv) then begin
-				Shutdown:=True; Exit('Q') end else
+				Shutdown:=True; Exit() 
+			end else
 			If (Ev.Type_ = SDL_KeyDown) then begin
-				If (Ev.Key.Keysym.Sym = SDLK_ESCAPE) then Choice:='Q' else
-				If (Ev.Key.Keysym.Sym = SDLK_Q) then Choice:='Q' else
-				If (Ev.Key.Keysym.Sym = SDLK_I) then Choice:='I' else
-				If (Ev.Key.Keysym.Sym = SDLK_N) then Choice:='N' else
-				If (Ev.Key.Keysym.Sym = SDLK_C) then begin
-					If (GameOn) then Choice:='C' end else
-				If (Ev.Key.Keysym.Sym = SDLK_L) then begin
-					If (IHasSaves) then Choice:='L' end else
-				If (Ev.Key.Keysym.Sym = SDLK_B) then Choice:='B' else
+				If ((Ev.Key.Keysym.Sym = SDLK_Escape) or (Ev.Key.Keysym.Sym = SDLK_AC_BACK)) then
+					Exit()
+				else begin
+					NewBind[K]:=Ev.Key.Keysym.Sym; Bound:=True
+				end
 			end else
-			If (Ev.Type_ = SDL_MouseButtonDown) then begin
-				If (MouseInRect(IntroRect)) then Choice:='I' else
-				If (MouseInRect(NewGameRect)) then Choice:='N' else
-				If (MouseInRect(ContinueRect)) then begin
-					If (GameOn) then Choice:='C' end else
-				If (MouseInRect(LoadGameRect)) then begin
-					If (IHasSaves) then Choice:='L' end else
-				If (MouseInRect(BindRect)) then Choice:='B' else
-				If (MouseInRect(QuitRect)) then Choice:='Q' else
+			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
+				HandleWindowResizedEvent(@Ev)
+		end;
+		If (Bound) then begin
+			If (K<High(TPlayerKey)) then
+				Inc(K)
+			else
+				Finito:=True;
+			
+			Bound:=False
+		end;
+	Until Finito;
+	For K:=Low(TPlayerKey) to High(TPlayerKey) do KeyBind[K]:=NewBind[K]
+End;
+{$ENDIF}
+
+(*
+ * TODO:
+ * The drawing code is copy-pasted from Game.DrawRoom().
+ * Think of a way to reduce duplication.
+ *)
+Procedure DrawColourPreview(Const Colour: PSDL_Colour; Const PosX, PosY: sInt);
+Const
+	PreviewW = 8;
+	PreviewH = 4;
+	PreviewMap: Array[0..(PreviewH-1), 0..(PreviewW-1)] of Char = (
+		('X', '-', '-', '-', '=', '-', '-', '+'),
+		('X', 'X', ' ', ' ', ' ', ' ', ' ', '|'),
+		(':', ' ', ' ', ' ', ' ', ' ', ' ', 'D'),
+		('X', 'X', ' ', '<', '-', '>', ' ', '|')
+	);
+Var
+	X, Y: sInt;
+	Tile: TTile;
+	Src, Dst: TSDL_Rect;
+Begin
+	// All tiles have the same size, no need to set this in the loop 
+	Src.W:=TILE_W; Src.H:=TILE_H; 
+	Dst.W:=TILE_W; Dst.H:=TILE_H;
+	
+	Src.X:=0;
+	For Y:=0 to (PreviewH-1) do For X:=0 to (PreviewW-1) do begin
+		Tile:=TRoom.CharToTile(PreviewMap[Y][X]);
+		If (Tile = TILE_NONE) then Continue;
+		
+		Dst.X := PosX + (X*TILE_W);
+		Dst.Y := PosY + (Y*TILE_H);
+		Src.Y := Ord(Tile)*TILE_H;
+		DrawImage(TileGfx,@Src,@Dst,Colour)
+	end
+End;
+
+Procedure SetSingleColour(Const idx: sInt);
+Const
+	RectWidth = 128;
+	RectHeight = 64;
+Var
+	idxName: AnsiString;
+	CurrentCol: TSDL_Colour;
+	
+	Menu: TMenu;
+	Choice: Char;
+	Changed: Boolean;
+	Finished: Boolean;
+
+	dt, pc: uInt;
+	YPos: sInt;
+Begin
+	idxName := UpperCase(ColourName[idx]);
+	CurrentCol := MapColour[idx];
+
+	Menu.Create();
+	Menu.SetFontScale(2);
+	Menu.AddItem('R', 'RED:   #'+HexStr(CurrentCol.R, 2), @WhiteColour);
+	Menu.AddItem('G', 'GREEN: #'+HexStr(CurrentCol.G, 2), @WhiteColour);
+	Menu.AddItem('B', 'BLUE:  #'+HexStr(CurrentCol.B, 2), @WhiteColour);
+	Menu.AddItem('D', 'DEFAULT', @WhiteColour);
+
+	Finished := False;
+	While Not Finished do begin
+		Rendering.BeginFrame();
+		DrawTitle();
+		
+		Font^.Scale := 2; YPos:=TitleGfx^.H;
+		PrintText('COLOUR SETTINGS', Font,(RESOL_W div 2),YPos,ALIGN_CENTRE,ALIGN_TOP,NIL);
+		
+		YPos += ((Font^.CharH * Font^.Scale) * 3) div 2;
+		PrintText(idxName, Font,(RESOL_W div 2),YPos,ALIGN_CENTRE,ALIGN_TOP,NIL);
+		
+		YPos += ((Font^.CharH * Font^.Scale) * 3) div 2;
+		DrawColourPreview(@CurrentCol, (RESOL_W - RectWidth) div 2, YPos);
+		
+		YPos += RectHeight + (Font^.CharH * Font^.Scale) div 2;
+		Menu.SetVerticalOffset(YPos);
+		Menu.Draw();
+		
+		Rendering.FinishFrame();
+		GetDeltaTime(dt);
+
+		Changed := False;
+		While (SDL_PollEvent(@Ev)>0) do begin
+			Choice := Menu.ProcessEvent(@Ev);
+			If (Choice = 'R') then begin
+				CurrentCol.R := CurrentCol.R + $10;
+				Changed := True
 			end else
-			If (Ev.Type_ = SDL_VideoResize) then Shared.ResizeWindow(Ev.Resize.W,Ev.Resize.H,False)
+			If (Choice = 'G') then begin
+				CurrentCol.G := CurrentCol.G + $10;
+				Changed := True
+			end else
+			If (Choice = 'B') then begin
+				CurrentCol.B := CurrentCol.B + $10;
+				Changed := True
+			end else
+			If (Choice = 'D') then begin
+				CurrentCol:=DefaultMapColour[idx];
+				Changed := True
+			end else
+			If (Choice = CHOICE_BACK) then begin
+				For pc:=0 to 7 do If(CentralPalette[pc] = MapColour[idx]) then CentralPalette[pc] := CurrentCol;
+				For pc:=0 to 7 do If(PaletteColour[pc] = MapColour[idx]) then PaletteColour[pc] := CurrentCol;
+				MapColour[idx] := CurrentCol;
+				Finished := True
+			end else
+			If (Choice = CHOICE_QUIT) then begin
+				Shutdown := True;
+				Finished := True
+			end
+		end;
+
+		If (Changed) then begin
+			Menu.EditItem(0, 'RED:   #'+HexStr(CurrentCol.R, 2));
+			Menu.EditItem(1, 'GREEN: #'+HexStr(CurrentCol.G, 2));
+			Menu.EditItem(2, 'BLUE:  #'+HexStr(CurrentCol.B, 2))
 		end
 	end;
-	Exit(Choice)
+	Menu.Destroy()
+End;
+
+Procedure SetColours();
+Var
+	Idx, dt: uInt;
+
+	Menu: TMenu;
+	Choice: Char;
+	Selection: sInt;
+	Finished: Boolean;
+Begin
+	Menu.Create(8);
+	Menu.SetFontScale(2);
+	For Idx := 0 to 7 do Menu.AddItem(Chr(48 + Idx), UpperCase(ColourName[Idx]), @WhiteColour);
+	Menu.SetVerticalOffset(TitleGfx^.H + (Font^.CharH * 3));
+
+	Finished := False;
+	Repeat
+		Rendering.BeginFrame();
+		DrawTitle();
+
+		Font^.Scale := 2;
+		PrintText('COLOUR SETTINGS', Font, (RESOL_W div 2), TitleGfx^.H, ALIGN_CENTRE, ALIGN_TOP, NIL);
+
+		Menu.Draw();
+		Rendering.FinishFrame();
+
+		GetDeltaTime(dt);
+		Selection := -1;
+		While (SDL_PollEvent(@Ev)>0) do begin
+			Choice := Menu.ProcessEvent(@Ev);
+			If (Choice = CHOICE_QUIT) then begin
+				Shutdown := True;
+				Finished := True
+			end else
+			If (Choice = CHOICE_BACK) then Finished := True
+			else
+			If (Choice <> CHOICE_NONE) then Selection := Ord(Choice) - 48
+		end;
+		If (Selection >= 0) and (Selection <= 7) then SetSingleColour(Selection)
+	Until Finished;
+	Menu.Destroy()
+End;
+
+{$IFDEF LD25_DONATE}
+Procedure DonateScreen();
+Const
+	GitHubText = 'G - GITHUB SPONSORS';
+Var
+	dt: uInt;
+	XPos, YPos: sInt;
+	GitHubRect, LiberaPayRect: TSDL_Rect;
+	BackToMenu: Boolean;
+Begin
+	XPos := (Length(GitHubText) * Font^.CharW) + ((Length(GitHubText) - 1) * Font^.SpacingX);
+	XPos := (RESOL_W - (XPos * Font^.Scale)) div 2;
+
+	BackToMenu := False;
+	Repeat
+		Rendering.BeginFrame();
+		DrawTitle();
+
+		Font^.Scale := 2; YPos:=TitleGfx^.H;
+		PrintText('DONATE',Font,(RESOL_W div 2),YPos,ALIGN_CENTRE,ALIGN_TOP,NIL);
+
+		YPos += Font^.CharH * Font^.Scale * 3;
+		PrintText('IF YOU LIKE THE GAME', Font,(RESOL_W div 2),YPos,ALIGN_CENTRE,ALIGN_TOP,NIL);
+		YPos += (Font^.CharH * Font^.Scale * 3) div 2;
+		PrintText('YOU CAN DONATE VIA:', Font,(RESOL_W div 2),YPos,ALIGN_CENTRE,ALIGN_TOP,NIL);
+
+		YPos += Font^.CharH * Font^.Scale * 3;
+		PrintMenuText(GitHubText, XPos, YPos, ALIGN_LEFT, @WhiteColour, GitHubRect);
+
+		YPos += Font^.CharH * Font^.Scale * 2;
+		PrintMenuText('L - LIBERAPAY', XPos, YPos, ALIGN_LEFT, @WhiteColour, LiberaPayRect);
+
+		YPos += Font^.CharH * Font^.Scale * 3;
+		PrintText('THANKS!', Font,(RESOL_W div 2),YPos,ALIGN_CENTRE,ALIGN_TOP,NIL);
+
+		Rendering.FinishFrame();
+		GetDeltaTime(dt);
+
+		While (SDL_PollEvent(@Ev)>0) do begin
+			If (Ev.Type_ = SDL_QuitEv) then begin
+				Shutdown:=True; BackToMenu := True
+			end else
+			If (Ev.Type_ = SDL_KeyDown) then begin
+				If ((Ev.Key.Keysym.Sym = SDLK_Escape) or (Ev.Key.Keysym.Sym = SDLK_AC_BACK)) then
+					BackToMenu := True
+				else
+				If (Ev.Key.Keysym.Sym = SDLK_G) then begin
+					SDL_OpenUrl(PChar('https://github.com/sponsors/suve'));
+					BackToMenu := True
+				end else
+				If (Ev.Key.Keysym.Sym = SDLK_L) then begin
+					SDL_OpenUrl(PChar('https://liberapay.com/suve'));
+					BackToMenu := True
+				end
+			end else
+			If (Ev.Type_ = SDL_MouseButtonDown) then begin
+				{$IFDEF ANDROID} TranslateMouseEventCoords(@Ev); {$ENDIF}
+				If(MouseInRect(GitHubRect)) then begin
+					SDL_OpenUrl(PChar('https://github.com/sponsors/suve'));
+					BackToMenu := True
+				end else
+				If(MouseInRect(LiberaPayRect)) then begin
+					SDL_OpenUrl(PChar('https://liberapay.com/suve'));
+					BackToMenu := True
+				end
+			end else
+			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
+				HandleWindowResizedEvent(@Ev)
+		end;
+	until BackToMenu
+End;
+{$ENDIF}
+
+Function GameworldDialog(Const Load:Boolean):Char;
+Const
+	WorldName: Array[TGameMode] of AnsiString = (
+		'TUTORIAL',
+		'CLASSIC'
+	);
+Var
+	Msg: AnsiString;
+	OK: Array[TGameMode] of Boolean;
+	GM: TGameMode;
+
+	Menu: TMenu;
+	Col: PSDL_Colour;
+	Choice: Char;
+	YPos: uInt;
+	dt:uInt;
+Begin
+	If Load then begin
+		Msg:='LOAD GAME';
+		For GM:=Low(GM) to High(GM) do Ok[GM]:=SaveExists[GM]
+	end else begin
+		Msg:='NEW GAME';
+		For GM:=Low(GM) to High(GM) do Ok[GM]:=True
+	end;
+
+	Menu.Create(Length(WorldName));
+	Menu.SetFontScale(2);
+	For GM := Low(GM) to High(GM) do begin
+		If (Ok[GM]) then
+			Col := @WhiteColour
+		else
+			Col := @GreyColour;
+		Menu.AddItem(WorldName[GM][1], WorldName[GM], Col)
+	end;
+
+	Result := '?';
+	While (Result = '?') do begin
+		Rendering.BeginFrame();
+		DrawTitle();
+
+		Font^.Scale := 2;
+		YPos := TitleGfx^.H;
+		PrintText(Msg, Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+		YPos += ((Font^.CharH * Font^.Scale) * 3) div 2;
+		PrintText('SELECT GAMEWORLD', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+		YPos += (Font^.CharH * Font^.Scale);
+
+		Menu.SetVerticalOffset(YPos);
+		Menu.Draw();
+
+		Rendering.FinishFrame();
+		GetDeltaTime(dt);
+		While (SDL_PollEvent(@Ev)>0) do begin
+			Choice := Menu.ProcessEvent(@Ev);
+			If (Choice = 'T') then begin
+				If (Ok[GM_TUTORIAL]) then Result := 'T'
+			end else
+			If (Choice = 'C') then begin
+				If (Ok[GM_ORIGINAL]) then Result := 'C'
+			end else
+			If (Choice = CHOICE_QUIT) then begin
+				Shutdown := True;
+				Result := 'Q'
+			end else
+			If (Choice = CHOICE_BACK) then Result := 'Q'
+		end
+	end;
+	Menu.Destroy()
+End;
+
+Function ShowSlide(Const Img:PImage):Boolean;
+Var
+	Q:sInt; dt:uInt;
+	Dst: TSDL_Rect;
+Begin
+	Q:=0;
+	While (Q = 0) do begin
+		Rendering.BeginFrame();
+		Dst.X := (RESOL_W - Img^.W) div 2;
+		Dst.Y := 0;
+		Dst.W := Img^.W;
+		Dst.H := Img^.H;
+		DrawImage(Img,NIL,@Dst,NIL);
+		Rendering.FinishFrame();
+		
+		GetDeltaTime(dt);
+		While (SDL_PollEvent(@Ev)>0) do begin
+			If (Ev.Type_ = SDL_QuitEv) then begin
+				Shutdown:=True; Exit(False)
+			end else
+			{$IFDEF ANDROID}
+			If (Ev.Type_ = SDL_FingerDown) then Q:=1 else
+			{$ENDIF}
+			If (Ev.Type_ = SDL_KeyDown) then begin
+				If (Ev.Key.Keysym.Sym = SDLK_ESCAPE) or (Ev.Key.Keysym.Sym = SDLK_AC_BACK) then
+					Q:=-1 
+				else
+					Q:=1
+			end else
+			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
+				HandleWindowResizedEvent(@Ev)
+		end
+	end;
+	Exit(Q >= 0)
+End;
+
+Function Intro():Boolean;
+Var C:uInt;
+Begin
+	For C:=Low(SlideIn) to High(SlideIn) do
+		If (Not ShowSlide(SlideIn[C])) then Exit(False);
+	
+	If (Not ShowSlide(TitleGfx)) then Exit(False);
+	Exit(True)
+End;
+
+Function MainMenu():Char;
+Var
+	dt: uInt;
+
+	GM: TGameMode;
+	IHasSaves: Boolean;
+	ContinueColour: PSDL_Colour;
+	LoadColour: PSDL_Colour;
+
+	Menu: TMenu;
+	Choice: Char;
+Begin
+	If (GameOn) then
+		ContinueColour := @WhiteColour
+	else
+		ContinueColour := @GreyColour;
+
+	IHasSaves := False;
+	For GM:=Low(GM) to High(GM) do If (SaveExists[GM]) then begin
+		IHasSaves:=True;
+		Break
+	end;
+	If (IHasSaves) then
+		LoadColour := @WhiteColour
+	else
+		LoadColour := @GreyColour;
+
+	Menu.Create(8);
+	Menu.SetFontScale(2);
+	Menu.AddItem('I', 'INTRODUCTION', @WhiteColour);
+	Menu.AddItem('C', 'CONTINUE', ContinueColour);
+	Menu.AddItem('N', 'NEW GAME', @WhiteColour);
+	Menu.AddItem('L', 'LOAD GAME', LoadColour);
+	Menu.AddItem('S', 'SET COLOURS', @WhiteColour);
+	{$IFNDEF ANDROID}
+		Menu.AddItem('B', 'BIND KEYS', @WhiteColour);
+	{$ENDIF}
+	{$IFDEF LD25_DONATE}
+		Menu.AddItem('D', 'DONATE', @WhiteColour);
+	{$ENDIF}
+	Menu.AddItem('Q', 'QUIT', @WhiteColour);
+
+	Result := '?';
+	While (Result = '?') do begin
+		Rendering.BeginFrame();
+		DrawTitle();
+		Menu.Draw();
+		Rendering.FinishFrame();
+
+		GetDeltaTime(dt);
+		While (SDL_PollEvent(@Ev)>0) do begin
+			Choice := Menu.ProcessEvent(@Ev);
+			If (Choice = CHOICE_QUIT) or (Choice = CHOICE_BACK) then begin
+				Shutdown := True;
+				Result := 'Q'
+			end else
+			If (Choice = 'C') then begin
+				If (GameOn) then Result := 'C'
+			end else
+			If (Choice = 'L') then begin
+				If (IHasSaves) then Result := 'L'
+			end else
+			If (Choice <> CHOICE_NONE) then Result := Choice
+		end
+	end;
+	Menu.Destroy()
 End;
 
 Procedure Outro();
-   Var C:uInt; YPos:uInt;
-   begin
-   For C:=Low(SlideOut) to High(SlideOut) do
-       If Not ShowSlide(SlideOut[C]) then Exit();
-   While True do begin
-      Sour.BeginFrame(); DrawTitle(); SetFontScaling(Font,2.0);
-      Sour.PrintText([UpperCase(GAMENAME),'BY SUPER VEGETA','','A LUDUM DARE 25 GAME','','THANKS TO:','','DANIEL REMAR'],
-                     Font,(RESOL_W div 2),TitleGfx^.H,ALIGN_CENTER);
-      YPos:=TitleGfx^.H+Trunc(8*Font^.SpaY*Font^.Scale); Sour.SetFontScaling(Font,1.0);
-      Sour.PrintText('FOR HERO CORE, WHICH THIS GAME WAS BASED UPON',Font,(RESOL_W div 2),YPos,Align_Center);
-      Sour.SetFontScaling(Font,2.0); YPos+=Trunc((Font^.SpaY)+(Font^.SpaY*Font^.Scale));
-      Sour.PrintText('DEXTERO',Font,(RESOL_W div 2),YPos,ALIGN_CENTER);
-      YPos+=Trunc(Font^.SpaY*Font^.Scale); Sour.SetFontScaling(Font,1.0);
-      Sour.PrintText(['FOR INTRODUCING ME TO LUDUM DARE','AND CHEERING ME UP DURING THE COMPO'],
-                     Font,(RESOL_W div 2),YPos,ALIGN_CENTER);
-      Sour.FinishFrame();
-      GetDeltaTime(C);
-      While (SDL_PollEvent(@Ev)>0) do begin
-        If (Ev.Type_ = SDL_QuitEv) then begin
-           Shutdown:=True; Exit() end else
-        If (Ev.Type_ = SDL_KeyDown) then Exit() else
-        If (Ev.Type_ = SDL_VideoResize) then
-           Shared.ResizeWindow(Ev.Resize.W,Ev.Resize.H,False) else
-        end
-      end
-   end;
+Var
+	C:uInt; YPos:uInt;
+Begin
+	For C:=Low(SlideOut) to High(SlideOut) do
+		If Not ShowSlide(SlideOut[C]) then Exit();
 
-Function Startup():Boolean;
-   Var S:AnsiString; Timu:Comp; GM:TGameMode;
-   begin
-   Timu:=GetMSecs();
-   SetPaths(); Randomize;
-   If (IHasIni()) then begin
-      Write('Loading configuration file... ');
-      If (LoadIni())
-         then Writeln('Success!')
-         else begin Writeln('Failed! Using default settings.'); DefaultSettings() end;
-      end else begin
-      ConfigFiles.DefaultSettings();
-      Writeln('Configuration file not found. Using default settings.')
-      end;
-   For GM:=Low(GM) to High(GM)
-       do SaveExists[GM]:=IHasGame(GM);
-   Write('Initializing SDL video... ');
-   If (SDL_Init(SDL_Init_Video or SDL_Init_Timer)<>0) then begin
-      Writeln('Failed!'); Halt(1) end else Writeln('Success!');
-   Write('Initializing SDL audio... ');
-   If (SDL_InitSubSystem(SDL_Init_Audio)<>0) then begin
-      Writeln('Failed!'); NoSound:=True end else Writeln('Success!');
-   If (Not NoSound) then begin
-      Write('Initializing SDL_mixer... ');
-      If (Mix_OpenAudio(AUDIO_FREQ, AUDIO_TYPE, AUDIO_CHAN, AUDIO_CSIZ)<>0) then begin
-         Writeln('Failed!'); NoSound:=True end else Writeln('Success!')
-      end else Writeln('SDL audio init failed - skipping SDL_mixer init.');
-   If (Not NoSound) then Mix_AllocateChannels(SFXCHANNELS);
-   LoadAndSetWindowIcon();
-   Sour.SetGLAttributes(8,8,8);
-   Write('Opening window... ');
-   If (Not Wnd_F)
-      then Screen:=Sour.OpenWindow(Wnd_W,Wnd_H,SDL_RESIZABLE)
-      else Screen:=Sour.OpenWindow(0,0,SDL_FullScreen);
-   If (Screen=NIL) then begin
-      Writeln('Failed!'); Halt(1) end else Writeln('Success!');
-   S:=GAMENAME+' v.'+GAMEVERS;
-   SDL_WM_SetCaption(PChar(S),PChar(S));
-   Shared.SetResolution();
-   Sour.SetClearColour(Sour.MakeColour($000000));
-   Sour.NonPOT := True;
-   Write('Loading basic resources... ');
-   If Not Shared.LoadBasics(S) then begin
-      Writeln('ERROR'); Writeln(S); Exit(False)
-      end else Writeln('Success!');
-   Write('Loading gameworld resources... ');
-   If Not Shared.LoadRes(S,@LoadUpdate) then begin
-      Writeln('ERROR'); Writeln(S); Exit(False);
-      end else Writeln('Success!');
-   SetLength(Mob,0); SetLength(EBul,0); SetLength(PBul,0); SetLength(Gib,0); Hero:=NIL;
-   Writeln('All done! Initialization finished in ',((GetMSecs()-Timu)/1000):0:2,' second(s).');
-   Exit(True)
-   end;
+	While True do begin
+		Rendering.BeginFrame();
+		DrawTitle();
+		
+		Font^.Scale := 2;
+		PrintText(
+			[UpperCase(GAMENAME),'BY SUPER VEGETA','','A LUDUM DARE 25 GAME','','THANKS TO:','','DANIEL REMAR'],
+			Font,
+			(RESOL_W div 2), TitleGfx^.H, 
+			ALIGN_CENTRE, ALIGN_TOP, NIL
+		);
+		
+		YPos:=TitleGfx^.H + (Font^.SpacingY + Font^.CharH) * 8 * Font^.Scale;
+		Font^.Scale := 1;
+		PrintText('FOR HERO CORE, WHICH THIS GAME WAS BASED UPON',Font,(RESOL_W div 2),YPos,ALIGN_CENTRE, ALIGN_TOP, NIL);
+		
+		Font^.Scale := 2;
+		YPos += (Font^.SpacingY + Font^.CharH) * (Font^.Scale + 1);
+		PrintText('DEXTERO',Font,(RESOL_W div 2),YPos,ALIGN_CENTRE, ALIGN_TOP, NIL);
+		
+		YPos += (Font^.SpacingY + Font^.CharH) * Font^.Scale;
+		Font^.Scale := 1;
+		PrintText(
+			['FOR INTRODUCING ME TO LUDUM DARE','AND CHEERING ME UP DURING THE COMPO'],
+			Font,
+			(RESOL_W div 2), YPos,
+			ALIGN_CENTRE, ALIGN_TOP, NIL
+		);
+		
+		Rendering.FinishFrame();
+		GetDeltaTime(C);
+		While (SDL_PollEvent(@Ev)>0) do begin
+			If (Ev.Type_ = SDL_QuitEv) then begin
+				Shutdown:=True; Exit()
+			end else
+			If (Ev.Type_ = SDL_KeyDown) then Exit() else
+			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then begin
+				HandleWindowResizedEvent(@Ev)
+			end
+		end
+	end
+End;
 
-Procedure NewGame_Turotial();
-   begin
-   GameMode:=GM_Tutorial; GameOn:=True;
-   DestroyEntities(True); ResetGamestate();
-   New(Hero,Create()); ChangeRoom(RespRoom[GM_Tutorial].X,RespRoom[GM_TUTORIAL].Y);
-   end;
+Procedure LoadConfig();
+Begin
+	(*
+	 * Start by setting everything to default values, just in case
+	 * the user manually edited the config file and some fields are now missing.
+	 *)
+	Configfiles.DefaultSettings();
 
-Procedure NewGame_Original();
-   begin
-   GameMode:=GM_ORIGINAL; GameOn:=True;
-   DestroyEntities(True); ResetGamestate();
-   New(Hero,Create()); ChangeRoom(RespRoom[GM_Original].X,RespRoom[GM_Original].Y);
-   end;
+	If (IHasIni(INIVER_2_0)) then begin
+		SDL_Log('Loading configuration file...', []);
+		If (LoadIni(INIVER_2_0)) then begin
+			SDL_Log('Configuration file loaded successfully.', []);
+			Exit()
+		end else
+			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, 'Failed to load configuration file!', [])
+	end else
+		SDL_Log('Configuration file not found.', []);
+
+	{$IFNDEF ANDROID}
+		If (IHasIni(INIVER_1_0)) then begin
+			SDL_Log('Loading legacy v1.x configuration file...', []);
+			If (LoadIni(INIVER_1_0)) then begin
+				SDL_Log('Legacy configuration file loaded successfully.', []);
+				Exit()
+			end else
+				SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, 'Failed to load legacy configuration file!', [])
+		end else
+			SDL_Log('Legacy v1.x configuration file not found.', []);
+	{$ENDIF}
+
+	SDL_Log('Using default settings.', []);
+	Configfiles.DefaultSettings()
+End;
+
+Function OpenWindow(): Boolean;
+Var
+	Title: AnsiString;
+Begin
+	Title := GAMENAME + ' v.' + GAMEVERS;
+	{$IFDEF ANDROID}
+		(*
+		 * On Android, pass 0x0 as the window size. This makes SDL open a window covering the entire screen.
+		 * Set the RESIZABLE flag to allow for rotations, split-screen, et cetera.
+		 * Do not set FULLSCREEN, as that disables system navigation buttons.
+		 *)
+		Window := SDL_CreateWindow(PChar(Title), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 0, 0, SDL_WINDOW_RESIZABLE);
+	{$ELSE}
+		(*
+		 * On desktop platforms, open a window based on the values read beforehand from the config file.
+		 *)
+		If (Not Wnd_F) then
+			Window := SDL_CreateWindow(PChar(Title), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, Wnd_W, Wnd_H, SDL_WINDOW_RESIZABLE)
+		else
+			Window := SDL_CreateWindow(PChar(Title), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, RESOL_W, RESOL_H, SDL_WINDOW_FULLSCREEN_DESKTOP or SDL_WINDOW_RESIZABLE);
+	{$ENDIF}
+	If (Window = NIL) then Exit(False);
+
+	(*
+	 * Trigger the resize event handler to force recalculating the window size and aspect ratio.
+	 *)
+	HandleWindowResizedEvent(NIL);
+
+	SDL_SetWindowMinimumSize(Window, RESOL_W, RESOL_H);
+	Exit(True)
+End;
+
+Procedure FatalError(fmt: AnsiString; args: Array of Const);
+Const
+	MsgBoxTitle = GAMENAME + ' v.' + GAMEVERS + ': Error';
+Var
+	ErrorStr: AnsiString;
+Begin
+	ErrorStr := SysUtils.Format(fmt, args);
+	SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, '%s', [PChar(ErrorStr)]);
+	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, PChar(MsgBoxTitle), PChar(ErrorStr), Window);
+	Halt(1)
+End;
+
+Function InitSDL2(): Boolean;
+Begin
+	(*
+	 * Configure the behaviour of the SDL2 library.
+	 * Some of the values we set here are the same as the default ones,
+	 * but it is always better to be explicit.
+	 *)
+	SDL_SetHint(SDL_HINT_APP_NAME, GAMENAME);
+
+	SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, '1');
+	SDL_SetHint(SDL_HINT_SCREENSAVER_INHIBIT_ACTIVITY_NAME, 'Playing a game');
+
+	SDL_SetHint(SDL_HINT_RENDER_BATCHING, '1');
+	SDL_SetHint(SDL_HINT_RENDER_LOGICAL_SIZE_MODE, 'letterbox');
+	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, 'nearest');
+
+	SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, '0');
+	SDL_SetHint(SDL_HINT_QUIT_ON_LAST_WINDOW_CLOSE, '1');
+	SDL_SetHint(SDL_HINT_WINDOWS_NO_CLOSE_ON_ALT_F4, '0');
+
+	SDL_SetHint(SDL_HINT_ANDROID_TRAP_BACK_BUTTON, '1');
+	SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, '0');
+	SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, '1');
+
+	Result := SDL_Init(SDL_Init_Video or SDL_Init_Timer) = 0
+End;
+
+Procedure Startup();
+Var
+	StartTime: TTimeStamp;
+	GM: TGameMode;
+	OldMask, NewMask: TFPUExceptionMask;
+	Assload: Assets.TLoadingResult;
+Begin
+	StartTime:=GetTimeStamp(); Randomize();
+
+	// Reset some global vars to known values
+	Shutdown:=False;
+	GameOn:=False;
+	NoSound:=False;
+
+	ConfigFiles.SetPaths();
+	{$IFNDEF ANDROID}
+	ConfigFiles.CopyOldSavegames();
+	{$ENDIF}
+
+	LoadConfig();
+	For GM:=Low(GM) to High(GM) do SaveExists[GM]:=IHasGame(GM);
+
+	// Disable Floating Poing Exception checking while initializing the video stack.
+	// See: https://github.com/PascalGameDevelopment/SDL2-for-Pascal/issues/56
+	OldMask := Math.GetExceptionMask();
+	NewMask := OldMask;
+	Include(NewMask, exInvalidOp);
+	Include(NewMask, exZeroDivide);
+	Math.SetExceptionMask(NewMask);
+
+	SDL_Log('Initializing SDL2...', []);
+	If (Not InitSDL2()) then
+		FatalError('Failed to initialize SDL2! Error details: %s', [SDL_GetError()])
+	else
+		SDL_Log('SDL2 initialized successfully.', []);
+
+	SDL_Log('Initializing SDL2_image... ', []);
+	if(IMG_Init(IMG_INIT_PNG) <> IMG_INIT_PNG) then
+		FatalError('Failed to initialize SDL2_image! Error details: %s', [IMG_GetError()])
+	else
+		SDL_Log('SDL2_image initialized successfully.', []);
+
+	SDL_Log('Initializing SDL2 audio subsystem...', []);
+	If (SDL_InitSubSystem(SDL_Init_Audio)<>0) then begin
+		SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 'Failed to initialize SDL2 audio subsystem! Error details: %s', [SDL_GetError()]);
+		NoSound:=True
+	end else
+		SDL_Log('SDL2 audio subsystem initialized successfully.', []);
+
+	If (Not NoSound) then begin
+		SDL_Log('Initializing SDL2_mixer...', []);
+		If(Mix_Init(0) <> 0) then begin
+			SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 'Failed to initialize SDL2_mixer! Error details: %s', [Mix_GetError()]);
+			NoSound:=True
+		end else
+		If (Mix_OpenAudio(AUDIO_FREQ, AUDIO_TYPE, AUDIO_CHAN, AUDIO_CSIZ)<>0) then begin
+			SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 'Failed to initialize SDL2_mixer! Error details: %s', [Mix_GetError()]);
+			NoSound:=True
+		end else begin
+			Mix_AllocateChannels(SFXCHANNELS);
+			SDL_Log('SDL2_mixer initialized successfully.', [])
+		end
+	end else
+		SDL_Log('Failed to initialize SDL2 audio - skipping SDL2_mixer init.', []);
+
+	SDL_Log('Opening window...', []);
+	If (Not OpenWindow()) then begin
+		FatalError('Failed to open window! Error details: %s', [SDL_GetError()])
+	end else begin
+		SDL_Log('Window opened successfully. (%s)', [PChar(Rendering.GetWindowInfo())]);
+		LoadAndSetWindowIcon()
+	end;
+
+	SDL_Log('Creating renderer...', []);
+	Renderer := SDL_CreateRenderer(Window, -1, SDL_RENDERER_TARGETTEXTURE);
+	if(Renderer = NIL) then begin
+		FatalError('Failed to create renderer! Error details: %s', [SDL_GetError()])
+	end else begin
+		SDL_Log('Renderer created successfully. (%s)', [PChar(Rendering.GetRendererInfo())]);
+		SDL_RenderSetLogicalSize(Renderer, RESOL_W, RESOL_H)
+	end;
+
+	// Restore the old mask after we disabled FPE checks.
+	Math.SetExceptionMask(OldMask);
+
+	SDL_Log('Creating render target texture...', []);
+	Display := SDL_CreateTexture(Renderer, SDL_GetWindowPixelFormat(Window), SDL_TEXTUREACCESS_TARGET, RESOL_W, RESOL_H);
+	if(Display = NIL) then
+		FatalError('Failed to create render target texture! Error details: %s', [SDL_GetError()])
+	else
+		SDL_Log('Render target texture created successfully.', []);
+
+	SDL_Log('Loading assets...', []);
+	RegisterAllAssets();
+	Assload := LoadAssets(@LoadUpdate);
+	If(Assload.Status <> ALS_OK) then begin
+		If(Assload.Status = ALS_FAILED) then
+			FatalError('Failed to load file: %s (%s)', [Assload.FileName, Assload.ErrStr])
+		else
+			FatalError('Failed to load assets: %s', [Assload.ErrStr])
+	end else
+		SDL_Log('All assets loaded successfully.', []);
+
+	SetLength(Mob,0); SetLength(EBul,0); SetLength(PBul,0); SetLength(Gib,0); Hero:=NIL;
+	SDL_Log('All done! Initialization finished in %ld ms.', [clong(TimeStampDiffMillis(StartTime, GetTimeStamp()))])
+End;
+
+Procedure NewGame(Const GM:TGameMode);
+Begin
+	If(GM <> GameMode) then SaveCurrentGame();
+
+	GameMode:=GM;
+	DestroyEntities(True); ResetGamestate();
+	New(Hero,Create()); ChangeRoom(RespRoom[GM].X,RespRoom[GM].Y);
+	GameOn:=True
+End;
+
+Function GameloadRequest(Const GM:TGameMode):Boolean;
+Begin
+	If(GM <> GameMode) then SaveCurrentGame();
+
+	SDL_Log('Loading game...', []);
+	Result := LoadGame(GM);
+	If(Result) then
+		SDL_Log('Game loaded successfully.', [])
+	else
+		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, 'Failed to load the game!', [])
+End;
 
 Procedure QuitProg();
-   Var Timu:Comp;
-   begin
-   Timu:=GetMSecs();
-   Write('Freeing resouces... '); Shared.Free(); Writeln('Done.');
-   Write('Closing SDL_mixer... '); Mix_CloseAudio(); Writeln('Done.');
-   Write('Closing SDL... '); SDL_Quit(); Writeln('Done.');
-   If (GameOn) then begin
-      Write('Saving current game...');
-      If (SaveGame(GameMode)) then Writeln('Done.') end;
-   Write('Saving configuration file... ');
-   If (SaveIni()) then Writeln('Done.');
-   Writeln('Finalization finished in ',((GetMSecs-Timu)/1000):0:2,' second(s).');
-   Writeln('Thanks for playing and have a nice day!');
-   end;
+Var
+	StartTime: TTimeStamp;
+Begin
+	StartTime := GetTimeStamp();
+	SDL_HideWindow(Window);
+
+	SaveCurrentGame();
+
+	SDL_Log('Saving configuration file...', []);
+	If (SaveIni()) then
+		SDL_Log('Configuration file saved successfully.', [])
+	else
+		SDL_Log('Failed to save configuration file!', []);
+
+	DestroyEntities();
+
+	SDL_Log('Freeing assets...', []);
+		Assets.FreeAssets();
+	SDL_Log('Assets freed.', []);
+
+	SDL_Log('Closing SDL2_mixer...', []);
+		Mix_CloseAudio();
+		Mix_Quit();
+	SDL_Log('SDL2_mixer closed.', []);
+
+	SDL_Log('Closing SDL2_image...', []);
+		IMG_Quit();
+	SDL_Log('SDL2_image closed.', []);
+
+	SDL_Log('Closing SDL2...', []);
+		SDL_DestroyTexture(Display);
+		SDL_DestroyRenderer(Renderer);
+		SDL_DestroyWindow(Window);
+		SDL_Quit();
+	SDL_Log('SDL2 closed.', []);
+
+	SDL_Log('Finalization finished in %ld ms.', [clong(TimeStampDiffMillis(StartTime, GetTimeStamp()))]);
+	SDL_Log('Thanks for playing and have a nice day!', [])
+End;
+
+(*
+ * On Android, we're building the game as a library, not as an executable.
+ * Stick the code in an "ld25main" function and export it.
+ * Use cdecl for compatibility with C wrapper code.
+ *)
+{$IFDEF ANDROID}
+Function ld25main(argc: cint; argv: Pointer): cint; cdecl;
+{$ENDIF}
 
 begin
-Writeln(GAMENAME,' by ',GAMEAUTH);
-Writeln('v.',GAMEVERS,' (build ',GAMEDATE,')');
-Writeln(StringOfChar('-',36));
-If (Not Startup()) Then Halt(255);
-Repeat
-   MenuChoice:=Menu();
-   Case MenuChoice of
-      'I': Intro();
-      'C': PlayGame();
-      'N': begin
-           MenuChoice:=GameworldDialog(False);
-           If (MenuChoice<>'Q') and (GameOn) then begin
-              Write('Saving current game... ');
-              If (SaveGame(GameMode)) then Writeln('Done.') end;
-           Case MenuChoice of
-              'T': begin NewGame_Turotial(); PlayGame() end;
-              'N': begin NewGame_Original(); PlayGame() end;
-              end;
-           MenuChoice:='N'
-           end;
-      'L': begin
-           MenuChoice:=GameworldDialog(True);
-           If (MenuChoice<>'Q') and (GameOn) and
-              ((MenuChoice='T') xor (GameMode=GM_TUTORIAL)) then begin
-              Write('Saving current game... ');
-              If (SaveGame(GameMode)) then Writeln('Done.') end;
-           Case MenuChoice of
-              'T': begin Write('Loading game... '); If LoadGame(GM_TUTORIAL) then begin
-                         Writeln('Done.'); PlayGame() end end;
-              'N': begin Write('Loading game... '); If LoadGame(GM_ORIGINAL) then begin
-                         Writeln('Done.'); PlayGame() end end;
-              end;
-           MenuChoice:='L'
-           end;
-      'B': BindKeys();
-      end;
-   If (GameOn) and (GameMode <> GM_TUTORIAL) and (Given >= 8) then begin
-      GameOn:=False; Outro() end;
-   Until (MenuChoice = 'Q') or (Shutdown);
-QuitProg()
-end.
+	SDL_Log(GAMENAME + ' v.' + GAMEVERS + ' by ' + GAMEAUTH, []);
+	{$IFDEF LD25_DEBUG}
+		SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_DEBUG);
+	{$ENDIF}
 
+	Startup();
+	Repeat
+		MenuChoice:=MainMenu();
+		Case MenuChoice of
+			'I': Intro();
+			'C': PlayGame();
+			'N': begin
+				MenuChoice:=GameworldDialog(False);
+				Case MenuChoice of
+					'T': begin NewGame(GM_TUTORIAL); PlayGame() end;
+					'C': begin NewGame(GM_ORIGINAL); PlayGame() end;
+				end;
+				MenuChoice:='N'
+			end;
+			'L': begin
+				MenuChoice:=GameworldDialog(True);
+				Case MenuChoice of
+					'T': If(GameloadRequest(GM_TUTORIAL)) then PlayGame();
+					'C': If(GameloadRequest(GM_ORIGINAL)) then PlayGame();
+				end;
+				MenuChoice:='L'
+			end;
+			'S': SetColours();
+			{$IFNDEF ANDROID}
+				'B': BindKeys();
+			{$ENDIF}
+			{$IFDEF LD25_DONATE}
+				'D': DonateScreen();
+			{$ENDIF}
+		end;
+		If (GameOn) and (GameMode <> GM_TUTORIAL) and (Given >= 8) then begin
+			GameOn:=False; Outro()
+		end;
+	Until (MenuChoice = 'Q') or (Shutdown);
+	QuitProg();
+{$IFDEF ANDROID}
+	Result := 0
+end;
+
+exports	ld25main;
+{$ENDIF}
+
+end.

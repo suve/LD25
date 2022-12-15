@@ -19,7 +19,8 @@ X        XX        :
 X                  :
 XXXXXXXXXXXXXXXXXXXX
 palette white
-text white 18 02 Use your fire keys (default: Z/X) to shoot.
+[desktop] text white 18 02 Use your fire keys (default: Z/X) to shoot.
+[mobile] text white 18 02 Use the fire buttons to shoot.
 text white 18 12 When touching an enemy, you both get damaged.
 text white 18 22 So don't let 'em catch you!
 text black 168 36 These fellas are drones. 
