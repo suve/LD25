@@ -10,12 +10,11 @@ Theme: You are the villain
 
 POST-COMPO VERSION
 
----------------------------------------
+-----===== About =====-----
 Colorful tells the story of a man, struggling to bear with the depression
 of his beloved woman. No longer able to cope with it, he goes on a quest
 to make her world, once again... colorful.
 
----------------------------------------
 Based heavily on Hero Core, Colorful is a game where the player
 moves freely around a 2D world, fighting multiple enemies. The
 goal is to collect eight colour artifact. Every artifact brought
@@ -39,7 +38,7 @@ automatically upon delivering one of the colour artifacts or on death.
 Game is also saved upon starting or loading a game using different gameworld
 or closing the program.
 
----------------------------------------
+-----===== Controls =====-----
 Default controls:
 Arrow keys - Movement
 Z / X - Shoot left/right
@@ -47,3 +46,17 @@ Z / X - Shoot left/right
 P - Pause
 
 Have fun!
+
+-----===== Licensing =====-----
+Colorful is subject to two different licences.
+
+- The executable binaries are available under the terms of the
+  GNU General Public License, version 3, as published by the
+  Free Software Foundation. The full text of this licence is available
+  in the LICENCE-CODE.txt file.
+
+- Game's assets (graphics and sounds) are made available under the terms
+  of the "zlib with acknowledgement" licence. The full text of this licence
+  is available in the LICENCE-ASSETS.txt file.
+
+For a copy of the game's source code, visit: https://github.com/suve/LD25
