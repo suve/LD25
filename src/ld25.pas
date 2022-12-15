@@ -731,6 +731,11 @@ Var
 Begin
 	StartTime:=GetTimeStamp(); Randomize();
 
+	// Reset some global vars to known values
+	Shutdown:=False;
+	GameOn:=False;
+	NoSound:=False;
+
 	ConfigFiles.SetPaths();
 	{$IFNDEF ANDROID}
 	ConfigFiles.CopyOldSavegames();

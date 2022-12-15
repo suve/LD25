@@ -427,7 +427,6 @@ End;
 
 
 Initialization
-	Shutdown:=False; GameOn:=False; NoSound:=False;
 	Tikku := 0;
 
 End.
