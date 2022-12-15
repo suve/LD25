@@ -51,8 +51,19 @@ install: all
 	install -m 644 -p -D "pkg/colorful.desktop"     "$(DESTDIR)/usr/share/applications/colorful.desktop"
 	install -m 644 -p -D "pkg/colorful.appdata.xml" "$(DESTDIR)/usr/share/appdata/colorful.appdata.xml"
 	# Man pages
-	install -m 644 -p -D "pkg/colorful-english.man" "$(DESTDIR)/usr/share/man/man6/colorful.6"
-	install -m 644 -p -D "pkg/colorful-polish.man"  "$(DESTDIR)/usr/share/man/pl/man6/colorful.6"
+	install -m 644 -p -D "pkg/man/en.man"    "$(DESTDIR)/usr/share/man/man6/colorful.6"
+	install -m 644 -p -D "pkg/man/de.man"    "$(DESTDIR)/usr/share/man/de/man6/colorful.6"
+	install -m 644 -p -D "pkg/man/es.man"    "$(DESTDIR)/usr/share/man/es/man6/colorful.6"
+	install -m 644 -p -D "pkg/man/fr.man"    "$(DESTDIR)/usr/share/man/fr/man6/colorful.6"
+	install -m 644 -p -D "pkg/man/he.man"    "$(DESTDIR)/usr/share/man/he/man6/colorful.6"
+	install -m 644 -p -D "pkg/man/id.man"    "$(DESTDIR)/usr/share/man/id/man6/colorful.6"
+	install -m 644 -p -D "pkg/man/nl.man"    "$(DESTDIR)/usr/share/man/nl/man6/colorful.6"
+	install -m 644 -p -D "pkg/man/pl.man"    "$(DESTDIR)/usr/share/man/pl/man6/colorful.6"
+	install -m 644 -p -D "pkg/man/pt.man"    "$(DESTDIR)/usr/share/man/pt/man6/colorful.6"
+	install -m 644 -p -D "pkg/man/pt_BR.man" "$(DESTDIR)/usr/share/man/pt_BR/man6/colorful.6"
+	install -m 644 -p -D "pkg/man/ro.man"    "$(DESTDIR)/usr/share/man/ro/man6/colorful.6"
+	install -m 644 -p -D "pkg/man/ru.man"    "$(DESTDIR)/usr/share/man/ru/man6/colorful.6"
+	install -m 644 -p -D "pkg/man/uk.man"    "$(DESTDIR)/usr/share/man/uk/man6/colorful.6"
 
 # -- Real targets
 

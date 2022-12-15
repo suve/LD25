@@ -1,6 +1,6 @@
 .\" Manpage for colorful
 .\" Contact veg@svgames.pl to correct errors or typos.
-.TH COLORFUL 6 "2017-10-01" "1.2" "Manuels de jeux"
+.TH COLORFUL 6 "2022-12-16" "2.0" "Manuels de jeux"
 .SH NOM
 colorful - un jeu de tir 2D en vue de côté
 .SH SYNOPSIS
@@ -27,6 +27,4 @@ Mettre en pause / Reprendre le jeu
 Toutes ces touches peuvent être redéfinies.
 .SH DOSSIERS
 Les données du jeu se trouvent dans : \fB/usr/share/suve/colorful\fR. 
-Les réglages ainsi que les sauvegardes sont dans : \fB~/.suve/colorful/\fR.
-.SH AUTEUR
-suve (veg@svgames.pl)
+Les réglages ainsi que les sauvegardes sont dans : \fB~/.local/share/suve/colorful/\fR.

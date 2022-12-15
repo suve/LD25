@@ -1,6 +1,6 @@
 .\" Manpage for colorful
 .\" Contact veg@svgames.pl to correct errors or typos.
-.TH COLORFUL 6 "2017-09-30" "1.2" "Manual Permainan"
+.TH COLORFUL 6 "2022-12-16" "2.0" "Manual Permainan"
 .SH NAMA
 colorful - Tembak-tembakan 2D sederhana
 .SH SINOPSIS
@@ -26,6 +26,4 @@ Tunda / mulai
 Tombol ini bisa diatur ulang seluruhnya.
 .SH DIREKTORI
 Berkas permainan berlokasi di \fB/usr/share/suve/colorful\fR. 
-Permainan ini menyimpan pengaturan dan savegames di \fB~/.suve/colorful/\fR.
-.SH PENULIS
-suve (veg@svgames.pl)
+Permainan ini menyimpan pengaturan dan savegames di \fB~/.local/share/suve/colorful/\fR.

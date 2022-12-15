@@ -1,6 +1,6 @@
 .\" Manpage para o jogo colorful
 .\" Contate veg@svgames.pl para corrigir falhas ou erros de digitação.
-.TH man 6 "2018-10-01" "1.2" "Games Manual"
+.TH man 6 "2022-12-16" "2.0" "Games Manual"
 .SH NOME
 colorful - shooter simples de plataforma 2D
 .SH SINOPSE
@@ -27,6 +27,4 @@ Pausar / despausar
 Essas combinações de teclas podem ser totalmente redefinidas.
 .SH DIRETÓRIOS
 Os arquivos do jogo estão localizados em \fB/usr/share/suve/colorful\fR.
-O jogo armazena suas configurações e savegames em \fB~/.suve/colorful/\fR.
-.SH AUTOR
-suve (veg@svgames.pl)
+O jogo armazena suas configurações e savegames em \fB~/.local/share/suve/colorful/\fR.

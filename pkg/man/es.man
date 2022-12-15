@@ -1,6 +1,6 @@
 .\" Manpage para colorful
 .\" Escriba a veg@svgames.pl para corregir bugs o errores de digitación.
-.TH COLORFUL 6 "2017-10-28" "1.2" "Manual de Juego"
+.TH COLORFUL 6 "2022-12-16" "2.0" "Manual de Juego"
 .SH NOMBRE
 colorful - un simple juego de tiro 2D
 .SH SINOPSIS
@@ -26,6 +26,4 @@ Pausar / reanudar
 Estas combinaciones pueden ser redefinidas.
 .SH DIRECTÓRIOS
 Los ficheros de juego se encuentran en \fB/usr/share/suve/colorful\fR. 
-Las configuraciones del juego y partidas pasadas se guardan en \fB~/.suve/colorful/\fR.
-.SH AUTOR
-suve (veg@svgames.pl)
+Las configuraciones del juego y partidas pasadas se guardan en \fB~/.local/share/suve/colorful/\fR.

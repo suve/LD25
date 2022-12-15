@@ -1,6 +1,6 @@
 .\" Manpage for colorful
 .\" Contact veg@svgames.pl to correct errors or typos.
-.TH COLORFUL 6 "2017-10-02" "1.2" "Manualul Jocului"
+.TH COLORFUL 6 "2022-12-16" "2.0" "Manualul Jocului"
 .SH NUME
 colorful - joc shooter simplu 2D sideview
 .SH REZUMAT
@@ -26,6 +26,4 @@ Pauză / anulați pauza
 Scurtăturile implicite pot fi redefinite complet.
 .SH LOCAȚII
 Fișierele cu datele jocului sunt localizate în \fB/usr/share/suve/colorful\fR.
-Jocul are setările și salvările în \fB~/.suve/colorful/\fR.
-.SH AUTOR
-suve (veg@svgames.pl)
+Jocul are setările și salvările în \fB~/.local/share/suve/colorful/\fR.
