@@ -777,7 +777,7 @@ Begin
 
 	If (Not NoSound) then begin
 		SDL_Log('Initializing SDL2_mixer...', []);
-		If(Mix_Init(0) <> 0) then begin
+		If((Mix_Init(MIX_INIT_OGG) and MIX_INIT_OGG) = 0) then begin
 			SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 'Failed to initialize SDL2_mixer! Error details: %s', [Mix_GetError()]);
 			NoSound:=True
 		end else
