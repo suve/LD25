@@ -317,15 +317,21 @@ End;
 {$IFDEF LD25_DONATE}
 Procedure DonateScreen();
 Const
-	GitHubText = 'G - GITHUB SPONSORS';
+	GitHubText    = {$IFNDEF ANDROID} 'G - ' + {$ENDIF} 'GITHUB SPONSORS';
+	LiberapayText = {$IFNDEF ANDROID} 'L - ' + {$ENDIF} 'LIBERAPAY';
+	Alignment = {$IFNDEF ANDROID} ALIGN_LEFT {$ELSE} ALIGN_CENTRE {$ENDIF};
 Var
 	dt: uInt;
 	XPos, YPos: sInt;
 	GitHubRect, LiberaPayRect: TSDL_Rect;
 	BackToMenu: Boolean;
 Begin
-	XPos := (Length(GitHubText) * Font^.CharW) + ((Length(GitHubText) - 1) * Font^.SpacingX);
-	XPos := (RESOL_W - (XPos * Font^.Scale)) div 2;
+	{$IFNDEF ANDROID}
+		XPos := (Length(GitHubText) * Font^.CharW) + ((Length(GitHubText) - 1) * Font^.SpacingX);
+		XPos := (RESOL_W - (XPos * Font^.Scale)) div 2;
+	{$ELSE}
+		XPos := RESOL_W div 2;
+	{$ENDIF}
 
 	BackToMenu := False;
 	Repeat
@@ -341,10 +347,10 @@ Begin
 		PrintText('YOU CAN DONATE VIA:', Font,(RESOL_W div 2),YPos,ALIGN_CENTRE,ALIGN_TOP,NIL);
 
 		YPos += Font^.CharH * Font^.Scale * 3;
-		PrintMenuText(GitHubText, XPos, YPos, ALIGN_LEFT, @WhiteColour, GitHubRect);
+		PrintMenuText(GitHubText, XPos, YPos, Alignment, @WhiteColour, GitHubRect);
 
 		YPos += Font^.CharH * Font^.Scale * 2;
-		PrintMenuText('L - LIBERAPAY', XPos, YPos, ALIGN_LEFT, @WhiteColour, LiberaPayRect);
+		PrintMenuText(LiberapayText, XPos, YPos, Alignment, @WhiteColour, LiberaPayRect);
 
 		YPos += Font^.CharH * Font^.Scale * 3;
 		PrintText('THANKS!', Font,(RESOL_W div 2),YPos,ALIGN_CENTRE,ALIGN_TOP,NIL);
