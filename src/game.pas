@@ -42,6 +42,8 @@ Type
 	);
 
 Const
+	AnimFPS = 12; AnimTime = 1000 div AnimFPS;
+
 	PAUSETXT_W = (64 - 35 - 2); 
 	PAUSETXT_H = (32 - 7 - 2);
 
@@ -137,7 +139,7 @@ Begin
 	AniFra:=(Ticks div AnimTime) mod 2;
 	{$ELSE}
 	If (Not debugY) 
-		then AniFra:=(Ticks div (AnimTime * 2)) mod 2
+		then AniFra:=(Ticks div AnimTime) mod 2
 		else AniFra:=0;
 	{$ENDIF}
 End;
