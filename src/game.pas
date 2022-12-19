@@ -55,7 +55,7 @@ Var
 	RoomChange: TRoomChange;
 
 	{$IFDEF LD25_DEBUG}
-		DebugFreeze, DebugNoClip, DebugHideUI: Boolean;
+		DebugInvulnerability, DebugFreeze, DebugNoClip, DebugHideUI: Boolean;
 	{$ENDIF}
 
 Procedure SetAllowScreensaver(Allow: Boolean);
@@ -65,6 +65,22 @@ Begin
 	else
 		SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, '0')
 end;
+
+{$IFDEF LD25_DEBUG}
+Procedure TriggerInvulnerabilityCheat(); Inline;
+Begin
+	If(DebugInvulnerability) then begin
+		DebugInvulnerability := False;
+		Exit
+	end;
+
+	// Prevent enabling invulnerability if the hero is already dead
+	If(DeadTime > 0) then Exit;
+
+	Hero^.HP := Hero^.MaxHP;
+	DebugInvulnerability := True
+End;
+{$ENDIF}
 
 Procedure GatherInput();
 Var
@@ -93,9 +109,7 @@ Begin
 					WantToQuit:=True
 			end else
 			{$IFDEF LD25_DEBUG}
-				If (Ev.Key.Keysym.Sym = SDLK_F1) then begin
-					If (DeadTime <= 0) then Hero^.HP:=Hero^.MaxHP 
-				end else
+				If (Ev.Key.Keysym.Sym = SDLK_F1) then TriggerInvulnerabilityCheat() else
 				If (Ev.Key.Keysym.Sym = SDLK_F2) then DebugFreeze:=(Not DebugFreeze) else
 				If (Ev.Key.Keysym.Sym = SDLK_F3) then DebugNoClip:=(Not DebugNoClip) else
 				If (Ev.Key.Keysym.Sym = SDLK_F12) then DebugHideUI:=(Not DebugHideUI) else
@@ -585,6 +599,7 @@ Const
 	PauseRect: TSDL_Rect = (X: (RESOL_W - 64) div 2; Y: (RESOL_H - 32) div 2; W: 64; H: 32);
 Var
 	Dst, DstCpy: TSDL_Rect;
+	HealthBarColour: PSDL_Colour;
 	C, d: sInt;
 Begin
 	// Health indicator
@@ -594,10 +609,18 @@ Begin
 		Dst.Y := 9;
 		Dst.W := 1+Trunc(9*Hero^.HP/Hero^.MaxHP);
 		Dst.H := 4;
-		If (Hero^.InvTimer <= 0) then
-			DrawColouredRect(@Dst, @WhiteColour)
+
+		{$IFDEF LD25_DEBUG}
+		If DebugInvulnerability then
+			HealthBarColour := @LimeColour
 		else
-			DrawColouredRect(@Dst, @GreyColour)
+		{$ENDIF}
+		If (Hero^.InvTimer > 0) then
+			HealthBarColour := @GreyColour
+		else
+			HealthBarColour := @WhiteColour;
+
+		DrawColouredRect(@Dst, HealthBarColour)
 	end;
 
 	// Colour indicator
@@ -734,9 +757,13 @@ End;
 Procedure DamagePlayer(Const Power:Double);
 Begin
 	PlaySfx(SFX_HIT);
-	Hero^.HP -= Power;
 	Hero^.InvTimer := Hero^.InvLength;
-	
+
+	{$IFDEF LD25_DEBUG}
+	If(DebugInvulnerability) then Exit;
+	{$ENDIF}
+
+	Hero^.HP -= Power;
 	If (Hero^.HP <= 0) then begin
 		DeadTime:=DeathLength;
 		PlaceGibs(Hero, HeroSprite.GetFrame(AniFra, Hero^.Face));
@@ -748,6 +775,7 @@ End;
 {$IFDEF LD25_DEBUG}
 Procedure ResetDebugCheats(); Inline;
 Begin
+	DebugInvulnerability:=False;
 	DebugFreeze:=False;
 	DebugNoClip:=False;
 	DebugHideUI:=False

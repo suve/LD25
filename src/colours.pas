@@ -25,6 +25,7 @@ Const
 	WhiteColour: TSDL_Colour = (R: 255; G: 255; B: 255; A: 255);
 	GreyColour: TSDL_Colour = (R: 128; G: 128; B: 128; A: 255);
 	BlackColour: TSDL_Colour = (R: 0; G: 0; B: 0; A: 255);
+	LimeColour: TSDL_Colour = (R: 0; G: 255; B: 0; A: 255);
 
 	ColourName : Array[0..7] of AnsiString = (
 		'black', 'navy', 'green', 'blue', 'red', 'purple', 'yellow', 'white'
