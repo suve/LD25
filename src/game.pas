@@ -54,7 +54,7 @@ Var
 	Paused, WantToQuit: Boolean;
 	RoomChange: TRoomChange;
 {$IFDEF LD25_DEBUG}
-	debugY,debugU,debugI:Boolean;
+	DebugFreeze,DebugHideUI,DebugNoClip:Boolean;
 {$ENDIF}
 
 Procedure SetAllowScreensaver(Allow: Boolean);
@@ -95,9 +95,9 @@ Begin
 				If (Ev.Key.Keysym.Sym = SDLK_H) then begin 
 					If (DeadTime <= 0) then Hero^.HP:=Hero^.MaxHP 
 				end else
-				If (Ev.Key.Keysym.Sym = SDLK_U) then debugU:=(Not debugU) else
-				If (Ev.Key.Keysym.Sym = SDLK_I) then debugI:=(Not debugI) else
-				If (Ev.Key.Keysym.Sym = SDLK_Y) then debugY:=(Not debugY) else
+				If (Ev.Key.Keysym.Sym = SDLK_U) then DebugHideUI:=(Not DebugHideUI) else
+				If (Ev.Key.Keysym.Sym = SDLK_I) then DebugNoClip:=(Not DebugNoClip) else
+				If (Ev.Key.Keysym.Sym = SDLK_Y) then DebugFreeze:=(Not DebugFreeze) else
 			{$ENDIF}
 		end else
 		If (Ev.Type_ = SDL_KeyUp) then begin
@@ -138,7 +138,7 @@ Begin
 	{$IFNDEF LD25_DEBUG}
 	AniFra:=(Ticks div AnimTime) mod 2;
 	{$ELSE}
-	If (Not debugY) 
+	If (Not DebugFreeze)
 		then AniFra:=(Ticks div AnimTime) mod 2
 		else AniFra:=0;
 	{$ENDIF}
@@ -155,10 +155,8 @@ Begin
 		XDif:=Hero^.XVel*Time/1000;
 		YDif:=Hero^.YVel*Time/1000;
 		
-		// In developer mode, debugI allows for noclip.
-		// Outside developer builds (or with disabled debugI), we need to check hero collisions.
 		{$IFDEF LD25_DEBUG}
-		If (Not debugI) then begin
+		If (Not DebugNoClip) then begin
 		{$ENDIF}
 			If (XDif<>0) then begin
 				If (XDif<0) then ChkX:=Hero^.X else ChkX:=Hero^.X+Hero^.W-1;
@@ -424,7 +422,7 @@ Begin
 	CalculateRoomChange();
 	
 	CalculatePlayerBullets(Time);
-	{$IFDEF LD25_DEBUG} If (Not debugY) then {$ENDIF} CalculateMonsters(Time);
+	{$IFDEF LD25_DEBUG} If (Not DebugFreeze) then {$ENDIF} CalculateMonsters(Time);
 	CalculateEnemyBullets(Time);
 	CalculateGibs(Time);
 End;
@@ -670,7 +668,7 @@ Begin
 	
 	If (Length(FloatTxt)>0) then DrawFloatingTexts();
 
-	{$IFDEF LD25_DEBUG} If Not (debugU) then {$ENDIF} DrawUI();
+	{$IFDEF LD25_DEBUG} If Not (DebugHideUI) then {$ENDIF} DrawUI();
 
 	Rendering.FinishFrame()
 end;
@@ -770,7 +768,7 @@ Begin
 	PauseTxt.X:=PAUSETXT_W div 2; PauseTxt.Y:=PAUSETXT_H div 2;
 	Font^.Scale := 1;
 
-	{$IFDEF LD25_DEBUG} debugY:=False; debugU:=False; debugI:=False; {$ENDIF}
+	{$IFDEF LD25_DEBUG} DebugFreeze:=False; DebugHideUI:=False; DebugNoClip:=False; {$ENDIF}
 	Repeat
 		If (RoomChange <> RCHANGE_NONE) then PerformRoomChange();
 		
