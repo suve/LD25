@@ -54,9 +54,17 @@ Var
 	Paused, WantToQuit: Boolean;
 	RoomChange: TRoomChange;
 
-	{$IFDEF LD25_DEBUG}
-		CheatInvulnerability, CheatFreeze, CheatNoClip, CheatHideUI: Boolean;
-	{$ENDIF}
+{$IFDEF LD25_DEBUG}
+	Type
+		TFreezeMode = (
+			FREEZE_NONE,
+			FREEZE_MOBS,
+			FREEZE_ALL
+		);
+	Var
+		CheatInvulnerability, CheatNoClip, CheatHideUI: Boolean;
+		CheatFreeze: TFreezeMode;
+{$ENDIF}
 
 Procedure SetAllowScreensaver(Allow: Boolean);
 Begin
@@ -79,6 +87,11 @@ Begin
 
 	Hero^.HP := Hero^.MaxHP;
 	CheatInvulnerability := True
+End;
+
+Procedure TriggerFreezeCheat(); Inline;
+Begin
+	CheatFreeze := TFreezeMode((Ord(CheatFreeze) + 1) mod (Ord(High(TFreezeMode)) + 1))
 End;
 {$ENDIF}
 
@@ -110,7 +123,7 @@ Begin
 			end else
 			{$IFDEF LD25_DEBUG}
 				If (Ev.Key.Keysym.Sym = SDLK_F1) then TriggerInvulnerabilityCheat() else
-				If (Ev.Key.Keysym.Sym = SDLK_F2) then CheatFreeze:=(Not CheatFreeze) else
+				If (Ev.Key.Keysym.Sym = SDLK_F2) then TriggerFreezeCheat() else
 				If (Ev.Key.Keysym.Sym = SDLK_F3) then CheatNoClip:=(Not CheatNoClip) else
 				If (Ev.Key.Keysym.Sym = SDLK_F12) then CheatHideUI:=(Not CheatHideUI) else
 			{$ENDIF}
@@ -151,7 +164,7 @@ End;
 Procedure Animate(Const Ticks:uInt);
 Begin
 	{$IFDEF LD25_DEBUG}
-		If(CheatFreeze) then AniFra:=0 else
+		If(CheatFreeze = FREEZE_ALL) then AniFra:=0 else
 	{$ENDIF}
 	AniFra:=(Ticks div AnimTime) mod 2
 End;
@@ -273,36 +286,42 @@ Begin
 
 	For M:=Low(Mob) to High(Mob) do begin
 		If (Mob[M]=NIL) then Continue;
-		
+
 		E:=Mob[M];
-		E^.Calculate(Time);
-		
-		XDif:=E^.XVel*Time/1000;
-		YDif:=E^.YVel*Time/1000;
-		If (XDif<>0) then begin
-			If (XDif<0) then begin 
-				E^.Face:=FACE_LEFT;  ChkX:=E^.X
-			end else begin 
-				E^.Face:=FACE_RIGHT; ChkX:=E^.X+E^.W-1 
-			end;
-			
-			If (Not Room^.CollidesOrOutside(ChkX+XDif,E^.Y)) and (Not Room^.CollidesOrOutside(ChkX+XDif,E^.Y+E^.H-1)) then begin 
-				E^.X:=E^.X+XDif; E^.XCol:=False 
+		{$IFDEF LD25_DEBUG}
+		If(CheatFreeze = FREEZE_NONE) then begin
+		{$ENDIF}
+			E^.Calculate(Time);
+
+			XDif:=E^.XVel*Time/1000;
+			YDif:=E^.YVel*Time/1000;
+			If (XDif<>0) then begin
+				If (XDif<0) then begin
+					E^.Face:=FACE_LEFT;  ChkX:=E^.X
+				end else begin
+					E^.Face:=FACE_RIGHT; ChkX:=E^.X+E^.W-1
+				end;
+
+				If (Not Room^.CollidesOrOutside(ChkX+XDif,E^.Y)) and (Not Room^.CollidesOrOutside(ChkX+XDif,E^.Y+E^.H-1)) then begin
+					E^.X:=E^.X+XDif; E^.XCol:=False
+				end else
+					E^.XCol:=True;
 			end else
-				E^.XCol:=True;
-		end else
-			E^.XCol:=False;
-		
-		If (YDif<>0) then begin
-			If (YDif<0) then ChkY:=E^.Y else ChkY:=E^.Y+E^.H-1;
-			
-			If (Not Room^.CollidesOrOutside(E^.X,ChkY+YDif)) and (Not Room^.CollidesOrOutside(E^.X+E^.W-1,ChkY+YDif)) then begin
-				E^.Y:=E^.Y+YDif; E^.YCol:=False
+				E^.XCol:=False;
+
+			If (YDif<>0) then begin
+				If (YDif<0) then ChkY:=E^.Y else ChkY:=E^.Y+E^.H-1;
+
+				If (Not Room^.CollidesOrOutside(E^.X,ChkY+YDif)) and (Not Room^.CollidesOrOutside(E^.X+E^.W-1,ChkY+YDif)) then begin
+					E^.Y:=E^.Y+YDif; E^.YCol:=False
+				end else
+					E^.YCol:=True
 			end else
-				E^.YCol:=True
-		end else 
-			E^.YCol:=False;
-		
+				E^.YCol:=False;
+		{$IFDEF LD25_DEBUG}
+		end;
+		{$ENDIF}
+
 		If (Hero^.HP > 0) and (Hero^.InvTimer <= 0) and (Overlap(Hero,E)) then begin 
 			DamageMob(M,9.5); DamagePlayer(9.5) 
 		end
@@ -347,13 +366,19 @@ Begin
 	
 	For B:=Low(PBul) to High(PBul) do begin
 		If (PBul[B]=NIL) then Continue;
-		
-		CalculateBulletMovement(PBul[B], Time);
-		If (PBul[B]^.HP <= 0) then begin
-			Dispose(PBul[B],Destroy()); PBul[B]:=NIL; 
-			Continue 
+
+		{$IFDEF LD25_DEBUG}
+		If(CheatFreeze <> FREEZE_ALL) then begin
+		{$ENDIF}
+			CalculateBulletMovement(PBul[B], Time);
+			If (PBul[B]^.HP <= 0) then begin
+				Dispose(PBul[B],Destroy()); PBul[B]:=NIL;
+				Continue
+			end;
+		{$IFDEF LD25_DEBUG}
 		end;
-		
+		{$ENDIF}
+
 		If (Length(Mob)>0) then M:=Low(Mob) else M:=High(M);
 		While (M<=High(Mob)) do begin
 			If (Mob[M]=NIL) then begin 
@@ -378,13 +403,19 @@ Begin
 	
 	For B:=Low(EBul) to High(EBul) do begin
 		If (EBul[B]=NIL) then Continue;
-		
-		CalculateBulletMovement(EBul[B], Time);
-		If (EBul[B]^.HP <= 0) then begin
-			Dispose(EBul[B],Destroy()); EBul[B]:=NIL;
-			Continue 
+
+		{$IFDEF LD25_DEBUG}
+		If(CheatFreeze <> FREEZE_ALL) then begin
+		{$ENDIF}
+			CalculateBulletMovement(EBul[B], Time);
+			If (EBul[B]^.HP <= 0) then begin
+				Dispose(EBul[B],Destroy()); EBul[B]:=NIL;
+				Continue
+			end;
+		{$IFDEF LD25_DEBUG}
 		end;
-		
+		{$ENDIF}
+
 		If (Hero^.HP > 0) and (Hero^.InvTimer <= 0) and (Overlap(EBul[B],Hero)) then begin 
 			DamagePlayer(EBul[B]^.Power);
 			Dispose(EBul[B],Destroy()); EBul[B]:=NIL
@@ -398,6 +429,7 @@ Var
 	XDif, YDif, ChkX, ChkY: Double;
 Begin
 	If (Length(Gib)=0) then Exit;
+	{$IFDEF LD25_DEBUG} If(CheatFreeze = FREEZE_ALL) then Exit; {$ENDIF}
 	
 	For G:=Low(Gib) to High(Gib) do begin
 		If (Gib[G]=NIL) then Continue;
@@ -434,7 +466,7 @@ Begin
 	CalculateRoomChange();
 	
 	CalculatePlayerBullets(Time);
-	{$IFDEF LD25_DEBUG} If (Not CheatFreeze) then {$ENDIF} CalculateMonsters(Time);
+	CalculateMonsters(Time);
 	CalculateEnemyBullets(Time);
 	CalculateGibs(Time);
 End;
@@ -775,10 +807,11 @@ End;
 {$IFDEF LD25_DEBUG}
 Procedure ResetDebugCheats(); Inline;
 Begin
-	CheatInvulnerability:=False;
-	CheatFreeze:=False;
-	CheatNoClip:=False;
-	CheatHideUI:=False
+	CheatInvulnerability := False;
+	CheatNoClip := False;
+	CheatHideUI := False;
+
+	CheatFreeze := FREEZE_NONE
 End;
 {$ENDIF}
 
