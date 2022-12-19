@@ -55,7 +55,7 @@ Var
 	RoomChange: TRoomChange;
 
 	{$IFDEF LD25_DEBUG}
-		DebugInvulnerability, DebugFreeze, DebugNoClip, DebugHideUI: Boolean;
+		CheatInvulnerability, CheatFreeze, CheatNoClip, CheatHideUI: Boolean;
 	{$ENDIF}
 
 Procedure SetAllowScreensaver(Allow: Boolean);
@@ -69,8 +69,8 @@ end;
 {$IFDEF LD25_DEBUG}
 Procedure TriggerInvulnerabilityCheat(); Inline;
 Begin
-	If(DebugInvulnerability) then begin
-		DebugInvulnerability := False;
+	If(CheatInvulnerability) then begin
+		CheatInvulnerability := False;
 		Exit
 	end;
 
@@ -78,7 +78,7 @@ Begin
 	If(DeadTime > 0) then Exit;
 
 	Hero^.HP := Hero^.MaxHP;
-	DebugInvulnerability := True
+	CheatInvulnerability := True
 End;
 {$ENDIF}
 
@@ -110,9 +110,9 @@ Begin
 			end else
 			{$IFDEF LD25_DEBUG}
 				If (Ev.Key.Keysym.Sym = SDLK_F1) then TriggerInvulnerabilityCheat() else
-				If (Ev.Key.Keysym.Sym = SDLK_F2) then DebugFreeze:=(Not DebugFreeze) else
-				If (Ev.Key.Keysym.Sym = SDLK_F3) then DebugNoClip:=(Not DebugNoClip) else
-				If (Ev.Key.Keysym.Sym = SDLK_F12) then DebugHideUI:=(Not DebugHideUI) else
+				If (Ev.Key.Keysym.Sym = SDLK_F2) then CheatFreeze:=(Not CheatFreeze) else
+				If (Ev.Key.Keysym.Sym = SDLK_F3) then CheatNoClip:=(Not CheatNoClip) else
+				If (Ev.Key.Keysym.Sym = SDLK_F12) then CheatHideUI:=(Not CheatHideUI) else
 			{$ENDIF}
 		end else
 		If (Ev.Type_ = SDL_KeyUp) then begin
@@ -151,7 +151,7 @@ End;
 Procedure Animate(Const Ticks:uInt);
 Begin
 	{$IFDEF LD25_DEBUG}
-		If(DebugFreeze) then AniFra:=0 else
+		If(CheatFreeze) then AniFra:=0 else
 	{$ENDIF}
 	AniFra:=(Ticks div AnimTime) mod 2
 End;
@@ -168,7 +168,7 @@ Begin
 		YDif:=Hero^.YVel*Time/1000;
 		
 		{$IFDEF LD25_DEBUG}
-		If (Not DebugNoClip) then begin
+		If (Not CheatNoClip) then begin
 		{$ENDIF}
 			If (XDif<>0) then begin
 				If (XDif<0) then ChkX:=Hero^.X else ChkX:=Hero^.X+Hero^.W-1;
@@ -434,7 +434,7 @@ Begin
 	CalculateRoomChange();
 	
 	CalculatePlayerBullets(Time);
-	{$IFDEF LD25_DEBUG} If (Not DebugFreeze) then {$ENDIF} CalculateMonsters(Time);
+	{$IFDEF LD25_DEBUG} If (Not CheatFreeze) then {$ENDIF} CalculateMonsters(Time);
 	CalculateEnemyBullets(Time);
 	CalculateGibs(Time);
 End;
@@ -611,7 +611,7 @@ Begin
 		Dst.H := 4;
 
 		{$IFDEF LD25_DEBUG}
-		If DebugInvulnerability then
+		If CheatInvulnerability then
 			HealthBarColour := @LimeColour
 		else
 		{$ENDIF}
@@ -689,7 +689,7 @@ Begin
 	
 	If (Length(FloatTxt)>0) then DrawFloatingTexts();
 
-	{$IFDEF LD25_DEBUG} If Not (DebugHideUI) then {$ENDIF} DrawUI();
+	{$IFDEF LD25_DEBUG} If Not (CheatHideUI) then {$ENDIF} DrawUI();
 
 	Rendering.FinishFrame()
 end;
@@ -760,7 +760,7 @@ Begin
 	Hero^.InvTimer := Hero^.InvLength;
 
 	{$IFDEF LD25_DEBUG}
-	If(DebugInvulnerability) then Exit;
+	If(CheatInvulnerability) then Exit;
 	{$ENDIF}
 
 	Hero^.HP -= Power;
@@ -775,10 +775,10 @@ End;
 {$IFDEF LD25_DEBUG}
 Procedure ResetDebugCheats(); Inline;
 Begin
-	DebugInvulnerability:=False;
-	DebugFreeze:=False;
-	DebugNoClip:=False;
-	DebugHideUI:=False
+	CheatInvulnerability:=False;
+	CheatFreeze:=False;
+	CheatNoClip:=False;
+	CheatHideUI:=False
 End;
 {$ENDIF}
 
