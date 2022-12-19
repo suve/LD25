@@ -53,9 +53,10 @@ Var
 	PauseTxt: TSDL_Point;
 	Paused, WantToQuit: Boolean;
 	RoomChange: TRoomChange;
-{$IFDEF LD25_DEBUG}
-	DebugFreeze,DebugHideUI,DebugNoClip:Boolean;
-{$ENDIF}
+
+	{$IFDEF LD25_DEBUG}
+		DebugFreeze, DebugNoClip, DebugHideUI: Boolean;
+	{$ENDIF}
 
 Procedure SetAllowScreensaver(Allow: Boolean);
 Begin
@@ -92,12 +93,12 @@ Begin
 					WantToQuit:=True
 			end else
 			{$IFDEF LD25_DEBUG}
-				If (Ev.Key.Keysym.Sym = SDLK_H) then begin 
+				If (Ev.Key.Keysym.Sym = SDLK_F1) then begin
 					If (DeadTime <= 0) then Hero^.HP:=Hero^.MaxHP 
 				end else
-				If (Ev.Key.Keysym.Sym = SDLK_U) then DebugHideUI:=(Not DebugHideUI) else
-				If (Ev.Key.Keysym.Sym = SDLK_I) then DebugNoClip:=(Not DebugNoClip) else
-				If (Ev.Key.Keysym.Sym = SDLK_Y) then DebugFreeze:=(Not DebugFreeze) else
+				If (Ev.Key.Keysym.Sym = SDLK_F2) then DebugFreeze:=(Not DebugFreeze) else
+				If (Ev.Key.Keysym.Sym = SDLK_F3) then DebugNoClip:=(Not DebugNoClip) else
+				If (Ev.Key.Keysym.Sym = SDLK_F12) then DebugHideUI:=(Not DebugHideUI) else
 			{$ENDIF}
 		end else
 		If (Ev.Type_ = SDL_KeyUp) then begin
@@ -135,13 +136,10 @@ End;
 
 Procedure Animate(Const Ticks:uInt);
 Begin
-	{$IFNDEF LD25_DEBUG}
-	AniFra:=(Ticks div AnimTime) mod 2;
-	{$ELSE}
-	If (Not DebugFreeze)
-		then AniFra:=(Ticks div AnimTime) mod 2
-		else AniFra:=0;
+	{$IFDEF LD25_DEBUG}
+		If(DebugFreeze) then AniFra:=0 else
 	{$ENDIF}
+	AniFra:=(Ticks div AnimTime) mod 2
 End;
 
 Procedure CalculateHero(Const Time:uInt);
@@ -174,8 +172,8 @@ Begin
 		{$IFDEF LD25_DEBUG}
 		end else begin 
 			Hero^.X:=Hero^.X+XDif; Hero^.Y:=Hero^.Y+YDif 
-		end {$ENDIF}
-	
+		end
+		{$ENDIF}
 	end else begin
 		If (DeadTime > 0) then 
 			DeadTime-=Time
@@ -747,6 +745,15 @@ Begin
 	end
 End;
 
+{$IFDEF LD25_DEBUG}
+Procedure ResetDebugCheats(); Inline;
+Begin
+	DebugFreeze:=False;
+	DebugNoClip:=False;
+	DebugHideUI:=False
+End;
+{$ENDIF}
+
 Function PlayGame():Boolean;
 Const
 	DELTA_MAXIMUM = 100; // Limit timestep to 100ms (10 updates/s)
@@ -768,7 +775,7 @@ Begin
 	PauseTxt.X:=PAUSETXT_W div 2; PauseTxt.Y:=PAUSETXT_H div 2;
 	Font^.Scale := 1;
 
-	{$IFDEF LD25_DEBUG} DebugFreeze:=False; DebugHideUI:=False; DebugNoClip:=False; {$ENDIF}
+	{$IFDEF LD25_DEBUG} ResetDebugCheats(); {$ENDIF}
 	Repeat
 		If (RoomChange <> RCHANGE_NONE) then PerformRoomChange();
 		
