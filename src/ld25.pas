@@ -26,7 +26,7 @@ uses
 	SysUtils, Math, ctypes,
 	SDL2, SDL2_image, SDL2_mixer,
 	Assets, Colours, ConfigFiles, FloatingText, Fonts, Game, Images, Objects,
-	MathUtils, Menus, Rendering, Rooms, Shared
+	MathUtils, Menus, Rendering, Rooms, Shared, Slides
 ;
 
 
@@ -463,52 +463,6 @@ Begin
 	Menu.Destroy()
 End;
 
-Function ShowSlide(Const Img:PImage):Boolean;
-Var
-	Q:sInt; dt:uInt;
-	Dst: TSDL_Rect;
-Begin
-	Q:=0;
-	While (Q = 0) do begin
-		Rendering.BeginFrame();
-		Dst.X := (RESOL_W - Img^.W) div 2;
-		Dst.Y := 0;
-		Dst.W := Img^.W;
-		Dst.H := Img^.H;
-		DrawImage(Img,NIL,@Dst,NIL);
-		Rendering.FinishFrame();
-		
-		GetDeltaTime(dt);
-		While (SDL_PollEvent(@Ev)>0) do begin
-			If (Ev.Type_ = SDL_QuitEv) then begin
-				Shutdown:=True; Exit(False)
-			end else
-			{$IFDEF ANDROID}
-			If (Ev.Type_ = SDL_FingerDown) then Q:=1 else
-			{$ENDIF}
-			If (Ev.Type_ = SDL_KeyDown) then begin
-				If (Ev.Key.Keysym.Sym = SDLK_ESCAPE) or (Ev.Key.Keysym.Sym = SDLK_AC_BACK) then
-					Q:=-1 
-				else
-					Q:=1
-			end else
-			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
-				HandleWindowResizedEvent(@Ev)
-		end
-	end;
-	Exit(Q >= 0)
-End;
-
-Function Intro():Boolean;
-Var C:uInt;
-Begin
-	For C:=Low(SlideIn) to High(SlideIn) do
-		If (Not ShowSlide(SlideIn[C])) then Exit(False);
-	
-	If (Not ShowSlide(TitleGfx)) then Exit(False);
-	Exit(True)
-End;
-
 Function MainMenu():Char;
 Var
 	dt: uInt;
@@ -575,56 +529,6 @@ Begin
 		end
 	end;
 	Menu.Destroy()
-End;
-
-Procedure Outro();
-Var
-	C:uInt; YPos:uInt;
-Begin
-	For C:=Low(SlideOut) to High(SlideOut) do
-		If Not ShowSlide(SlideOut[C]) then Exit();
-
-	While True do begin
-		Rendering.BeginFrame();
-		DrawTitle();
-		
-		Font^.Scale := 2;
-		PrintText(
-			[UpperCase(GAMENAME),'BY SUPER VEGETA','','A LUDUM DARE 25 GAME','','THANKS TO:','','DANIEL REMAR'],
-			Font,
-			(RESOL_W div 2), TitleGfx^.H, 
-			ALIGN_CENTRE, ALIGN_TOP, NIL
-		);
-		
-		YPos:=TitleGfx^.H + (Font^.SpacingY + Font^.CharH) * 8 * Font^.Scale;
-		Font^.Scale := 1;
-		PrintText('FOR HERO CORE, WHICH THIS GAME WAS BASED UPON',Font,(RESOL_W div 2),YPos,ALIGN_CENTRE, ALIGN_TOP, NIL);
-		
-		Font^.Scale := 2;
-		YPos += (Font^.SpacingY + Font^.CharH) * (Font^.Scale + 1);
-		PrintText('DEXTERO',Font,(RESOL_W div 2),YPos,ALIGN_CENTRE, ALIGN_TOP, NIL);
-		
-		YPos += (Font^.SpacingY + Font^.CharH) * Font^.Scale;
-		Font^.Scale := 1;
-		PrintText(
-			['FOR INTRODUCING ME TO LUDUM DARE','AND CHEERING ME UP DURING THE COMPO'],
-			Font,
-			(RESOL_W div 2), YPos,
-			ALIGN_CENTRE, ALIGN_TOP, NIL
-		);
-		
-		Rendering.FinishFrame();
-		GetDeltaTime(C);
-		While (SDL_PollEvent(@Ev)>0) do begin
-			If (Ev.Type_ = SDL_QuitEv) then begin
-				Shutdown:=True; Exit()
-			end else
-			If (Ev.Type_ = SDL_KeyDown) then Exit() else
-			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then begin
-				HandleWindowResizedEvent(@Ev)
-			end
-		end
-	end
 End;
 
 Procedure LoadConfig();
@@ -921,7 +825,7 @@ begin
 	Repeat
 		MenuChoice:=MainMenu();
 		Case MenuChoice of
-			'I': Intro();
+			'I': ShowIntro();
 			'C': PlayGame();
 			'N': begin
 				MenuChoice:=GameworldDialog(False);
@@ -948,7 +852,7 @@ begin
 			{$ENDIF}
 		end;
 		If (GameOn) and (GameMode <> GM_TUTORIAL) and (Given >= 8) then begin
-			GameOn:=False; Outro()
+			GameOn:=False; ShowOutro()
 		end;
 	Until (MenuChoice = 'Q') or (Shutdown);
 	QuitProg();
