@@ -48,8 +48,8 @@ install: all
 	install -m 644 -p -D "pkg/colorful-64x64.png"   "$(DESTDIR)/usr/share/icons/hicolor/64x64/apps/colorful.png"
 	install -m 644 -p -D "pkg/colorful-128x128.png" "$(DESTDIR)/usr/share/icons/hicolor/128x128/apps/colorful.png"
 	# Desktop file and AppStream metadata
-	install -m 644 -p -D "pkg/colorful.desktop"     "$(DESTDIR)/usr/share/applications/colorful.desktop"
-	install -m 644 -p -D "pkg/colorful.appdata.xml" "$(DESTDIR)/usr/share/appdata/colorful.appdata.xml"
+	install -m 644 -p -D "pkg/pl.suve.colorful.desktop"      "$(DESTDIR)/usr/share/applications/pl.suve.colorful.desktop"
+	install -m 644 -p -D "pkg/pl.suve.colorful.metainfo.xml" "$(DESTDIR)/usr/share/metainfo/pl.suve.colorful.metainfo.xml"
 	# Man pages
 	install -m 644 -p -D "pkg/man/en.man"    "$(DESTDIR)/usr/share/man/man6/colorful.6"
 	install -m 644 -p -D "pkg/man/de.man"    "$(DESTDIR)/usr/share/man/de/man6/colorful.6"

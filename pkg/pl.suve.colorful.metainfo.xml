@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2017-2022 suve <veg@svgames.pl> -->
+<component type="desktop">
+<id>pl.suve.colorful</id>
+	<name>Colorful</name>
+	<project_license>GPL-3.0-only</project_license>
+	<developer_name>suve</developer_name>
+
+	<summary>Side-view shooter game</summary>
+	<summary xml:lang="pl">Strzelanka 2D</summary>
+	<description>
+		<p>
+			Colorful is a simple side-view shooter game, where the protagonist
+			travels a maze of caves and corridors in order to collect color artifacts.
+		</p>
+		<p xml:lang="pl">
+			Colorful jest prostą strzelanką z widokiem z boku, w której bohater
+			przemierza labirynt jaskiń i korytarzy w celu zebrania kolorowych artefaktów.
+		</p>
+	</description>
+	<categories>
+		<category>Game</category>
+	</categories>
+
+	<launchable type="desktop-id">pl.suve.colorful.desktop</launchable>
+
+	<requires>
+		<internet>offline-only</internet>
+	</requires>
+	<recommends>
+		<control>keyboard</control>
+	</recommends>
+
+	<content_rating type="oars-1.1">
+		<content_attribute id="violence-cartoon">moderate</content_attribute>
+		<content_attribute id="violence-bloodshed">mild</content_attribute>
+		<content_attribute id="money-purchasing">mild</content_attribute>
+	</content_rating>
+
+	<screenshots>
+		<screenshot type="default">
+			<image>https://svgames.pl/fedora/appdata/colorful0.png</image>
+		</screenshot>
+		<screenshot>
+			<image>https://svgames.pl/fedora/appdata/colorful1.png</image>
+		</screenshot>
+		<screenshot>
+			<image>https://svgames.pl/fedora/appdata/colorful2.png</image>
+		</screenshot>
+	</screenshots>
+
+	<url type="homepage">https://svgames.pl/</url>
+	<url type="bugtracker">https://github.com/suve/LD25/issues/</url>
+	<url type="vcs-browser">https://github.com/suve/LD25/</url>
+
+	<metadata_license>CC-BY-SA-3.0</metadata_license>
+	<update_contact>veg@svgames.pl</update_contact>
+</component>
