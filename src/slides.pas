@@ -103,15 +103,25 @@ Begin
 		Dst.W := TitleGfx^.W; Dst.H := TitleGfx^.H;
 		DrawImage(TitleGfx, NIL, @Dst, NIL);
 
+		YPos := TitleGfx^.H;
 		Font^.Scale := 2;
-		PrintText(
-			[UpperCase(GAMENAME),'BY SUPER VEGETA','','A LUDUM DARE 25 GAME','','THANKS TO:','','DANIEL REMAR'],
-			Font,
-			(RESOL_W div 2), TitleGfx^.H,
-			ALIGN_CENTRE, ALIGN_TOP, NIL
-		);
+		PrintText('A GAME BY SUVE', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
 
-		YPos:=TitleGfx^.H + (Font^.SpacingY + Font^.CharH) * 8 * Font^.Scale;
+		YPos += (Font^.SpacingY + Font^.CharH) * Font^.Scale * 5 div 2;
+		PrintText('A LUDUM DARE 25 GAME', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+
+		YPos += (Font^.SpacingY + Font^.CharH) * Font^.Scale;
+		Font^.Scale := 1;
+		PrintText('ORIGINALLY MADE IN 48 HOURS IN DECEMBER 2012', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+
+		YPos += (Font^.SpacingY + Font^.CharH) * Font^.Scale * 3;
+		Font^.Scale := 2;
+		PrintText('BIG THANKS TO:', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+
+		YPos += (Font^.SpacingY + Font^.CharH) * Font^.Scale * 2;
+		PrintText('DANIEL REMAR', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+
+		YPos += (Font^.SpacingY + Font^.CharH) * Font^.Scale;
 		Font^.Scale := 1;
 		PrintText('FOR HERO CORE, WHICH THIS GAME WAS BASED UPON',Font,(RESOL_W div 2),YPos,ALIGN_CENTRE, ALIGN_TOP, NIL);
 
