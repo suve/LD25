@@ -78,13 +78,24 @@ Begin
 End;
 
 Procedure ShowOutro();
+Const
+	FADE_IN_TICKS = 500; // Half a second
 Var
 	Idx, YPos, Delta: uInt;
 	Dst: TSDL_Rect;
+
+	FadeInTime: sInt;
+	FadeColour: TSDL_Color;
 Begin
 	For Idx := Low(SlideOut) to High(SlideOut) do
 		If Not DisplaySlide(SlideOut[Idx]) then Exit();
 
+	FadeInTime := FADE_IN_TICKS;
+	FadeColour.R := 0;
+	FadeColour.G := 0;
+	FadeColour.B := 0;
+
+	Delta := 0;
 	While True do begin
 		Rendering.BeginFrame();
 
@@ -116,6 +127,14 @@ Begin
 			(RESOL_W div 2), YPos,
 			ALIGN_CENTRE, ALIGN_TOP, NIL
 		);
+
+		If(FadeInTime >= 0) then begin
+			FadeInTime -= Delta;
+			If(FadeInTime >= 0) then begin
+				FadeColour.A := (255 * FadeInTime) div FADE_IN_TICKS;
+				Shared.DrawColouredRect(NIL, @FadeColour)
+			end
+		end;
 
 		Rendering.FinishFrame();
 		GetDeltaTime(Delta);
