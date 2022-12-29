@@ -6,6 +6,7 @@ set -eu -o pipefail
 
 cd "$(dirname "$0")"
 SCRIPT_DIR="$(pwd)"
+SCRIPT_NAME="$(basename "$0")"
 
 # -- parse args
 
@@ -18,7 +19,7 @@ while [[ "$#" -gt 0 ]]; do
 	elif [[ "$1" == "--debug" ]]; then
 		DEBUG="true"
 	else
-		echo "Unknown option \"${1}\"" >&2
+		echo "${SCRIPT_NAME}: Error! Unknown option \"${1}\"." >&2
 		exit 1
 	fi
 	shift 1

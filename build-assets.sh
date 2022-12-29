@@ -6,6 +6,7 @@ set -eu -o pipefail
 
 cd "$(dirname "$0")"
 SCRIPT_DIR="$(pwd)"
+SCRIPT_NAME="$(basename "$0")"
 
 # -- parse args
 
@@ -18,7 +19,7 @@ while [[ "$#" -gt 0 ]]; do
 	elif [[ "$1" == "--debug" ]]; then
 		DEBUG="true"
 	else
-		echo "Unknown option \"${1}\"" >&2
+		echo "${SCRIPT_NAME}: Error! Unknown option \"${1}\"." >&2
 		exit 1
 	fi
 	shift 1
@@ -27,7 +28,7 @@ done
 # -- clean up, if requested
 
 if [[ "${CLEAN}" -eq 1 ]]; then
-	rm -rf "${SCRIPT_DIR}"/colorful/build/{gfx,map,sfx,slide}
+	rm -rf "${SCRIPT_DIR}"/colorful/build/{gfx,map,sfx,slides}
 fi
 
 # -- build the game assets
