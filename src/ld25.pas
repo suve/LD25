@@ -150,9 +150,10 @@ End;
 {$ELSE} // IFDEF(ANDROID)
 Procedure TweakOptions();
 Const
-	VOLUME_BAR_WIDTH = 240;
-	VOLUME_BAR_CHUNK = VOLUME_BAR_WIDTH div VOL_LEVEL_MAX;
-	VOLUME_BAR_GAP = 16;
+	VOLUME_BAR_CHUNK = 32;
+	VOLUME_BAR_GAP = 4;
+	VOLUME_BAR_MIDGAP = 16;
+	VOLUME_BAR_WIDTH = (VOL_LEVEL_MAX * VOLUME_BAR_CHUNK) + ((VOL_LEVEL_MAX - 2) * VOLUME_BAR_GAP) + VOLUME_BAR_MIDGAP;
 Var
 	Volume: TVolLevel;
 	VolumeText: AnsiString;
@@ -160,41 +161,53 @@ Var
 
 	dt, Idx: uInt;
 	YPos: sInt;
-	BarChunk: TSDL_Rect;
+	BarChunk: Array[1..VOL_LEVEL_MAX] of TSDL_Rect;
 Begin
+	// Pre-calculate positions for some UI elements.
+	// Would be great if we could do this at compile time.
+	YPos := TitleGfx^.H + (Font^.CharH + Font^.SpacingY) * 6;
+	For Idx := 1 to VOL_LEVEL_MAX do
+		With BarChunk[Idx] do begin
+			X := ((RESOL_W - VOLUME_BAR_WIDTH) div 2) + ((Idx - 1) * (VOLUME_BAR_CHUNK + VOLUME_BAR_GAP));
+			If(Idx > (VOL_LEVEL_MAX div 2)) then X += VOLUME_BAR_MIDGAP - VOLUME_BAR_GAP;
+
+			Y := YPos;
+			W := VOLUME_BAR_CHUNK;
+			H := Font^.CharH
+		end;
+
+	// Get current settings and store in helper vars.
 	Volume := GetVol();
 	VolumeText := IntToStr(Volume);
 
 	Finished := False;
 	SaveChanges := False;
 	Repeat
-	Rendering.BeginFrame();
+		Rendering.BeginFrame();
 		DrawTitle();
 
 		YPos := TitleGfx^.H;
 		Font^.Scale := 2;
 		PrintText('GAME OPTIONS', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
 
+		(*
+		 * "Sound" has 5 letters, and "volume" has 6. This makes the space between
+		 * the words not align with the volume level text, which looks off - despite
+		 * both texts being aligned to the centre of the screen!
+		 * Hence, an extra space is added at the start of the text.
+		 *)
 		YPos += (Font^.CharH + Font^.SpacingY) * Font^.Scale * 2;
-		PrintText('SOUND VOLUME', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+		PrintText(' SOUND VOLUME', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
 
 		YPos += (Font^.CharH + Font^.SpacingY) * Font^.Scale;
 		Font^.Scale := 1;
 		PrintText(VolumeText, Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
 
-		BarChunk.X := ((RESOL_W - VOLUME_BAR_WIDTH - VOLUME_BAR_GAP) div 2);
-		BarChunk.Y := YPos;
-		BarChunk.W := VOLUME_BAR_CHUNK;
-		BarChunk.H := Font^.CharH;
-		For Idx := 1 to VOL_LEVEL_MAX do begin
-			If(Idx >= Volume) then
-				DrawColouredRect(@BarChunk, @WhiteColour)
+		For Idx := 1 to VOL_LEVEL_MAX do
+			If(Volume >= Idx) then
+				DrawColouredRect(@BarChunk[Idx], @WhiteColour)
 			else
-				DrawColouredRect(@BarChunk, @GreyColour);
-
-			If(Idx = (VOL_LEVEL_MAX div 2)) then BarChunk.X += VOLUME_BAR_GAP;
-			BarChunk.X += VOLUME_BAR_CHUNK
-		end;
+				DrawColouredRect(@BarChunk[Idx], @GreyColour);
 
 		Rendering.FinishFrame();
 		GetDeltaTime(dt);
@@ -206,6 +219,15 @@ Begin
 				If ((Ev.Key.Keysym.Sym = SDLK_Escape) or (Ev.Key.Keysym.Sym = SDLK_AC_BACK)) then begin
 					Finished := True; SaveChanges := True
 				end
+			end else
+			If (Ev.Type_ = SDL_MouseButtonDown) then begin
+				TranslateMouseEventCoords(@Ev);
+				For Idx := 1 to VOL_LEVEL_MAX do
+					If(MouseInRect(BarChunk[Idx])) then begin
+						Volume := TVolLevel(Idx);
+						VolumeText := IntToStr(Volume);
+						Break
+					end
 			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
 				HandleWindowResizedEvent(@Ev)
