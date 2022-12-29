@@ -52,9 +52,9 @@ Const
 	DeathLength = 2500; WOMAN = 8;
 
 Const
-	VolLevel_MAX = 6;
+	VOL_LEVEL_MAX = 6;
 Type
-	TVolLevel = 0..VolLevel_MAX;
+	TVolLevel = 0..VOL_LEVEL_MAX;
 
 Type
 	TPlayerKey = (
@@ -120,8 +120,8 @@ Function IntToStr(Num:uInt;Digits:uInt=0;Chr:Char='0'):AnsiString; Overload;
 Function StrToInt(S:AnsiString):Int64;
 
 // Volume functions
-Procedure ChgVol(Change:sInt;ChgChanVol:Boolean = TRUE);
-Procedure SetVol(NewVol:TVolLevel;ChgChanVol:Boolean = TRUE);
+Procedure ChgVol(Change:sInt; ChangeChannelsVolume: Boolean = TRUE);
+Procedure SetVol(NewVol:TVolLevel; ChangeChannelsVolume: Boolean = TRUE);
 Function  GetVol:TVolLevel;
 
 // Play a sound
@@ -225,24 +225,30 @@ Function StrToInt(S:AnsiString):Int64;
    If (S[1]<>'-') then Exit(R) else Exit(-R)
    end;
 
-Procedure ChgVol(Change:sInt;ChgChanVol:Boolean = TRUE);
-   begin
-   Change+=VolLevel;
-   If (Change<Low(VolLevel)) then SetVol(Low(VolLevel),ChgChanVol) else
-   If (Change>High(VolLevel)) then SetVol(High(VolLevel),ChgChanVol) {else}
-                               else SetVol(Change,ChgChanVol)
-   end;
+Procedure ChgVol(Change:sInt; ChangeChannelsVolume:Boolean = TRUE);
+Begin
+	Change += VolLevel;
+	If(Change < 0) then
+		SetVol(0, ChangeChannelsVolume)
+	else If(Change > VOL_LEVEL_MAX) then
+		SetVol(VOL_LEVEL_MAX, ChangeChannelsVolume)
+	else
+		SetVol(TVolLevel(Change), ChangeChannelsVolume)
+end;
 
-Procedure SetVol(NewVol:TVolLevel;ChgChanVol:Boolean = TRUE);
-   begin
-   VolLevel:=NewVol;
-   Volume:=Trunc(VolLevel * MIX_MAX_VOLUME / VolLevel_MAX);
-   If (Not NoSound) and (ChgChanVol) then Mix_Volume( -1, Volume)
-      // When -1 is passes to Mix_Volume, it changes volume of all channels
-   end;
+Procedure SetVol(NewVol:TVolLevel;ChangeChannelsVolume:Boolean = TRUE);
+Begin
+	VolLevel:=NewVol;
+	Volume:=Trunc(VolLevel * MIX_MAX_VOLUME / VOL_LEVEL_MAX);
+
+	// Passing -1 as channel number changes volume of all channels
+	If (Not NoSound) and (ChangeChannelsVolume) then Mix_Volume(-1, Volume)
+end;
 
 Function GetVol:TVolLevel;
-   begin Exit(VolLevel) end;
+Begin
+	Result := VolLevel
+End;
 
 Procedure PlaySfx(ID:uInt);
    Var Chan:sInt;

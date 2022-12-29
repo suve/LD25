@@ -147,6 +147,73 @@ Begin
 	Until Finito;
 	For K:=Low(TPlayerKey) to High(TPlayerKey) do KeyBind[K]:=NewBind[K]
 End;
+{$ELSE} // IFDEF(ANDROID)
+Procedure TweakOptions();
+Const
+	VOLUME_BAR_WIDTH = 240;
+	VOLUME_BAR_CHUNK = VOLUME_BAR_WIDTH div VOL_LEVEL_MAX;
+	VOLUME_BAR_GAP = 16;
+Var
+	Volume: TVolLevel;
+	VolumeText: AnsiString;
+	Finished, SaveChanges: Boolean;
+
+	dt, Idx: uInt;
+	YPos: sInt;
+	BarChunk: TSDL_Rect;
+Begin
+	Volume := GetVol();
+	VolumeText := IntToStr(Volume);
+
+	Finished := False;
+	SaveChanges := False;
+	Repeat
+	Rendering.BeginFrame();
+		DrawTitle();
+
+		YPos := TitleGfx^.H;
+		Font^.Scale := 2;
+		PrintText('GAME OPTIONS', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+
+		YPos += (Font^.CharH + Font^.SpacingY) * Font^.Scale * 2;
+		PrintText('SOUND VOLUME', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+
+		YPos += (Font^.CharH + Font^.SpacingY) * Font^.Scale;
+		Font^.Scale := 1;
+		PrintText(VolumeText, Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+
+		BarChunk.X := ((RESOL_W - VOLUME_BAR_WIDTH - VOLUME_BAR_GAP) div 2);
+		BarChunk.Y := YPos;
+		BarChunk.W := VOLUME_BAR_CHUNK;
+		BarChunk.H := Font^.CharH;
+		For Idx := 1 to VOL_LEVEL_MAX do begin
+			If(Idx >= Volume) then
+				DrawColouredRect(@BarChunk, @WhiteColour)
+			else
+				DrawColouredRect(@BarChunk, @GreyColour);
+
+			If(Idx = (VOL_LEVEL_MAX div 2)) then BarChunk.X += VOLUME_BAR_GAP;
+			BarChunk.X += VOLUME_BAR_CHUNK
+		end;
+
+		Rendering.FinishFrame();
+		GetDeltaTime(dt);
+		While (SDL_PollEvent(@Ev)>0) do begin
+			If (Ev.Type_ = SDL_QuitEv) then begin
+				Shutdown:=True; Finished := True
+			end else
+			If (Ev.Type_ = SDL_KeyDown) then begin
+				If ((Ev.Key.Keysym.Sym = SDLK_Escape) or (Ev.Key.Keysym.Sym = SDLK_AC_BACK)) then begin
+					Finished := True; SaveChanges := True
+				end
+			end else
+			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
+				HandleWindowResizedEvent(@Ev)
+		end;
+	Until Finished;
+
+	If(SaveChanges) then SetVol(Volume)
+End;
 {$ENDIF}
 
 (*
@@ -496,10 +563,12 @@ Begin
 	Menu.AddItem('C', 'CONTINUE', ContinueColour);
 	Menu.AddItem('N', 'NEW GAME', @WhiteColour);
 	Menu.AddItem('L', 'LOAD GAME', LoadColour);
-	Menu.AddItem('S', 'SET COLOURS', @WhiteColour);
 	{$IFNDEF ANDROID}
 		Menu.AddItem('B', 'BIND KEYS', @WhiteColour);
+	{$ELSE}
+		Menu.AddItem('O', 'CHANGE OPTIONS', @WhiteColour);
 	{$ENDIF}
+	Menu.AddItem('S', 'SET COLOURS', @WhiteColour);
 	{$IFDEF LD25_DONATE}
 		Menu.AddItem('D', 'DONATE', @WhiteColour);
 	{$ENDIF}
@@ -844,7 +913,9 @@ begin
 				MenuChoice:='L'
 			end;
 			'S': SetColours();
-			{$IFNDEF ANDROID}
+			{$IFDEF ANDROID}
+				'O': TweakOptions();
+			{$ELSE}
 				'B': BindKeys();
 			{$ENDIF}
 			{$IFDEF LD25_DONATE}

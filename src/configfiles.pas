@@ -291,7 +291,7 @@ Begin
 	Wnd_W:=WINDOW_W; Wnd_H:=WINDOW_H; Wnd_F:=False;
 
 	// Audio volume
-	SetVol(VolLevel_MAX,False);
+	SetVol(VOL_LEVEL_MAX,False);
 
 	// Colour values
 	ResetMapColoursToDefault()
