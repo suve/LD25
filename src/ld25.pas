@@ -150,18 +150,25 @@ End;
 {$ELSE} // IFDEF(ANDROID)
 Procedure TweakOptions();
 Const
+	VOLUME_BTN_SIZE = 16;
+
 	VOLUME_BAR_CHUNK = 32;
 	VOLUME_BAR_GAP = 4;
-	VOLUME_BAR_MIDGAP = 16;
-	VOLUME_BAR_WIDTH = (VOL_LEVEL_MAX * VOLUME_BAR_CHUNK) + ((VOL_LEVEL_MAX - 2) * VOLUME_BAR_GAP) + VOLUME_BAR_MIDGAP;
+	VOLUME_BAR_WIDTH = (VOL_LEVEL_MAX * VOLUME_BAR_CHUNK) + ((VOL_LEVEL_MAX - 2) * VOLUME_BAR_GAP) + VOLUME_BTN_SIZE;
+
+	VOLUME_DOWN_XPOS = (RESOL_W - VOLUME_BAR_WIDTH - VOLUME_BTN_SIZE) div 2;
+	VOLUME_UP_XPOS = (RESOL_W + VOLUME_BAR_WIDTH + VOLUME_BTN_SIZE) div 2;
 Var
 	Volume: TVolLevel;
 	VolumeText: AnsiString;
+	VolumeChanged: Boolean;
 	Finished, SaveChanges: Boolean;
 
 	dt, Idx: uInt;
 	YPos: sInt;
+
 	BarChunk: Array[1..VOL_LEVEL_MAX] of TSDL_Rect;
+	VolDown, VolUp, VolMute: TSDL_Rect;
 Begin
 	// Pre-calculate positions for some UI elements.
 	// Would be great if we could do this at compile time.
@@ -169,12 +176,30 @@ Begin
 	For Idx := 1 to VOL_LEVEL_MAX do
 		With BarChunk[Idx] do begin
 			X := ((RESOL_W - VOLUME_BAR_WIDTH) div 2) + ((Idx - 1) * (VOLUME_BAR_CHUNK + VOLUME_BAR_GAP));
-			If(Idx > (VOL_LEVEL_MAX div 2)) then X += VOLUME_BAR_MIDGAP - VOLUME_BAR_GAP;
+			If(Idx > (VOL_LEVEL_MAX div 2)) then X += VOLUME_BTN_SIZE - VOLUME_BAR_GAP;
 
 			Y := YPos;
 			W := VOLUME_BAR_CHUNK;
 			H := Font^.CharH
 		end;
+	With VolDown do begin
+		X := VOLUME_DOWN_XPOS - (VOLUME_BTN_SIZE div 2);
+		Y := YPos;
+		W := VOLUME_BTN_SIZE;
+		H := Font^.CharH
+	end;
+	With VolUp do begin
+		X := VOLUME_UP_XPOS - (VOLUME_BTN_SIZE div 2);
+		Y := YPos;
+		W := VOLUME_BTN_SIZE;
+		H := Font^.CharH
+	end;
+	With VolMute do begin
+		X := (RESOL_W - VOLUME_BTN_SIZE) div 2;
+		Y := YPos;
+		W := VOLUME_BTN_SIZE;
+		H := Font^.CharH
+	end;
 
 	// Get current settings and store in helper vars.
 	Volume := GetVol();
@@ -202,6 +227,12 @@ Begin
 		YPos += (Font^.CharH + Font^.SpacingY) * Font^.Scale;
 		Font^.Scale := 1;
 		PrintText(VolumeText, Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+		(*
+		 * TODO: Grey these out when volume is already at 0 or VOL_LEVEL_MAX.
+		 * TODO: Think of some way to make it more obvious that these are touchable.
+		 *)
+		PrintText('-', Font, VOLUME_DOWN_XPOS, YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+		PrintText('+', Font, VOLUME_UP_XPOS, YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
 
 		For Idx := 1 to VOL_LEVEL_MAX do
 			If(Volume >= Idx) then
@@ -211,6 +242,8 @@ Begin
 
 		Rendering.FinishFrame();
 		GetDeltaTime(dt);
+
+		VolumeChanged := False;
 		While (SDL_PollEvent(@Ev)>0) do begin
 			If (Ev.Type_ = SDL_QuitEv) then begin
 				Shutdown:=True; Finished := True
@@ -222,16 +255,31 @@ Begin
 			end else
 			If (Ev.Type_ = SDL_MouseButtonDown) then begin
 				TranslateMouseEventCoords(@Ev);
+				If MouseInRect(VolDown) then begin
+					If(Volume > 0) then begin
+						Volume -= 1; VolumeChanged := True
+					end
+				end else
+				If MouseInRect(VolUp) then begin
+					If(Volume < VOL_LEVEL_MAX) then begin
+						Volume += 1; VolumeChanged := True
+					end
+				end else
+				If MouseInRect(VolMute) then begin
+					Volume := 0; VolumeChanged := True
+				end else
 				For Idx := 1 to VOL_LEVEL_MAX do
-					If(MouseInRect(BarChunk[Idx])) then begin
+					If MouseInRect(BarChunk[Idx]) then begin
 						Volume := TVolLevel(Idx);
-						VolumeText := IntToStr(Volume);
+						VolumeChanged := True;
 						Break
 					end
 			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
 				HandleWindowResizedEvent(@Ev)
 		end;
+
+		If (VolumeChanged) then VolumeText := IntToStr(Volume)
 	Until Finished;
 
 	If(SaveChanges) then SetVol(Volume)
