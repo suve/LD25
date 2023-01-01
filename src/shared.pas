@@ -112,8 +112,8 @@ Function GetTimeStamp(): TTimeStamp;
 Function TimestampDiffMillis(Const First, Second: TTimeStamp): sInt;
 
 // Draw primitives using SDL
-Procedure DrawColouredRect(Const Rect: PSDL_Rect; Const Colour: PSDL_Colour);
-Procedure DrawColouredRect(Const Rect: PSDL_Rect; Const RGB: LongWord);
+Procedure DrawRectFilled(Const Rect: PSDL_Rect; Const Colour: PSDL_Colour);
+Procedure DrawRectFilled(Const Rect: PSDL_Rect; Const RGB: LongWord);
 
 // Some simple converstions from and to strings
 Function IntToStr(Num:uInt;Digits:uInt=0;Chr:Char='0'):AnsiString; Overload;
@@ -194,18 +194,18 @@ Begin
 	{$ENDIF}
 End;
 
-Procedure DrawColouredRect(Const Rect: PSDL_Rect; Const Colour: PSDL_Colour);
+Procedure DrawRectFilled(Const Rect: PSDL_Rect; Const Colour: PSDL_Colour);
 Begin
 	SDL_SetRenderDrawColor(Renderer, Colour^.R, Colour^.G, Colour^.B, Colour^.A);
 	SDL_RenderFillRect(Renderer, Rect)
 End;
 
-Procedure DrawColouredRect(Const Rect: PSDL_Rect; Const RGB: LongWord);
+Procedure DrawRectFilled(Const Rect: PSDL_Rect; Const RGB: LongWord);
 Var
 	Colour: TSDL_Colour;
 Begin
 	Colour := RGBToColour(RGB);
-	DrawColouredRect(Rect, @Colour)
+	DrawRectFilled(Rect, @Colour)
 End;
 
 Function IntToStr(Num:uInt;Digits:uInt=0;Chr:Char='0'):AnsiString;

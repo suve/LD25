@@ -87,14 +87,14 @@ Begin
 	PrintText(UpperCase(Name),Font,(RESOL_W div 2),STARTY-(Font^.CharW*2),ALIGN_CENTRE,ALIGN_MIDDLE,NIL);
 	
 	With Rect do begin X:=STARTX; Y:=STARTY; W:=SIZEX; H:=SIZEY end;
-	DrawColouredRect(@Rect, @WhiteColour);
+	DrawRectFilled(@Rect, @WhiteColour);
 	
 	Col.R := 64+Random(128);
 	Col.G := 64+Random(128);
 	Col.B := 64+Random(128);
 	Col.A := 255;
 	Rect.W := Trunc(SIZEX*Perc);
-	DrawColouredRect(@Rect, @Col);
+	DrawRectFilled(@Rect, @Col);
 	
 	Rendering.FinishFrame()
 End;
@@ -236,9 +236,9 @@ Begin
 
 		For Idx := 1 to VOL_LEVEL_MAX do
 			If(Volume >= Idx) then
-				DrawColouredRect(@BarChunk[Idx], @WhiteColour)
+				DrawRectFilled(@BarChunk[Idx], @WhiteColour)
 			else
-				DrawColouredRect(@BarChunk[Idx], @GreyColour);
+				DrawRectFilled(@BarChunk[Idx], @GreyColour);
 
 		Rendering.FinishFrame();
 		GetDeltaTime(dt);

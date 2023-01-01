@@ -142,7 +142,7 @@ Begin
 			FadeInTime -= Delta;
 			If(FadeInTime >= 0) then begin
 				FadeColour.A := (255 * FadeInTime) div FADE_IN_TICKS;
-				Shared.DrawColouredRect(NIL, @FadeColour)
+				Shared.DrawRectFilled(NIL, @FadeColour)
 			end
 		end;
 

@@ -652,7 +652,7 @@ Begin
 		else
 			HealthBarColour := @WhiteColour;
 
-		DrawColouredRect(@Dst, HealthBarColour)
+		DrawRectFilled(@Dst, HealthBarColour)
 	end;
 
 	// Colour indicator
@@ -670,14 +670,14 @@ Begin
 		// For carried colours, draw two (randomly selected) pixels in the 2x2 rectangle area.
 		If (ColState[C]=STATE_GIVEN) then begin
 			Dst.W:=2; Dst.H:=2;
-			DrawColouredRect(@Dst, @UIcolour[C])
+			DrawRectFilled(@Dst, @UIcolour[C])
 		end else begin
 			Dst.W:=1; Dst.H:=1;
 			For d:=0 to 1 do begin
 				dstcpy := Dst;
 				dstcpy.X += Random(0, 1);
 				dstcpy.Y += Random(0, 1);
-				DrawColouredRect(@dstcpy, @UIcolour[C])
+				DrawRectFilled(@dstcpy, @UIcolour[C])
 			end
 		end
 	end;
@@ -687,7 +687,7 @@ Begin
 	For C:=GetVol() downto 1 do begin
 		Dst.X := C*2;              Dst.W := 2;
 		Dst.Y := RESOL_H - 2 - C;  Dst.H := C;
-		DrawColouredRect(@Dst, @WhiteColour)
+		DrawRectFilled(@Dst, @WhiteColour)
 	end;
 
 	// Frames per second indicator
@@ -697,10 +697,10 @@ Begin
 	// If paused, draw frame with "PAUSED" bouncing
 	If (Paused) then begin
 		Dst := PauseRect;
-		DrawColouredRect(@Dst, @WhiteColour);
+		DrawRectFilled(@Dst, @WhiteColour);
 		
 		With Dst do begin X+=1; Y+=1; W-=2; H-=2 end;
-		DrawColouredRect(@Dst, @BlackColour);
+		DrawRectFilled(@Dst, @BlackColour);
 		
 		PrintText('PAUSED', Font, Dst.X+PauseTxt.X, Dst.Y+PauseTxt.Y, ALIGN_LEFT, ALIGN_TOP, @WhiteColour)
 	end
