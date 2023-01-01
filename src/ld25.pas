@@ -169,10 +169,19 @@ Var
 
 	BarChunk: Array[1..VOL_LEVEL_MAX] of TSDL_Rect;
 	VolDown, VolUp, VolMute: TSDL_Rect;
+	VolDownColour, VolUpColour: PSDL_Colour;
+
+{ Subproc }
+	Procedure OnVolumeChanged();
+	Begin
+		If(Volume = 0) then VolDownColour := @GreyColour else VolDownColour := @WhiteColour;
+		If(Volume = VOL_LEVEL_MAX) then VolUpColour := @GreyColour else VolUpColour := @WhiteColour;
+		VolumeText := IntToStr(Volume)
+	End;
 Begin
 	// Pre-calculate positions for some UI elements.
 	// Would be great if we could do this at compile time.
-	YPos := TitleGfx^.H + (Font^.CharH + Font^.SpacingY) * 6;
+	YPos := TitleGfx^.H + (Font^.CharH + Font^.SpacingY) * 7;
 	For Idx := 1 to VOL_LEVEL_MAX do
 		With BarChunk[Idx] do begin
 			X := ((RESOL_W - VOLUME_BAR_WIDTH) div 2) + ((Idx - 1) * (VOLUME_BAR_CHUNK + VOLUME_BAR_GAP));
@@ -203,7 +212,7 @@ Begin
 
 	// Get current settings and store in helper vars.
 	Volume := GetVol();
-	VolumeText := IntToStr(Volume);
+	OnVolumeChanged();
 
 	Finished := False;
 	SaveChanges := False;
@@ -211,9 +220,8 @@ Begin
 		Rendering.BeginFrame();
 		DrawTitle();
 
-		YPos := TitleGfx^.H;
 		Font^.Scale := 2;
-		PrintText('GAME OPTIONS', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+		PrintText('GAME OPTIONS', Font, (RESOL_W div 2), TitleGfx^.H, ALIGN_CENTRE, ALIGN_TOP, NIL);
 
 		(*
 		 * "Sound" has 5 letters, and "volume" has 6. This makes the space between
@@ -221,18 +229,16 @@ Begin
 		 * both texts being aligned to the centre of the screen!
 		 * Hence, an extra space is added at the start of the text.
 		 *)
-		YPos += (Font^.CharH + Font^.SpacingY) * Font^.Scale * 2;
+		YPos := VolMute.Y - ((Font^.CharH + Font^.SpacingY) * Font^.Scale);
 		PrintText(' SOUND VOLUME', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
 
-		YPos += (Font^.CharH + Font^.SpacingY) * Font^.Scale;
 		Font^.Scale := 1;
-		PrintText(VolumeText, Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+		PrintText(VolumeText, Font, (RESOL_W div 2), VolMute.Y, ALIGN_CENTRE, ALIGN_TOP, NIL);
 		(*
-		 * TODO: Grey these out when volume is already at 0 or VOL_LEVEL_MAX.
 		 * TODO: Think of some way to make it more obvious that these are touchable.
 		 *)
-		PrintText('-', Font, VOLUME_DOWN_XPOS, YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
-		PrintText('+', Font, VOLUME_UP_XPOS, YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+		PrintText('-', Font, VOLUME_DOWN_XPOS, VolDown.Y, ALIGN_CENTRE, ALIGN_TOP, VolDownColour);
+		PrintText('+', Font, VOLUME_UP_XPOS, VolUp.Y, ALIGN_CENTRE, ALIGN_TOP, VolUpColour);
 
 		For Idx := 1 to VOL_LEVEL_MAX do
 			If(Volume >= Idx) then
@@ -279,7 +285,7 @@ Begin
 				HandleWindowResizedEvent(@Ev)
 		end;
 
-		If (VolumeChanged) then VolumeText := IntToStr(Volume)
+		If (VolumeChanged) then OnVolumeChanged()
 	Until Finished;
 
 	If(SaveChanges) then SetVol(Volume)
