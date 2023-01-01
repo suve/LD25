@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2022 suve (a.k.a. Artur Frenszek-Iwicki)
+ * Copyright (C) 2012-2023 suve (a.k.a. Artur Frenszek-Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -193,10 +193,16 @@ Begin
 	Writeln(F,'[Keybind]');
 	For K:=Low(K) to High(K) do Writeln(F,K,'=',KeyBind[K]);
 	Writeln(F);
-	
+
+	{$IFDEF ANDROID}
+		Writeln(F, '[TouchControls]');
+		Writeln(F, 'Swapped=', BoolToStr(SwapTouchControls, 'True', 'False'));
+		Writeln(F);
+	{$ENDIF}
+
 	Writeln(F, '[Colours]');
 	For C:=0 to 7 do Writeln(F, Capitalise(ColourName[C]),'=',ColourToStr(MapColour[C]));
-	
+
 	Close(F); Exit(True);
 End;
 
@@ -229,6 +235,11 @@ Begin
 	end;
 	
 	If(Version = 2) then begin
+		{$IFDEF ANDROID}
+			Ini.ReadSectionValues('TouchControls', Str);
+			SwapTouchControls:=StrToBoolDef(Str.Values['Swapped'], False);
+		{$ENDIF}
+
 		Ini.ReadSectionValues('Colours',Str);
 		For C:=0 to 7 do begin
 			CapitalisedColourName:=Capitalise(ColourName[C]);
@@ -294,7 +305,11 @@ Begin
 	SetVol(VOL_LEVEL_MAX,False);
 
 	// Colour values
-	ResetMapColoursToDefault()
+	ResetMapColoursToDefault();
+
+	{$IFDEF ANDROID}
+	SwapTouchControls := False
+	{$ENDIF}
 End;
 
 {$IFNDEF ANDROID}
