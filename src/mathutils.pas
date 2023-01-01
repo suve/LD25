@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2022 suve (a.k.a. Artur Frenszek-Iwicki)
+ * Copyright (C) 2012-2023 suve (a.k.a. Artur Frenszek-Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -20,13 +20,15 @@ Unit MathUtils;
 
 
 Interface
-	uses Entities;
+	uses SDL2, Entities;
 
 Function Hypotenuse(X, Y: Double): Double;
 Function Hypotenuse(aX, aY, bX, bY: Double): Double;
 Function Hypotenuse(A, B: PEntity): Double;
 
 Procedure GetDist(A,B:PEntity;Out oX,oY,oD:Double);
+
+Function ProjectPoint(OriginX, OriginY: sInt; Distance: uInt; Angle: Double): TSDL_Point;
 
 Function InRange(Num,Min,Max:Int64):Boolean;
 Function Random(Min,Max:Int64):Int64; Overload; // The overload prevents shadowing "System.Random()"
@@ -60,6 +62,12 @@ Begin
 	oY:=(B^.Y+(B^.H/2))-(A^.Y+(A^.H/2));
 	oD:=Hypotenuse(oX,oY)
 end;
+
+Function ProjectPoint(OriginX, OriginY: sInt; Distance: uInt; Angle: Double): TSDL_Point;
+Begin
+	Result.X := Trunc(OriginX + 0.5 + (Cos(Angle) * Distance));
+	Result.Y := Trunc(OriginY + 0.5 + (Sin(Angle) * Distance))
+End;
 
 Function InRange(Num,Min,Max:Int64):Boolean;
 Begin

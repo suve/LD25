@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2022 suve (a.k.a. Artur Frenszek-Iwicki)
+ * Copyright (C) 2012-2023 suve (a.k.a. Artur Frenszek-Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -158,18 +158,28 @@ Const
 
 	VOLUME_DOWN_XPOS = (RESOL_W - VOLUME_BAR_WIDTH - VOLUME_BTN_SIZE) div 2;
 	VOLUME_UP_XPOS = (RESOL_W + VOLUME_BAR_WIDTH + VOLUME_BTN_SIZE) div 2;
+
+	WHEEL_SIZE = 60;
+	SHOOT_BTN_SIZE = 16;
+	TOUCHY_MARGIN = 36;
 Var
+	Finished, SaveChanges: Boolean;
+
 	Volume: TVolLevel;
 	VolumeText: AnsiString;
 	VolumeChanged: Boolean;
-	Finished, SaveChanges: Boolean;
-
-	dt, Idx: uInt;
-	YPos: sInt;
 
 	BarChunk: Array[1..VOL_LEVEL_MAX] of TSDL_Rect;
 	VolDown, VolUp, VolMute: TSDL_Rect;
 	VolDownColour, VolUpColour: PSDL_Colour;
+
+	TouchControlsSwap, TouchControlsSwapChanged: Boolean;
+	WheelRect, ShootLeftBtn, ShootRightBtn: TSDL_Rect;
+	MovementWheel: Array[0..8] of TSDL_Point;
+	SwapButton: TSDL_Rect;
+
+	dt, Idx: uInt;
+	FreeSpace, YPos: sInt;
 
 { Subproc }
 	Procedure OnVolumeChanged();
@@ -178,10 +188,37 @@ Var
 		If(Volume = VOL_LEVEL_MAX) then VolUpColour := @GreyColour else VolUpColour := @WhiteColour;
 		VolumeText := IntToStr(Volume)
 	End;
+
+	Procedure OnTouchControlsSwapChanged();
+	Var
+		pt: sInt;
+	Begin
+		If(Not TouchControlsSwap) then begin
+			WheelRect.X := SwapButton.X - TOUCHY_MARGIN - (WHEEL_SIZE div 2);
+			ShootLeftBtn.X := SwapButton.X + SwapButton.W + TOUCHY_MARGIN - (SHOOT_BTN_SIZE div 2)
+		end else begin
+			ShootLeftBtn.X := SwapButton.X - TOUCHY_MARGIN - (SHOOT_BTN_SIZE div 2);
+			WheelRect.X := SwapButton.X + SwapButton.W + TOUCHY_MARGIN - (WHEEL_SIZE div 2)
+		end;
+		ShootRightBtn.X := ShootLeftBtn.X;
+
+		For pt := 0 to 7 do begin
+			MovementWheel[pt] := ProjectPoint(
+				WheelRect.X + (WHEEL_SIZE div 2),
+				WheelRect.Y + (WHEEL_SIZE div 2),
+				WHEEL_SIZE div 2,
+				0 - (Pi / 2) - (Pi / 8) + (Pi * pt / 4)
+			)
+		end;
+		MovementWheel[8] := MovementWheel[0]
+	End;
 Begin
-	// Pre-calculate positions for some UI elements.
-	// Would be great if we could do this at compile time.
-	YPos := TitleGfx^.H + (Font^.CharH + Font^.SpacingY) * 7;
+	(*
+	 * Pre-calculate positions for some UI elements.
+	 * Would be great if we could do this at compile time.
+	 *)
+	FreeSpace := RESOL_H - TitleGfx^.H - WHEEL_SIZE - ((Font^.CharH + Font^.SpacingY) * 7);
+	YPos := TitleGfx^.H + ((Font^.CharH + Font^.SpacingY) * 4) + (FreeSpace div 3);
 	For Idx := 1 to VOL_LEVEL_MAX do
 		With BarChunk[Idx] do begin
 			X := ((RESOL_W - VOLUME_BAR_WIDTH) div 2) + ((Idx - 1) * (VOLUME_BAR_CHUNK + VOLUME_BAR_GAP));
@@ -209,10 +246,39 @@ Begin
 		W := VOLUME_BTN_SIZE;
 		H := Font^.CharH
 	end;
+	(*
+	 * Position the UI elements for touch controls.
+	 * The X coordinate is set by OnTouchControlsSwapChanged().
+	 *)
+	With WheelRect do begin
+		Y := RESOL_H - WHEEL_SIZE - (FreeSpace div 3);
+		W := WHEEL_SIZE;
+		H := WHEEL_SIZE
+	end;
+	With ShootLeftBtn do begin
+		Y := WheelRect.Y + ((WHEEL_SIZE - SHOOT_BTN_SIZE - SHOOT_BTN_SIZE) div 3);
+		W := SHOOT_BTN_SIZE;
+		H := SHOOT_BTN_SIZE
+	end;
+	With ShootRightBtn do begin
+		Y := ShootLeftBtn.Y + SHOOT_BTN_SIZE + ((WHEEL_SIZE - SHOOT_BTN_SIZE - SHOOT_BTN_SIZE) div 3);
+		W := SHOOT_BTN_SIZE;
+		H := SHOOT_BTN_SIZE
+	end;
 
-	// Get current settings and store in helper vars.
+	Font^.Scale := 2;
+	With SwapButton do begin
+		W := GetTextWidth('SWAP', Font);
+		H := GetTextHeight('SWAP', Font);
+		X := (RESOL_W - W) div 2;
+		Y := WheelRect.Y + ((WHEEL_SIZE - H) div 2)
+	end;
+
+	(* Get current settings and store in helper vars. *)
 	Volume := GetVol();
+	TouchControlsSwap := Rendering.SwapTouchControls;
 	OnVolumeChanged();
+	OnTouchControlsSwapChanged();
 
 	Finished := False;
 	SaveChanges := False;
@@ -246,10 +312,28 @@ Begin
 			else
 				DrawRectFilled(@BarChunk[Idx], @GreyColour);
 
+		Font^.Scale := 2;
+		YPos := WheelRect.Y - ((Font^.CharH + Font^.SpacingY) * Font^.Scale);
+		PrintText('TOUCH CONTROLS', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
+
+		SDL_SetRenderDrawColor(Renderer, 191, 191, 191, 255);
+		SDL_RenderDrawLines(Renderer, MovementWheel, 9);
+		SDL_RenderDrawRect(Renderer, @ShootLeftBtn);
+		SDL_RenderDrawRect(Renderer, @ShootRightBtn);
+
+		PrintText('<', Font, ShootLeftBtn.X + (SHOOT_BTN_SIZE div 2), ShootLeftBtn.Y + (SHOOT_BTN_SIZE div 2), ALIGN_CENTRE, ALIGN_MIDDLE, @GreyColour);
+		PrintText('>', Font, ShootRightBtn.X + (SHOOT_BTN_SIZE div 2), ShootRightBtn.Y + (SHOOT_BTN_SIZE div 2), ALIGN_CENTRE, ALIGN_MIDDLE, @GreyColour);
+		Font^.Scale := 1;
+		PrintText(['MOVEMENT', 'WHEEL'], Font, WheelRect.X + (WHEEL_SIZE div 2), WheelRect.Y + (WHEEL_SIZE div 2), ALIGN_CENTRE, ALIGN_MIDDLE, @GreyColour);
+
+		Font^.Scale := 2;
+		PrintText('SWAP', Font, SwapButton.X, SwapButton.Y, ALIGN_LEFT, ALIGN_TOP, @WhiteColour);
+
 		Rendering.FinishFrame();
 		GetDeltaTime(dt);
 
 		VolumeChanged := False;
+		TouchControlsSwapChanged := False;
 		While (SDL_PollEvent(@Ev)>0) do begin
 			If (Ev.Type_ = SDL_QuitEv) then begin
 				Shutdown:=True; Finished := True
@@ -261,6 +345,10 @@ Begin
 			end else
 			If (Ev.Type_ = SDL_MouseButtonDown) then begin
 				TranslateMouseEventCoords(@Ev);
+				If MouseInRect(SwapButton) then begin
+					TouchControlsSwap := (Not TouchControlsSwap);
+					TouchControlsSwapChanged := True
+				end else
 				If MouseInRect(VolDown) then begin
 					If(Volume > 0) then begin
 						Volume -= 1; VolumeChanged := True
@@ -285,10 +373,17 @@ Begin
 				HandleWindowResizedEvent(@Ev)
 		end;
 
-		If (VolumeChanged) then OnVolumeChanged()
+		If (VolumeChanged) then OnVolumeChanged();
+		If (TouchControlsSwapChanged) then OnTouchControlsSwapChanged()
 	Until Finished;
 
-	If(SaveChanges) then SetVol(Volume)
+	If(SaveChanges) then begin
+		SetVol(Volume);
+
+		Rendering.SwapTouchControls := TouchControlsSwap;
+		// Call the resize handler to trigger touch controls positioning code
+		Rendering.HandleWindowResizedEvent(NIL);
+	end
 End;
 {$ENDIF}
 

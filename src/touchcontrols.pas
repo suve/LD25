@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2022 suve (a.k.a. Artur Frenszek Iwicki)
+ * Copyright (C) 2022-2023 suve (a.k.a. Artur Frenszek Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -307,14 +307,6 @@ Begin
 		end
 	end
 End;
-
-{$IFDEF LD25_DEBUG}
-Function ProjectPoint(OriginX, OriginY: sInt; Distance: uInt; Angle: Double): TSDL_Point;
-Begin
-	Result.X := Trunc(OriginX + 0.5 + (Cos(Angle) * Distance));
-	Result.Y := Trunc(OriginY + 0.5 + (Sin(Angle) * Distance))
-End;
-{$ENDIF}
 
 Function EnlargeRect(Const Source: TSDL_Rect; Const EnlargeX, EnlargeY: uInt): TSDL_Rect;
 Begin
