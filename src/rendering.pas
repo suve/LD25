@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2022 suve (a.k.a. Artur Frenszek Iwicki)
+ * Copyright (C) 2012-2023 suve (a.k.a. Artur Frenszek Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -39,6 +39,10 @@ Var
 	 *)
 	Wnd_W, Wnd_H: uInt;
 	Wnd_F : Boolean;
+
+	{$IFDEF ANDROID}
+	SwapTouchControls: Boolean;
+	{$ENDIF}
 
 Procedure HandleWindowResizedEvent(Ev: PSDL_Event);
 
@@ -107,20 +111,27 @@ Begin
 		TotalWidth := (TotalWidth * Wnd_H) div RESOL_H;
 		HorizontalOffset := (Wnd_W - TotalWidth) div 4;
 
-		DPad.X := HorizontalOffset;
-		DPad.Y := (((RESOL_H - DPAD_SIZE) div 2) * Wnd_H) div RESOL_H;
 		DPad.W := (DPAD_SIZE * Wnd_H) div RESOL_H;
 		DPad.H := DPad.W;
-
-		GameArea.X := DPad.X + DPad.W + HorizontalOffset;
-		GameArea.Y := 0;
-		GameArea.W := Wnd_H;
-		GameArea.H := Wnd_H;
+		DPad.Y := (((RESOL_H - DPAD_SIZE) div 2) * Wnd_H) div RESOL_H;
 
 		ShootBtns.W := (BUTTON_SIZE * Wnd_H) div RESOL_H;
-		ShootBtns.X := Wnd_W - ShootBtns.W - HorizontalOffset;
 		ShootBtns.H := (ShootBtns.W * 7) div 2;
-		ShootBtns.Y := DPad.Y + ((DPad.H - ShootBtns.H) div 2)
+		ShootBtns.Y := DPad.Y + ((DPad.H - ShootBtns.H) div 2);
+
+		GameArea.W := Wnd_H;
+		GameArea.H := Wnd_H;
+		GameArea.Y := 0;
+
+		If(Not SwapTouchControls) then begin
+			DPad.X := HorizontalOffset;
+			GameArea.X := DPad.X + DPad.W + HorizontalOffset;
+			ShootBtns.X := Wnd_W - ShootBtns.W - HorizontalOffset
+		end else begin
+			ShootBtns.X := HorizontalOffset;
+			GameArea.X := ShootBtns.X + ShootBtns.W + HorizontalOffset;
+			DPad.X := Wnd_W - DPad.W - HorizontalOffset
+		end
 	end else begin // "Portrait" mode
 		TotalHeight := RESOL_H + DPAD_SIZE;
 		TotalHeight := (TotalHeight * Wnd_W) div RESOL_W;
@@ -132,15 +143,21 @@ Begin
 		GameArea.W := Wnd_W;
 		GameArea.H := Wnd_W;
 
-		DPad.X := HorizontalOffset;
-		DPad.Y := GameArea.Y + GameArea.H + VerticalOffset;
 		DPad.W := (DPAD_SIZE * Wnd_W) div RESOL_W;
 		DPad.H := DPad.W;
+		DPad.Y := GameArea.Y + GameArea.H + VerticalOffset;
 
 		ShootBtns.W := (BUTTON_SIZE * Wnd_W) div RESOL_W;
-		ShootBtns.X := Wnd_W - ShootBtns.W - HorizontalOffset;
 		ShootBtns.H := (ShootBtns.W * 7) div 2;
-		ShootBtns.Y := DPad.Y + ((DPad.H - ShootBtns.H) div 2)
+		ShootBtns.Y := DPad.Y + ((DPad.H - ShootBtns.H) div 2);
+
+		If(Not SwapTouchControls) then begin
+			DPad.X := HorizontalOffset;
+			ShootBtns.X := Wnd_W - ShootBtns.W - HorizontalOffset
+		end else begin
+			ShootBtns.X := HorizontalOffset;
+			DPad.X := Wnd_W - DPad.W - HorizontalOffset
+		end
 	end;
 
 	TouchControls.SetPosition(@DPad, @ShootBtns);
