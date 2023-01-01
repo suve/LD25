@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2022 suve (a.k.a. Artur Frenszek Iwicki)
+ * Copyright (C) 2012-2023 suve (a.k.a. Artur Frenszek Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -114,6 +114,8 @@ Function TimestampDiffMillis(Const First, Second: TTimeStamp): sInt;
 // Draw primitives using SDL
 Procedure DrawRectFilled(Const Rect: PSDL_Rect; Const Colour: PSDL_Colour);
 Procedure DrawRectFilled(Const Rect: PSDL_Rect; Const RGB: LongWord);
+Procedure DrawRectOutline(Const Rect: PSDL_Rect; Const Colour: PSDL_Colour);
+Procedure DrawRectOutline(Const Rect: PSDL_Rect; Const RGB: LongWord);
 
 // Some simple converstions from and to strings
 Function IntToStr(Num:uInt;Digits:uInt=0;Chr:Char='0'):AnsiString; Overload;
@@ -207,6 +209,21 @@ Begin
 	Colour := RGBToColour(RGB);
 	DrawRectFilled(Rect, @Colour)
 End;
+
+Procedure DrawRectOutline(Const Rect: PSDL_Rect; Const Colour: PSDL_Colour);
+Begin
+	SDL_SetRenderDrawColor(Renderer, Colour^.R, Colour^.G, Colour^.B, Colour^.A);
+	SDL_RenderDrawRect(Renderer, Rect)
+End;
+
+Procedure DrawRectOutline(Const Rect: PSDL_Rect; Const RGB: LongWord);
+Var
+	Colour: TSDL_Colour;
+Begin
+	Colour := RGBToColour(RGB);
+	DrawRectOutline(Rect, @Colour)
+End;
+
 
 Function IntToStr(Num:uInt;Digits:uInt=0;Chr:Char='0'):AnsiString;
    Var Res:AnsiString;

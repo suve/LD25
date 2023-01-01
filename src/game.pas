@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2022 suve (a.k.a. Artur Frenszek Iwicki)
+ * Copyright (C) 2012-2023 suve (a.k.a. Artur Frenszek Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -62,7 +62,7 @@ Var
 			FREEZE_ALL
 		);
 	Var
-		CheatInvulnerability, CheatNoClip, CheatHideUI: Boolean;
+		CheatInvulnerability, CheatNoClip, CheatHitboxes, CheatHideUI: Boolean;
 		CheatFreeze: TFreezeMode;
 {$ENDIF}
 
@@ -125,6 +125,7 @@ Begin
 				If (Ev.Key.Keysym.Sym = SDLK_F1) then TriggerInvulnerabilityCheat() else
 				If (Ev.Key.Keysym.Sym = SDLK_F2) then TriggerFreezeCheat() else
 				If (Ev.Key.Keysym.Sym = SDLK_F3) then CheatNoClip:=(Not CheatNoClip) else
+				If (Ev.Key.Keysym.Sym = SDLK_F11) then CheatHitboxes:=(Not CheatHitboxes) else
 				If (Ev.Key.Keysym.Sym = SDLK_F12) then CheatHideUI:=(Not CheatHideUI) else
 			{$ENDIF}
 		end else
@@ -500,7 +501,10 @@ Begin
 			Rect.Y := Gib[G]^.iY;
 			Rect.W := Gib[G]^.Rect.W;
 			Rect.H := Gib[G]^.Rect.H;
-			
+
+			{$IFDEF LD25_DEBUG}
+			If(CheatHitboxes) then DrawRectOutline(@Rect, @YellowColour);
+			{$ENDIF}
 			DrawImage(EntityGfx, @Gib[G]^.Rect, @Rect, Gib[G]^.Col)
 		end
 End;
@@ -515,11 +519,18 @@ Begin
 	Src := Sprite^.GetFrame(AniFra, E^.Face)
 End;
 
-Procedure DrawEntity(Const E:PEntity; Const Sprite: PSprite);
+Procedure DrawEntity(
+	Const E:PEntity;
+	Const Sprite: PSprite
+	{$IFDEF LD25_DEBUG}; Const OutlineColour: PSDL_Colour {$ENDIF}
+);
 Var
 	Src, Dst: TSDL_Rect;
 Begin
 	SetEntityDrawRects(E, Sprite, Src, Dst);
+	{$IFDEF LD25_DEBUG}
+	If(CheatHitboxes) then DrawRectOutline(@Dst, OutlineColour);
+	{$ENDIF}
 	DrawImage(EntityGfx, @Src, @Dst, E^.Col)
 End;
 
@@ -529,7 +540,7 @@ Var
 Begin
 	For M:=Low(Mob) to High(Mob) do
 		If (Mob[M]<>NIL) then
-			DrawEntity(Mob[M], Mob[M]^.Sprite)
+			DrawEntity(Mob[M], Mob[M]^.Sprite {$IFDEF LD25_DEBUG}, @RedColour {$ENDIF})
 End;
 
 Procedure DrawPlayerBullets();
@@ -538,7 +549,7 @@ Var
 Begin
 	For B:=Low(PBul) to High(PBul) do
 		If (PBul[B]<>NIL) then
-			DrawEntity(PBul[B], PBul[B]^.Sprite)
+			DrawEntity(PBul[B], PBul[B]^.Sprite {$IFDEF LD25_DEBUG}, @LimeColour {$ENDIF})
 End;
 
 Procedure DrawEnemyBullets();
@@ -547,7 +558,7 @@ Var
 Begin
 	For B:=Low(EBul) to High(EBul) do
 		If (EBul[B]<>NIL) then
-			DrawEntity(EBul[B], EBul[B]^.Sprite)
+			DrawEntity(EBul[B], EBul[B]^.Sprite {$IFDEF LD25_DEBUG}, @RedColour {$ENDIF})
 End;
 
 Procedure DrawHero();
@@ -557,8 +568,13 @@ Var
 	Col: TSDL_Colour;
 Begin
 	If (Hero^.HP <= 0.0) then Exit;
-	
+
 	SetEntityDrawRects(Hero, @HeroSprite, Src, Dst);
+
+	{$IFDEF LD25_DEBUG}
+	If(CheatHitboxes) then DrawRectOutline(@Dst, @LimeColour);
+	{$ENDIF}
+
 	// If hero has taken damage recently, randomly move target position to make a "damage shake" effect
 	If (Hero^.InvTimer > 0) then begin
 		Dst.X += Random(-1, +1);
@@ -809,6 +825,7 @@ Procedure ResetDebugCheats(); Inline;
 Begin
 	CheatInvulnerability := False;
 	CheatNoClip := False;
+	CheatHitboxes := False;
 	CheatHideUI := False;
 
 	CheatFreeze := FREEZE_NONE
