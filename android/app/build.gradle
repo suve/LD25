@@ -25,6 +25,15 @@ android {
 		targetCompatibility JavaVersion.VERSION_1_8
 	}
 
+	sourceSets {
+		main {
+			java {
+				srcDir "src/main/java"
+				srcDir "../../SDL2/android-project/app/src/main/java"
+			}
+		}
+	}
+
 	/*
 	 * SDL's Java glue code contains support for stuff that requires
 	 * extra permissions, like audio recording and bluetooth controllers.

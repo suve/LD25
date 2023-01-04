@@ -46,11 +46,6 @@ for TYPE in gfx sfx map slides; do
 	ln -srnf "colorful/build/${TYPE}" "android/app/src/main/assets/${TYPE}"
 done
 
-ln -srnf SDL2/android-project/app/src/main/java/org \
-	android/app/src/main/java/org
-ln -srnf build/lib \
-	android/app/src/main/jniLibs
-
 # -- trigger a Gradle build
 
 cd "${SCRIPT_DIR}/android"
