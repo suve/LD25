@@ -10,19 +10,33 @@ SCRIPT_NAME="$(basename "$0")"
 
 # -- parse args
 
+ARCHES=""
 CLEAN=""
 DEBUG=""
 
 while [[ "$#" -gt 0 ]]; do
-	if [[ "$1" == "--clean" ]]; then
+	if [[ "$1" == "--arch" ]]; then
+		if [[ "$#" -eq 1 ]]; then
+			echo "${SCRIPT_NAME}: Error! The --arch option requires an argument." >&2
+			exit 1
+		fi
+		if [[ "$2" == "arm" ]] || [[ "$2" == "aarch64" ]] || [[ "$2" == "x86" ]] || [[ "$2" == "x86_64" ]]; then
+			ARCHES="${ARCHES} --arch ${2}"
+		else
+			echo "${SCRIPT_NAME}: Error! The argument to --arch must be one of 'arm', 'aarch64', 'x86' or 'x86_64' (got '${2}')" >&2
+			exit 1
+		fi
+		shift 2
+	elif [[ "$1" == "--clean" ]]; then
 		CLEAN="--clean"
+		shift 1
 	elif [[ "$1" == "--debug" ]]; then
 		DEBUG="--debug"
+		shift 1
 	else
 		echo "${SCRIPT_NAME}: Error! Unknown option \"${1}\"." >&2
 		exit 1
 	fi
-	shift 1
 done
 
 # -- check env vars
@@ -45,7 +59,7 @@ fi
 # -- call sub-scripts in order
 
 cd "${SCRIPT_DIR}"
-./build-SDL2.sh ${CLEAN} ${DEBUG}
-./build-colorful.sh ${CLEAN} ${DEBUG}
+./build-SDL2.sh ${ARCHES} ${CLEAN} ${DEBUG}
+./build-colorful.sh ${ARCHES} ${CLEAN} ${DEBUG}
 ./build-assets.sh ${CLEAN} ${DEBUG}
 ./build-apk.sh ${CLEAN} ${DEBUG}

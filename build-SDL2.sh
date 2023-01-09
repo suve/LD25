@@ -10,20 +10,45 @@ SCRIPT_NAME="$(basename "$0")"
 
 # -- parse args
 
+ARCHES=""
 CLEAN=0
 DEBUG=0
 
 while [[ "$#" -gt 0 ]]; do
-	if [[ "$1" == "--clean" ]]; then
+	if [[ "$1" == "--arch" ]]; then
+		if [[ "$#" -eq 1 ]]; then
+			echo "${SCRIPT_NAME}: Error! The --arch option requires an argument." >&2
+			exit 1
+		fi
+		if [[ "$2" == "arm" ]]; then
+			ARCHES="${ARCHES} armeabi-v7a"
+		elif [[ "$2" == "aarch64" ]]; then
+			ARCHES="${ARCHES} arm64-v8a"
+		elif [[ "$2" == "x86" ]]; then
+			ARCHES="${ARCHES} x86"
+		elif [[ "$2" == "x86_64" ]]; then
+			ARCHES="${ARCHES} x86_64"
+		else
+			echo "${SCRIPT_NAME}: Error! The argument to --arch must be one of 'arm', 'aarch64', 'x86' or 'x86_64' (got '${2}')" >&2
+			exit 1
+		fi
+		shift 2
+	elif [[ "$1" == "--clean" ]]; then
 		CLEAN=1
+		shift 1
 	elif [[ "$1" == "--debug" ]]; then
 		DEBUG=1
+		shift 1
 	else
 		echo "${SCRIPT_NAME}: Error! Unknown option \"${1}\"." >&2
 		exit 1
 	fi
-	shift 1
 done
+
+# If user didn't specify any architectures, use default
+if [[ -z "${ARCHES}" ]]; then
+	ARCHES="armeabi-v7a arm64-v8a x86_64"
+fi
 
 # -- check env vars
 
@@ -59,7 +84,7 @@ function build_sdl2() {
 		NDK_OUT="${BUILD_DIR}/obj" \
 		NDK_LIBS_OUT="${BUILD_DIR}/lib" \
 		APP_BUILD_SCRIPT=Android.mk \
-		APP_ABI="armeabi-v7a arm64-v8a x86_64" \
+		APP_ABI="${ARCHES}" \
 		APP_PLATFORM="android-${ANDROID_API}" \
 		APP_MODULES="SDL2 SDL2_main SDL2_mixer SDL2_image" \
 		APP_OPTIM="${OPT_OPTIM}" \
