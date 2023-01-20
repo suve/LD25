@@ -71,39 +71,23 @@ Uses
 Var
 	WindowTex: PSDL_Texture;
 
-	{$IFDEF LD25_MOBILE}
-	GameArea: TSDL_Rect;
-	{$ENDIF}
-
-Procedure HandleWindowResizedEvent(Ev: PSDL_Event);
 {$IFDEF LD25_MOBILE}
+Var
+	GameArea: TSDL_Rect;
+
+Procedure PositionTouchControls();
 Const
 	BUTTON_SIZE = 32;
 	DPAD_SIZE = 120;
-{$ENDIF}
 Var
-	ww, wh: cint;
-
-	{$IFDEF LD25_MOBILE}
 	TotalHeight, VerticalOffset: uInt;
 	TotalWidth, HorizontalOffset: uInt;
 	DPad, ShootBtns: TSDL_Rect;
-	{$ENDIF}
 Begin
-	If (Ev <> NIL) then begin
-		Wnd_W := Ev^.Window.Data1;
-		Wnd_H := Ev^.Window.Data2
-	end else begin
-		SDL_GetWindowSize(Window, @ww, @wh);
-		Wnd_W := ww;
-		Wnd_H := wh
-	end;
-
 	(*
 	 * FIXME: This code is quite naive and will produce rather bogus setups
 	 *        on devices with an aspect ratio close to 1:1 (like 5:4 tablets).
 	 *)
-	{$IFDEF LD25_MOBILE}
 	If (Wnd_W >= Wnd_H) then begin // "Landscape" mode
 		TotalWidth := RESOL_W + DPAD_SIZE + BUTTON_SIZE;
 		TotalWidth := (TotalWidth * Wnd_H) div RESOL_H;
@@ -158,7 +142,25 @@ Begin
 		end
 	end;
 
-	TouchControls.SetPosition(@DPad, @ShootBtns);
+	TouchControls.SetPosition(@DPad, @ShootBtns)
+End;
+{$ENDIF}
+
+Procedure HandleWindowResizedEvent(Ev: PSDL_Event);
+Var
+	ww, wh: cint;
+Begin
+	If (Ev <> NIL) then begin
+		Wnd_W := Ev^.Window.Data1;
+		Wnd_H := Ev^.Window.Data2
+	end else begin
+		SDL_GetWindowSize(Window, @ww, @wh);
+		Wnd_W := ww;
+		Wnd_H := wh
+	end;
+
+	{$IFDEF LD25_MOBILE}
+		PositionTouchControls()
 	{$ENDIF}
 End;
 
