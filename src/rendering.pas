@@ -40,18 +40,16 @@ Var
 	Wnd_W, Wnd_H: uInt;
 	Wnd_F : Boolean;
 
-	{$IFDEF ANDROID}
+	{$IFDEF LD25_MOBILE}
 	SwapTouchControls: Boolean;
 	{$ENDIF}
 
 Procedure HandleWindowResizedEvent(Ev: PSDL_Event);
 
-{$IFDEF ANDROID}
+{$IFDEF LD25_MOBILE}
 Procedure TranslateMouseEventCoords(Ev: PSDL_Event);
 Procedure WindowCoordsToGameCoords(Const WindowX, WindowY: sInt; Out GameX, GameY: sInt);
-{$ENDIF}
-
-{$IFNDEF ANDROID}
+{$ELSE}
 // Unused at the moment. Revise whether this is actually needed.
 Procedure ResizeWindow(W,H:uInt;Full:Boolean=FALSE);
 {$ENDIF}
@@ -67,18 +65,18 @@ Procedure FinishFrame();
 Implementation
 Uses
 	ctypes,
-	{$IFDEF ANDROID} TouchControls, {$ENDIF}
+	{$IFDEF LD25_MOBILE} TouchControls, {$ENDIF}
 	Shared;
 
 Var
 	WindowTex: PSDL_Texture;
 
-	{$IFDEF ANDROID}
+	{$IFDEF LD25_MOBILE}
 	GameArea: TSDL_Rect;
 	{$ENDIF}
 
 Procedure HandleWindowResizedEvent(Ev: PSDL_Event);
-{$IFDEF ANDROID}
+{$IFDEF LD25_MOBILE}
 Const
 	BUTTON_SIZE = 32;
 	DPAD_SIZE = 120;
@@ -86,7 +84,7 @@ Const
 Var
 	ww, wh: cint;
 
-	{$IFDEF ANDROID}
+	{$IFDEF LD25_MOBILE}
 	TotalHeight, VerticalOffset: uInt;
 	TotalWidth, HorizontalOffset: uInt;
 	DPad, ShootBtns: TSDL_Rect;
@@ -105,7 +103,7 @@ Begin
 	 * FIXME: This code is quite naive and will produce rather bogus setups
 	 *        on devices with an aspect ratio close to 1:1 (like 5:4 tablets).
 	 *)
-	{$IFDEF ANDROID}
+	{$IFDEF LD25_MOBILE}
 	If (Wnd_W >= Wnd_H) then begin // "Landscape" mode
 		TotalWidth := RESOL_W + DPAD_SIZE + BUTTON_SIZE;
 		TotalWidth := (TotalWidth * Wnd_H) div RESOL_H;
@@ -164,7 +162,7 @@ Begin
 	{$ENDIF}
 End;
 
-{$IFDEF ANDROID}
+{$IFDEF LD25_MOBILE}
 Procedure TranslateMouseEventCoords(Ev: PSDL_Event);
 Var
 	GameX, GameY: sInt;
@@ -179,9 +177,7 @@ Begin
 	GameX := ((WindowX - GameArea.X) * RESOL_W) div GameArea.W;
 	GameY := ((WindowY - GameArea.Y) * RESOL_H) div GameArea.H
 End;
-{$ENDIF}
-
-{$IFNDEF ANDROID}
+{$ELSE}
 Procedure ResizeWindow(W,H:uInt;Full:Boolean=FALSE);
 Begin
 	If (Full) then begin
@@ -278,7 +274,7 @@ Begin
 	WindowTex := SDL_GetRenderTarget(Renderer);
 	SDL_SetRenderTarget(Renderer, Display);
 
-	{$IFDEF ANDROID}
+	{$IFDEF LD25_MOBILE}
 	SDL_RenderSetLogicalSize(Renderer, RESOL_W, RESOL_H);
 	{$ENDIF}
 
@@ -290,7 +286,7 @@ End;
 Procedure FinishFrame();
 Begin
 	SDL_SetRenderTarget(Renderer, WindowTex);
-	{$IFDEF ANDROID}
+	{$IFDEF LD25_MOBILE}
 	SDL_RenderSetLogicalSize(Renderer, Wnd_W, Wnd_H);
 	{$ENDIF}
 
@@ -298,7 +294,7 @@ Begin
 	SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 255);
 	SDL_RenderClear(Renderer);
 
-	{$IFDEF ANDROID}
+	{$IFDEF LD25_MOBILE}
 		SDL_RenderCopy(Renderer, Display, NIL, @GameArea);
 		TouchControls.Draw();
 	{$ELSE}

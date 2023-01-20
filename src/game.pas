@@ -28,7 +28,7 @@ Function PlayGame():Boolean;
 Implementation
 Uses
 	SDL2,
-	{$IFDEF ANDROID} ctypes, TouchControls, {$ENDIF}
+	{$IFDEF LD25_MOBILE} ctypes, TouchControls, {$ENDIF}
 	Assets, Colours, ConfigFiles, Entities, FloatingText, Fonts, Images,
 	MathUtils, Rendering, Rooms, Shared, Sprites;
 
@@ -137,7 +137,7 @@ Begin
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_ShootLeft] ) then Key[KEY_ShootLeft] :=False else
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_ShootRight]) then Key[KEY_ShootRight]:=False else
 		end else
-		{$IFDEF ANDROID}
+		{$IFDEF LD25_MOBILE}
 		If (Ev.Type_ = SDL_FingerUp) or (Ev.Type_ = SDL_FingerDown) or (Ev.Type_ = SDL_FingerMotion) then begin
 			TouchControls.HandleEvent(@Ev)
 		end else
@@ -844,7 +844,7 @@ Begin
 	SDL_ShowCursor(0);
 	
 	For pk := Low(TPlayerKey) to High(TPlayerKey) do Key[pk]:=False;
-	{$IFDEF ANDROID} TouchControls.SetVisibility(True); {$ENDIF}
+	{$IFDEF LD25_MOBILE} TouchControls.SetVisibility(True); {$ENDIF}
 	
 	RoomChange:=RCHANGE_NONE;
 	Paused:=False; WantToQuit:=False; 
@@ -875,7 +875,7 @@ Begin
 
 	Until WantToQuit;
 
-	{$IFDEF ANDROID} TouchControls.SetVisibility(False); {$ENDIF}
+	{$IFDEF LD25_MOBILE} TouchControls.SetVisibility(False); {$ENDIF}
 
 	SetAllowScreensaver(True);
 	SDL_ShowCursor(1);

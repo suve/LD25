@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2022 suve (a.k.a. Artur Frenszek-Iwicki)
+ * Copyright (C) 2022-2023 suve (a.k.a. Artur Frenszek-Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -86,7 +86,7 @@ End;
 
 Procedure TMenu.SetItemCaption(Index: sInt; Caption: AnsiString);
 Begin
-	Self.Items[Index].Caption := {$IFNDEF ANDROID} Self.Items[Index].Letter + ' - ' + {$ENDIF} Caption;
+	Self.Items[Index].Caption := {$IFNDEF LD25_MOBILE} Self.Items[Index].Letter + ' - ' + {$ENDIF} Caption;
 	Self.Items[Index].Width := (Fonts.GetTextWidth(Self.Items[Index].Caption, Assets.Font) * Self.FontScale) div Assets.Font^.Scale
 End;
 
@@ -164,7 +164,7 @@ Var
 Begin
 	If (Self.OffsetsAreDirty) then Self.RecalculateOffsets();
 
-	{$IFNDEF ANDROID}
+	{$IFNDEF LD25_MOBILE}
 	XPos := (RESOL_W - Self.MaxTextWidth) div 2;
 	{$ENDIF}
 	YPos := Self.VertPos + Self.VertSpacing;
@@ -172,7 +172,7 @@ Begin
 
 	Font^.Scale := Self.FontScale;
 	For Idx := 0 to (Self.Count - 1) do begin
-		{$IFDEF ANDROID}
+		{$IFDEF LD25_MOBILE}
 		XPos := (RESOL_W - Self.Items[Idx].Width) div 2;
 		{$ENDIF}
 
@@ -218,7 +218,7 @@ Begin
 	If (Ev^.Type_ = SDL_QuitEv) then Exit(CHOICE_QUIT);
 	If (Ev^.Type_ = SDL_KeyDown) then Exit(Self.ProcessKeyboardEvent(ev));
 	If (Ev^.Type_ = SDL_MouseButtonDown) then begin
-		{$IFDEF ANDROID} TranslateMouseEventCoords(ev); {$ENDIF}
+		{$IFDEF LD25_MOBILE} TranslateMouseEventCoords(ev); {$ENDIF}
 		Exit(Self.ProcessMouseEvent(ev))
 	end;
 

@@ -99,7 +99,7 @@ Begin
 	Rendering.FinishFrame()
 End;
 
-{$IFNDEF ANDROID}
+{$IFNDEF LD25_MOBILE}
 Procedure BindKeys();
 Const
 	KeyName : Array[TPlayerKey] of AnsiString = (
@@ -147,7 +147,7 @@ Begin
 	Until Finito;
 	For K:=Low(TPlayerKey) to High(TPlayerKey) do KeyBind[K]:=NewBind[K]
 End;
-{$ELSE} // IFDEF(ANDROID)
+{$ELSE} // LD25_MOBILE is defined
 Procedure TweakOptions();
 Const
 	VOLUME_BTN_SIZE = 16;
@@ -555,16 +555,16 @@ End;
 {$IFDEF LD25_DONATE}
 Procedure DonateScreen();
 Const
-	GitHubText    = {$IFNDEF ANDROID} 'G - ' + {$ENDIF} 'GITHUB SPONSORS';
-	LiberapayText = {$IFNDEF ANDROID} 'L - ' + {$ENDIF} 'LIBERAPAY';
-	Alignment = {$IFNDEF ANDROID} ALIGN_LEFT {$ELSE} ALIGN_CENTRE {$ENDIF};
+	GitHubText    = {$IFNDEF LD25_MOBILE} 'G - ' + {$ENDIF} 'GITHUB SPONSORS';
+	LiberapayText = {$IFNDEF LD25_MOBILE} 'L - ' + {$ENDIF} 'LIBERAPAY';
+	Alignment = {$IFNDEF LD25_MOBILE} ALIGN_LEFT {$ELSE} ALIGN_CENTRE {$ENDIF};
 Var
 	dt: uInt;
 	XPos, YPos: sInt;
 	GitHubRect, LiberaPayRect: TSDL_Rect;
 	BackToMenu: Boolean;
 Begin
-	{$IFNDEF ANDROID}
+	{$IFNDEF LD25_MOBILE}
 		XPos := (Length(GitHubText) * Font^.CharW) + ((Length(GitHubText) - 1) * Font^.SpacingX);
 		XPos := (RESOL_W - (XPos * Font^.Scale)) div 2;
 	{$ELSE}
@@ -614,7 +614,7 @@ Begin
 				end
 			end else
 			If (Ev.Type_ = SDL_MouseButtonDown) then begin
-				{$IFDEF ANDROID} TranslateMouseEventCoords(@Ev); {$ENDIF}
+				{$IFDEF LD25_MOBILE} TranslateMouseEventCoords(@Ev); {$ENDIF}
 				If(MouseInRect(GitHubRect)) then begin
 					SDL_OpenUrl(PChar('https://github.com/sponsors/suve'));
 					BackToMenu := True
@@ -734,7 +734,7 @@ Begin
 	Menu.AddItem('C', 'CONTINUE', ContinueColour);
 	Menu.AddItem('N', 'NEW GAME', @WhiteColour);
 	Menu.AddItem('L', 'LOAD GAME', LoadColour);
-	{$IFNDEF ANDROID}
+	{$IFNDEF LD25_MOBILE}
 		Menu.AddItem('B', 'BIND KEYS', @WhiteColour);
 	{$ELSE}
 		Menu.AddItem('O', 'CHANGE OPTIONS', @WhiteColour);
@@ -1084,7 +1084,7 @@ begin
 				MenuChoice:='L'
 			end;
 			'S': SetColours();
-			{$IFDEF ANDROID}
+			{$IFDEF LD25_MOBILE}
 				'O': TweakOptions();
 			{$ELSE}
 				'B': BindKeys();

@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2022 suve (a.k.a. Artur Frenszek-Iwicki)
+ * Copyright (C) 2012-2023 suve (a.k.a. Artur Frenszek-Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -51,7 +51,7 @@ Begin
 			If (Ev.Type_ = SDL_QuitEv) then begin
 				Shutdown:=True; Exit(False)
 			end else
-			{$IFDEF ANDROID}
+			{$IFDEF LD25_MOBILE}
 			If (Ev.Type_ = SDL_FingerDown) then Q:=1 else
 			{$ENDIF}
 			If (Ev.Type_ = SDL_KeyDown) then begin

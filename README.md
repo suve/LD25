@@ -78,6 +78,12 @@ The script takes the following options:
   Encode sound effects to `.ogg` with this quality setting.
   The default value is `10`.
 
+- `--platform <auto, desktop, mobile>`    
+  Controls whether the game should be built in desktop mode (keyboard focus,
+  no touch controls) or mobile mode (touch, extra menus for accessibility).
+  The default value is `auto`, which resolves to `mobile` when building
+  for Android, and `desktop` otherwise.
+
 - `--strip`    
   Controls whether the built executable should be stripped of debug symbols.
   The default value is `false`.

@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2022 suve (a.k.a. Artur Frenszek-Iwicki)
+ * Copyright (C) 2012-2023 suve (a.k.a. Artur Frenszek-Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -46,7 +46,7 @@ Var
 	SlideIn  : Array[0..SLIDES_IN-1] of PImage;
 	SlideOut : Array[0..SLIDES_OUT-1] of PImage;
 
-	{$IFDEF ANDROID}
+	{$IFDEF LD25_MOBILE}
 	TouchControlsGfx: PImage;
 	{$ENDIF}
 
@@ -207,7 +207,7 @@ Begin
 	For idx:=0 to (SLIDES_IN-1) do RegisterImage('slides/intro' + IntToStr(idx) + '.png', @SlideIn[idx], @COLOUR_BLACK);
 	For idx:=0 to (SLIDES_OUT-1) do RegisterImage('slides/outro' + IntToStr(idx) + '.png', @SlideOut[idx], @COLOUR_BLACK);
 
-	{$IFDEF ANDROID}
+	{$IFDEF LD25_MOBILE}
 	RegisterImage('gfx/touch-controls.png', @TouchControlsGfx, @COLOUR_LIME);
 	{$ENDIF}
 

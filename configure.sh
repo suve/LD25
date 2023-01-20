@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # colorful - simple 2D sideview shooter
-# Copyright (C) 2022 suve (a.k.a. Artur Frenszek-Iwicki)
+# Copyright (C) 2022-2023 suve (a.k.a. Artur Frenszek-Iwicki)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 3,
@@ -58,6 +58,12 @@ Accepted options:
   Encode sound effects to .ogg with this quality setting.
   The default value is "10".
 
+--platform <auto, desktop, mobile>
+  Controls whether the game should be built in desktop mode (keyboard focus,
+  no touch controls) or mobile mode (touch, extra menus for accessibility).
+  The default value is "auto", which resolves to "mobile" for Android builds
+  and "desktop" otherwise.
+
 --strip BOOLEAN
   Controls whether the built executable should be stripped of debug symbols.
   The default value is "false".
@@ -92,7 +98,7 @@ DONATE="true"
 FPC="fpc"
 USER_FLAGS=""
 OGG_QUALITY="10"
-PLATFORM="desktop"
+PLATFORM="auto"
 STRIP="false"
 
 while [[ "${#}" -gt 0 ]]; do
@@ -110,7 +116,7 @@ while [[ "${#}" -gt 0 ]]; do
 		ANDROID="$(parse_bool "--android" "${val}")"
 	elif [[ "${opt}" == "--assets" ]]; then
 		if [[ "${val}" != "bundle" ]] && [[ "${val}" != "standalone" ]] && [[ "${val}" != "systemwide" ]]; then
-			echo "Error: The argument to --assets must be one of \"bundle\", \"standalone\" or \"systemwide\"" >&2
+			echo "Error: The argument to --assets must be one of \"bundle\", \"standalone\", or \"systemwide\"" >&2
 			exit 1
 		fi
 		ASSETS="${val}"
@@ -124,6 +130,12 @@ while [[ "${#}" -gt 0 ]]; do
 		USER_FLAGS="${USER_FLAGS} ${val}"
 	elif [[ "${opt}" == "--ogg-quality" ]]; then
 		OGG_QUALITY="${val}"
+	elif [[ "${opt}" == "--platform" ]]; then
+		if [[ "${val}" != "auto" ]] && [[ "${val}" != "desktop" ]] && [[ "${val}" != "mobile" ]]; then
+			echo "Error: The argument to --platform must be one of \"auto\", \"desktop\", or \"mobile\"" >&2
+			exit 1
+		fi
+		PLATFORM="${val}"
 	elif [[ "${opt}" == "--strip" ]]; then
 		STRIP="$(parse_bool "--strip" "${val}")"
 	else
@@ -131,6 +143,16 @@ while [[ "${#}" -gt 0 ]]; do
 		exit 1
 	fi
 done
+
+# Resolve "auto" values
+
+if [[ "${PLATFORM}" == "auto" ]]; then
+	if [[ "${ANDROID}" == "true" ]]; then
+		PLATFORM="mobile"
+	else
+		PLATFORM="desktop"
+	fi
+fi
 
 # Print out used values
 
@@ -143,6 +165,7 @@ Config values:
   FPC = ${FPC}
   FLAGS =${USER_FLAGS}
   OGG_QUALITY = ${OGG_QUALITY}
+  PLATFORM = ${PLATFORM}
   STRIP = ${STRIP}
 EOF
 
@@ -153,12 +176,10 @@ BUILD_FLAGS="-vewnh -dLD25_ASSETS_${ASSETS}"
 if [[ "${ANDROID}" == "true" ]]; then
 	EXE_PREFIX="lib"
 	EXE_SUFFIX=".so"
-	GFX_FILTER=""
 	BUILD_FLAGS="-Tandroid ${BUILD_FLAGS}"
 else
 	EXE_PREFIX=""
 	EXE_SUFFIX=""
-	GFX_FILTER="gfx/touch-controls.png"
 fi
 
 if [[ "${DEBUG}" == "true" ]]; then
@@ -168,8 +189,15 @@ else
 	BUILD_FLAGS="${BUILD_FLAGS} -O3"
 fi
 
-if [[ "${DONATE}" == true ]]; then
+if [[ "${DONATE}" == "true" ]]; then
 	BUILD_FLAGS="${BUILD_FLAGS} -dLD25_DONATE"
+fi
+
+if [[ "${PLATFORM}" == "mobile" ]]; then
+	BUILD_FLAGS="${BUILD_FLAGS} -dLD25_MOBILE"
+	GFX_FILTER=""
+else	
+	GFX_FILTER="gfx/touch-controls.png"
 fi
 
 if [[ "${STRIP}" == "true" ]]; then

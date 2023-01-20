@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2022 suve (a.k.a. Artur Frenszek Iwicki)
+ * Copyright (C) 2012-2023 suve (a.k.a. Artur Frenszek Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -640,7 +640,7 @@ Const
 	SCRIPT_OFFSET = 21;
 	MAX_IF_NEST = 8;
 
-	{$IFDEF ANDROID}
+	{$IFDEF LD25_MOBILE}
 		PLATFORM_GOOD = '[mobile]';
 		PLATFORM_BAD = '[desktop]';
 	{$ELSE}

@@ -194,7 +194,7 @@ Begin
 	For K:=Low(K) to High(K) do Writeln(F,K,'=',KeyBind[K]);
 	Writeln(F);
 
-	{$IFDEF ANDROID}
+	{$IFDEF LD25_MOBILE}
 		Writeln(F, '[TouchControls]');
 		Writeln(F, 'Swapped=', BoolToStr(SwapTouchControls, 'True', 'False'));
 		Writeln(F);
@@ -235,7 +235,7 @@ Begin
 	end;
 	
 	If(Version = 2) then begin
-		{$IFDEF ANDROID}
+		{$IFDEF LD25_MOBILE}
 			Ini.ReadSectionValues('TouchControls', Str);
 			SwapTouchControls:=StrToBoolDef(Str.Values['Swapped'], False);
 		{$ENDIF}
@@ -307,7 +307,7 @@ Begin
 	// Colour values
 	ResetMapColoursToDefault();
 
-	{$IFDEF ANDROID}
+	{$IFDEF LD25_MOBILE}
 	SwapTouchControls := False
 	{$ENDIF}
 End;
