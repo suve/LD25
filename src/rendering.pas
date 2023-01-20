@@ -142,6 +142,18 @@ Begin
 		end
 	end;
 
+	{$IFDEF LD25_DEBUG}
+	SDL_LogDebug(
+		SDL_LOG_CATEGORY_APPLICATION,
+		'Positioning: %dx%d -> game: %dx%d @ %dx%d; DPad: %dx%d @ %dx%d; shbt: %dx%d @ %dx%d',
+		[
+			cint(Wnd_W), cint(Wnd_H),
+			cint(GameArea.X), cint(GameArea.Y), cint(GameArea.W), cint(GameArea.H),
+			cint(DPad.X), cint(DPad.Y), cint(DPad.W), cint(DPad.H),
+			cint(ShootBtns.X), cint(ShootBtns.Y), cint(ShootBtns.W), cint(ShootBtns.H)
+		]
+	);
+	{$ENDIF}
 	TouchControls.SetPosition(@DPad, @ShootBtns)
 End;
 {$ENDIF}
