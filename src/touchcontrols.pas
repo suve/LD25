@@ -395,8 +395,15 @@ Begin
 		Key[KEY_LEFT] := False;
 	end;
 	If (NewShootBtnsPos <> NIL) then begin
-		BtnW := NewShootBtnsPos^.W;
-		BtnH := BtnW;
+		If(NewShootBtnsPos^.H > NewShootBtnsPos^.W) then begin
+			BtnW := NewShootBtnsPos^.W;
+			BtnH := BtnW;
+			BtnExtraSize := (NewShootBtnsPos^.H - (BtnH * 2)) div 2;
+		end else begin
+			BtnH := NewShootBtnsPos^.H;
+			BtnW := BtnH;
+			BtnExtraSize := (NewShootBtnsPos^.W - (BtnW * 2)) div 2;
+		end;
 
 		With ShootLeftButton do begin
 			Position.X := NewShootBtnsPos^.X;
@@ -407,18 +414,21 @@ Begin
 		end;
 
 		With ShootRightButton do begin
-			Position.X := NewShootBtnsPos^.X;
-			Position.Y := NewShootBtnsPos^.Y + NewShootBtnsPos^.H - BtnH;
+			If(NewShootBtnsPos^.H > NewShootBtnsPos^.W) then begin
+				Position.X := NewShootBtnsPos^.X;
+				Position.Y := NewShootBtnsPos^.Y + NewShootBtnsPos^.H - BtnH
+			end else begin
+				Position.X := NewShootBtnsPos^.X + NewShootBtnsPos^.W - BtnW;
+				Position.Y := NewShootBtnsPos^.Y
+			end;
 			Position.W := BtnW;
 			Position.H := BtnH;
 			Touched := False
 		end;
 
-		BtnExtraSize := BtnW div 4;
-		ShootLeftTouchArea := EnlargeRect(ShootLeftButton.Position, BtnExtraSize, BtnExtraSize);
-		ShootRightTouchArea := EnlargeRect(ShootRightButton.Position, BtnExtraSize, BtnExtraSize);
+		ShootLeftTouchArea := EnlargeRect(ShootLeftButton.Position, (BtnW div 4), (BtnH div 4));
+		ShootRightTouchArea := EnlargeRect(ShootRightButton.Position, (BtnW div 4), (BtnH div 4));
 
-		BtnExtraSize := (NewShootBtnsPos^.H - (BtnH * 2)) div 2;
 		ShootLeftExtraTouchArea := EnlargeRect(ShootLeftButton.Position, BtnExtraSize, BtnExtraSize);
 		ShootRightExtraTouchArea := EnlargeRect(ShootRightButton.Position, BtnExtraSize, BtnExtraSize);
 

@@ -79,16 +79,24 @@ Procedure PositionTouchControls();
 Const
 	BUTTON_SIZE = 32;
 	DPAD_SIZE = 120;
+
+	ASPECT_RATIO_MUL = 1000;
+
+	LANDSCAPE_WIDTH = RESOL_W + DPAD_SIZE + BUTTON_SIZE;
+	LANDSCAPE_RATIO = (LANDSCAPE_WIDTH * ASPECT_RATIO_MUL) div RESOL_H;
+
+	PORTRAIT_HEIGHT = RESOL_H + DPAD_SIZE;
+	PORTRAIT_RATIO = (RESOL_W * ASPECT_RATIO_MUL) div PORTRAIT_HEIGHT;
 Var
-	TotalHeight, VerticalOffset: uInt;
-	TotalWidth, HorizontalOffset: uInt;
+	AspectRatio: uInt;
+	SquareSize: uInt;
+	TotalHeight, TotalWidth: uInt;
+	VerticalOffset, HorizontalOffset: sInt;
 	DPad, ShootBtns: TSDL_Rect;
 Begin
-	(*
-	 * FIXME: This code is quite naive and will produce rather bogus setups
-	 *        on devices with an aspect ratio close to 1:1 (like 5:4 tablets).
-	 *)
-	If (Wnd_W >= Wnd_H) then begin // "Landscape" mode
+	AspectRatio := (Wnd_W * ASPECT_RATIO_MUL) div Wnd_H;
+
+	If (AspectRatio >= LANDSCAPE_RATIO) then begin // "Landscape" mode
 		TotalWidth := RESOL_W + DPAD_SIZE + BUTTON_SIZE;
 		TotalWidth := (TotalWidth * Wnd_H) div RESOL_H;
 		HorizontalOffset := (Wnd_W - TotalWidth) div 4;
@@ -114,7 +122,8 @@ Begin
 			GameArea.X := ShootBtns.X + ShootBtns.W + HorizontalOffset;
 			DPad.X := Wnd_W - DPad.W - HorizontalOffset
 		end
-	end else begin // "Portrait" mode
+	end else
+	If (AspectRatio <= PORTRAIT_RATIO) then begin // "Portrait" mode
 		TotalHeight := RESOL_H + DPAD_SIZE;
 		TotalHeight := (TotalHeight * Wnd_W) div RESOL_W;
 		VerticalOffset := (Wnd_H - TotalHeight) div 3;
@@ -140,6 +149,49 @@ Begin
 			ShootBtns.X := HorizontalOffset;
 			DPad.X := Wnd_W - DPad.W - HorizontalOffset
 		end
+	end else
+	begin // "Square-ish" mode
+		If(Wnd_W >= Wnd_H) then begin
+			SquareSize := Wnd_H;
+			HorizontalOffset := (Wnd_W - Wnd_H) div 3;
+			VerticalOffset := 0;
+		end else begin
+			SquareSize := Wnd_W;
+			VerticalOffset := (Wnd_H - Wnd_W) div 3;
+			HorizontalOffset := 0
+		end;
+
+		(* TODO:
+		 * The game area can be made slightly bigger by accounting for the fact
+		 * that the DPad is an octagon, and making the game area stretch all the way
+		 * to touch the angled side of the DPad, i.e.:
+		 *
+		 *  __v  Touch the middle of this side
+		 * /  \< instead of the corner of the bounding box.
+		 * |  |
+		 * \__/
+		 *)
+		GameArea.Y := VerticalOffset;
+		GameArea.W := (RESOL_W * SquareSize) div (RESOL_W + DPAD_SIZE);
+		GameArea.H := (RESOL_H * SquareSize) div (RESOL_H + DPAD_SIZE);
+
+		DPad.W := (DPAD_SIZE * SquareSize) div (RESOL_W + DPAD_SIZE);
+		DPad.H := (DPAD_SIZE * SquareSize) div (RESOL_H + DPAD_SIZE);
+		DPad.Y := Wnd_H - DPad.H - VerticalOffset;
+
+		ShootBtns.H := (BUTTON_SIZE * SquareSize) div (RESOL_H + DPAD_SIZE);
+		ShootBtns.W := (ShootBtns.H * 7) div 2;
+		ShootBtns.Y := DPad.Y + ((DPad.H - ShootBtns.H) div 2);
+
+		If(Not SwapTouchControls) then begin
+			DPad.X := HorizontalOffset;
+			GameArea.X := DPad.X + DPad.W + HorizontalOffset;
+			ShootBtns.X := Wnd_W - ShootBtns.W - (Wnd_H - ShootBtns.Y - ShootBtns.H);
+		end else begin
+			GameArea.X := HorizontalOffset;
+			DPad.X := GameArea.X + GameArea.W + HorizontalOffset;
+			ShootBtns.X := (Wnd_H - ShootBtns.Y - ShootBtns.H);
+		end;
 	end;
 
 	{$IFDEF LD25_DEBUG}
