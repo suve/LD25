@@ -585,9 +585,28 @@ Procedure TRoom.ParseTiles(Reader: PLineReader);
 Var
 	rx, ry: sInt;
 	Line: AnsiString;
+	Len: uInt;
 Begin
 	For rY:=0 to (ROOM_H-1) do begin
 		Line := Reader^.GetLine();
+
+		Len := Length(Line);
+		If(Len < ROOM_W) then begin
+			SDL_LogError(
+				SDL_LOG_CATEGORY_APPLICATION,
+				'Room %u:%u, line %u: line too short (expected %u characters, got %u): assuming " " for each missing character',
+				[cuint(Self.X), cuint(Self.Y), cuint(rY+1), cuint(ROOM_W), cuint(Len)]
+			);
+			Line += StringOfChar(' ', ROOM_W-Len)
+		end else
+		If(Len > ROOM_W) then begin
+			SDL_LogWarn(
+				SDL_LOG_CATEGORY_APPLICATION,
+				'Room %u:%u, line %u: line too long (expected %u characters, got %u); ignoring spurious characters',
+				[cuint(Self.X), cuint(Self.Y), cuint(rY+1), cuint(ROOM_W), cuint(Len)]
+			)
+		end;
+
 		For rX:=0 to (ROOM_W-1) do begin
 			Self.SetTile(rX, rY, Line[rX+1]);
 			Self.TCol[rX][rY] := @WhiteColour;
