@@ -38,14 +38,14 @@ fi
 if 83
 	tile 14 18
 	tile 14 19
-else 
+else
 	tile 14 18 D
 	tile 14 19 D
 fi
 if 81
 	tile 12 18
 	tile 12 19
-else 
+else
 	tile 12 18 D
 	tile 12 19 D
 fi

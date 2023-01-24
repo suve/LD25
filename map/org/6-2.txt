@@ -38,7 +38,7 @@ if 82 not
 else
 	spawn spitter 16 08
 fi
-if 83 not 
+if 83 not
 	spawn turret 17 10 83
 else
 	spawn spitter 16 10

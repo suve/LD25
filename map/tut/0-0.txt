@@ -26,7 +26,7 @@ palette white
 [mobile] text white 18 12 introduce you to the basics of the game.
 [mobile] text white 18 22 Use the direction wheel to move around.
 text black 01 37 This small guy is your hero.
-text black 18 308 Dotted areas mark passages between rooms.  
+text black 18 308 Dotted areas mark passages between rooms.
 if 20
 	tile 11 06
 else

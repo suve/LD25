@@ -32,7 +32,7 @@ spawn drone 06 18
 if 01
 	tile 05 02
 	tile 05 03
-else 
+else
 	tile 05 02 D
 	tile 05 03 D
 fi

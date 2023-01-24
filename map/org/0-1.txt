@@ -31,4 +31,4 @@ if 01 not
 	spawn generator 04 18 01
 	spawn turret 16 14
 	spawn drone 19 19
-fi 
+fi

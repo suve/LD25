@@ -22,9 +22,8 @@ palette white
 spawn spitter 02 14
 spawn drone 05 19
 spawn drone 08 19
-spawn drone 11 19 
+spawn drone 11 19
 spawn drone 14 19
 spawn spitter 10 12
 spawn basher 16 8
 spawn drone 15 8
-

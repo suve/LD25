@@ -34,5 +34,5 @@ spawn drone 12 05
 spawn drone 02 06
 spawn drone 12 06
 spawn drone 03 16
-spawn drone 03 17 
+spawn drone 03 17
 spawn drone 02 11

@@ -18,10 +18,10 @@ XXXXXXXXXXXXXXXXXXXX
                     
                     
                     
-palette blue 
+palette blue
 colour woman 07 10
-text black 18 02 The main goal of the game is to bring eight  
-text black 18 12 colour artifacts to the hero's love. Every  
+text black 18 02 The main goal of the game is to bring eight
+text black 18 12 colour artifacts to the hero's love. Every
 text black 02 22 artifact brought back also improves hero
 text black 02 32 statistics a bit, so if you get stuck, it may
 text black 02 42 be wiser to go back and try in another zone.

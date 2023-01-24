@@ -19,7 +19,7 @@ XXXXX             XX
 XXXXXX           XXX
 XXXXXXXXXXXXXXX::XXX
 palette white
-spawn drone 06 03 
+spawn drone 06 03
 spawn drone 18 03
 spawn spitter 12 14
 spawn spitter 05 07

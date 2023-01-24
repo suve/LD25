@@ -27,4 +27,4 @@ spawn spitter 15 07
 spawn basher 10 8
 spawn spitter 05 15
 spawn drone 02 14
-spawn drone 07 15 
+spawn drone 07 15

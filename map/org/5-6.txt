@@ -18,14 +18,14 @@ XXXX    XXXXX      X
 | DD              XX
 +---+XXXXX      XXXX
 XXXXXXXXXXXXXXXXXXXX
-palette green  
+palette green
 colour green 02 18
 spawn ball 18 18
 spawn basher 18 10
 spawn spitter 11 14
 spawn spitter 18 07
 spawn drone 03 14
-spawn drone 04 15 
+spawn drone 04 15
 spawn drone 02 05
 spawn drone 03 04
 spawn drone 10 13

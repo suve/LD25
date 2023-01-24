@@ -18,7 +18,7 @@ XX                 :
 XXX              XXX
 XXXXXX          XXXX
 XXXXXXXXXXXXXXXXXXXX
-palette green  
+palette green
 spawn drone 05 04
 spawn drone 17 05
 spawn spitter 02 07

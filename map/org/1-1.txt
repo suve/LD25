@@ -26,7 +26,7 @@ spawn basher 15 06
 spawn basher 15 08
 spawn spitter 03 09
 spawn drone 09 02
-if 01 
+if 01
 	tile 13 01 :
 	tile 14 01 :
 else

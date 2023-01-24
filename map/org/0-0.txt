@@ -19,7 +19,7 @@ XXX             XXXX
 XXXX            XXXX
 XXXXXXXXXXXXXXXXXXXX
 palette red
-colour red 10 13 
+colour red 10 13
 spawn drone 08 02
 spawn drone 08 03
 spawn drone 10 02

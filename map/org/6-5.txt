@@ -18,7 +18,7 @@ X     XXXXXXXX     X
 |                  |
 |        }         |
 +--------+---------+
-palette green  
+palette green
 if 65 not
 	spawn generator 10 18 65
 fi

@@ -18,7 +18,7 @@ XX                XX
 XXX           XXXXXX
 XXXX        XXXXXXXX
 XXXXXX+##+XXXXXXXXXX
-palette green 
+palette green
 spawn spitter 05 03
 spawn basher 10 14
 spawn drone 03 17
@@ -54,8 +54,8 @@ if 00
 else
 	text white 18 02 Oh no! Looks like a pair of doors is blocking
 	text white 18 12 your way. Doors are always opened in another
-	text white 18 22 room by killing a certain enemy.    
-	
+	text white 18 22 room by killing a certain enemy.
+
 	tile 05 08 D
 	tile 05 08 D
 fi

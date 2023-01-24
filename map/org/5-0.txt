@@ -5,7 +5,7 @@ XX        XX       :
 XX                 :
 XXXX              XX
 XXXXX         XXXXXX
-XX              +--+ 
+XX              +--+
 XXX             D  |
 XXXXXXX         D  |
 +----+----------+==|
@@ -41,7 +41,7 @@ fi
 if 85
 	tile 05 18
 	tile 05 19
-else 
+else
 	tile 05 18 D
 	tile 05 19 D
 fi
