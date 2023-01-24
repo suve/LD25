@@ -73,7 +73,7 @@ build/gfx/%.png: gfx/%.png
 
 build/map/%.txt: map/%.txt
 	mkdir -p "$(dir $@)"
-	sed -e 's|\r$$||g' -e 's|^[\t]*||g' -e 's| 0*\([0-9][0-9]*\)| \1|g' < "$<" > "$@"
+	sed -e 's|\r$$||g' -e 's|^[\t]*||g' -e 's| 0*\([0-9][0-9]*\)| \1|g' -e '/^\[$(PLATFORM_BAD)\]/d' -e 's/^\[$(PLATFORM_GOOD)\]\s*//g' < "$<" > "$@"
 
 build/sfx/%.ogg: sfx/%.wav
 	mkdir -p "$(dir $@)"

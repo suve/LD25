@@ -116,7 +116,6 @@ Type
 			
 			Procedure ParseTiles(Reader: PLineReader);
 			Procedure Tokenize(Const Line: AnsiString; Const Tokens:PAnsiStringArray);
-			Procedure ShiftArray(Const Arr: PAnsiStringArray; Const Count: uInt);
 
 		Public
 			X, Y : uInt;
@@ -621,34 +620,10 @@ Begin
 	end;
 End;
 
-Procedure TRoom.ShiftArray(Const Arr: PAnsiStringArray; Const Count: uInt);
-Var
-	Len, Idx: uInt;
-Begin
-	Len := Length(Arr^);
-	If Count >= Len then begin
-		SetLength(Arr^, 0);
-		Exit
-	end;
-
-	For Idx := 0 to (Len - Count - 1) do Arr^[Idx] := Arr^[Idx + Count];
-	SetLength(Arr^, Len - Count)
-End;
-
 Procedure TRoom.ParseScript(Reader: PLineReader);
 Const
 	SCRIPT_OFFSET = 21;
 	MAX_IF_NEST = 8;
-
-	{$IFDEF LD25_MOBILE}
-		PLATFORM_GOOD = '[mobile]';
-		PLATFORM_BAD = '[desktop]';
-	{$ELSE}
-		PLATFORM_GOOD = '[desktop]';
-		PLATFORM_BAD = '[mobile]';
-	{$ENDIF}
-Label
-	MatchCommand;
 Type
 	TIfInfo = record
 		IfLine, IfInstr: sInt;
@@ -677,23 +652,8 @@ Begin
 		// Oddly named function. Replaces multiple spaces with single spaces.
 		Line := DelSpace1(Line);
 		Tokenize(Line, @Tokens);
-	
-		MatchCommand: Case(Tokens[0]) of
-			PLATFORM_BAD: begin
-				{$IFDEF LD25_DEBUG}
-				SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION,
-					'RoomScript: room %d:%d: skipping line %d due to platform mismatch',
-					[cint(Self.X), cint(Self.Y), cint(LineNo)]
-				);
-				{$ENDIF}
-				InstrOk := False
-			end;
-			
-			PLATFORM_GOOD: begin
-				ShiftArray(@Tokens, 1);
-				Goto MatchCommand
-			end;
 
+		Case(Tokens[0]) of
 			'if': begin
 				If(IfNest = MAX_IF_NEST) then begin
 					SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,

@@ -196,8 +196,12 @@ fi
 if [[ "${PLATFORM}" == "mobile" ]]; then
 	BUILD_FLAGS="${BUILD_FLAGS} -dLD25_MOBILE"
 	GFX_FILTER=""
-else	
+	PLATFORM_GOOD="mobile"
+	PLATFORM_BAD="desktop"
+else
 	GFX_FILTER="gfx/touch-controls.png"
+	PLATFORM_GOOD="desktop"
+	PLATFORM_BAD="mobile"
 fi
 
 if [[ "${STRIP}" == "true" ]]; then
@@ -224,6 +228,8 @@ EXE_SUFFIX := ${EXE_SUFFIX}
 FPC := ${FPC}
 FPC_FLAGS := ${FPC_FLAGS}
 GFX_FILTER := ${GFX_FILTER}
+PLATFORM_GOOD := ${PLATFORM_GOOD}
+PLATFORM_BAD := ${PLATFORM_BAD}
 OGG_QUALITY := ${OGG_QUALITY}
 
 EOF
