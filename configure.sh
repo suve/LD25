@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 # colorful - simple 2D sideview shooter
 # Copyright (C) 2022-2023 suve (a.k.a. Artur Frenszek-Iwicki)
@@ -15,9 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-set -eu -o pipefail
+set -eu
 
-function show_help() {
+show_help() {
 	cat <<EOF
 configure.sh for colorful
 Accepted options:
@@ -75,13 +75,13 @@ EOF
 
 # Helper functions
 
-function parse_bool() {
-	local flag="${1}"
-	local value="${2}"
+parse_bool() {
+	flag="${1}"
+	value="${2}"
 
-	if [[ -z "${value}" ]] || [[ "${value}" == "true" ]] || [[ "${value}" == "yes" ]] || [[ "${value}" == "1" ]]; then
+	if [ -z "${value}" ] || [ "${value}" = "true" ] || [ "${value}" = "yes" ] || [ "${value}" = "1" ]; then
 		echo "true"
-	elif [[ "${value}" == "false" ]] || [[ "${value}" == "no" ]] || [[ "${value}" == "0" ]]; then
+	elif [ "${value}" = "false" ] || [ "${value}" = "no" ] || [ "${value}" = "0" ]; then
 		echo "false"
 	else
 		echo "Error: The argument to ${flag} must be one of \"true\", \"yes\", \"1\", \"false\", \"no\", or \"0\"" >&2
@@ -101,42 +101,44 @@ OGG_QUALITY="10"
 PLATFORM="auto"
 STRIP="false"
 
-while [[ "${#}" -gt 0 ]]; do
-	if [[ "${1}" == "--help" ]]; then
+while [ "${#}" -gt 0 ]; do
+	if [ "${1}" = "--help" ]; then
 		show_help
 		exit
 	fi
 
 	opt="${1%%=*}"
-	val="${1:${#opt}}"
-	val="${val:1}"
+	val="${1#*=}"
+	if [ "${val}" = "${1}" ]; then
+		val=""
+	fi
 	shift
 
-	if [[ "${opt}" == "--android" ]]; then
+	if [ "${opt}" = "--android" ]; then
 		ANDROID="$(parse_bool "--android" "${val}")"
-	elif [[ "${opt}" == "--assets" ]]; then
-		if [[ "${val}" != "bundle" ]] && [[ "${val}" != "standalone" ]] && [[ "${val}" != "systemwide" ]]; then
+	elif [ "${opt}" = "--assets" ]; then
+		if [ "${val}" != "bundle" ] && [ "${val}" != "standalone" ] && [ "${val}" != "systemwide" ]; then
 			echo "Error: The argument to --assets must be one of \"bundle\", \"standalone\", or \"systemwide\"" >&2
 			exit 1
 		fi
 		ASSETS="${val}"
-	elif [[ "${opt}" == "--debug" ]]; then
+	elif [ "${opt}" = "--debug" ]; then
 		DEBUG="$(parse_bool "--debug" "${val}")"
-	elif [[ "${opt}" == "--donate" ]]; then
+	elif [ "${opt}" = "--donate" ]; then
 		DONATE="$(parse_bool "--donate" "${val}")"
-	elif [[ "${opt}" == "--fpc" ]]; then
+	elif [ "${opt}" = "--fpc" ]; then
 		FPC="${val}"
-	elif [[ "${opt}" == "--flags" ]]; then
+	elif [ "${opt}" = "--flags" ]; then
 		USER_FLAGS="${USER_FLAGS} ${val}"
-	elif [[ "${opt}" == "--ogg-quality" ]]; then
+	elif [ "${opt}" = "--ogg-quality" ]; then
 		OGG_QUALITY="${val}"
-	elif [[ "${opt}" == "--platform" ]]; then
-		if [[ "${val}" != "auto" ]] && [[ "${val}" != "desktop" ]] && [[ "${val}" != "mobile" ]]; then
+	elif [ "${opt}" = "--platform" ]; then
+		if [ "${val}" != "auto" ] && [ "${val}" != "desktop" ] && [ "${val}" != "mobile" ]; then
 			echo "Error: The argument to --platform must be one of \"auto\", \"desktop\", or \"mobile\"" >&2
 			exit 1
 		fi
 		PLATFORM="${val}"
-	elif [[ "${opt}" == "--strip" ]]; then
+	elif [ "${opt}" = "--strip" ]; then
 		STRIP="$(parse_bool "--strip" "${val}")"
 	else
 		echo "Unknown option \"${opt}\"" >&2
@@ -146,8 +148,8 @@ done
 
 # Resolve "auto" values
 
-if [[ "${PLATFORM}" == "auto" ]]; then
-	if [[ "${ANDROID}" == "true" ]]; then
+if [ "${PLATFORM}" = "auto" ]; then
+	if [ "${ANDROID}" = "true" ]; then
 		PLATFORM="mobile"
 	else
 		PLATFORM="desktop"
@@ -173,7 +175,7 @@ EOF
 
 BUILD_FLAGS="-vewnh -dLD25_ASSETS_${ASSETS}"
 
-if [[ "${ANDROID}" == "true" ]]; then
+if [ "${ANDROID}" = "true" ]; then
 	EXE_PREFIX="lib"
 	EXE_SUFFIX=".so"
 	BUILD_FLAGS="-Tandroid ${BUILD_FLAGS}"
@@ -182,18 +184,18 @@ else
 	EXE_SUFFIX=""
 fi
 
-if [[ "${DEBUG}" == "true" ]]; then
+if [ "${DEBUG}" = "true" ]; then
 	# Note: No -O1/-O2/-O3/-O4 flag - no optimisations!
 	BUILD_FLAGS="${BUILD_FLAGS} -dLD25_DEBUG"
 else
 	BUILD_FLAGS="${BUILD_FLAGS} -O3"
 fi
 
-if [[ "${DONATE}" == "true" ]]; then
+if [ "${DONATE}" = "true" ]; then
 	BUILD_FLAGS="${BUILD_FLAGS} -dLD25_DONATE"
 fi
 
-if [[ "${PLATFORM}" == "mobile" ]]; then
+if [ "${PLATFORM}" = "mobile" ]; then
 	BUILD_FLAGS="${BUILD_FLAGS} -dLD25_MOBILE"
 	GFX_FILTER=""
 	PLATFORM_GOOD="mobile"
@@ -204,7 +206,7 @@ else
 	PLATFORM_BAD="mobile"
 fi
 
-if [[ "${STRIP}" == "true" ]]; then
+if [ "${STRIP}" = "true" ]; then
 	BUILD_FLAGS="${BUILD_FLAGS} -CX -XX -Xs"
 else
 	BUILD_FLAGS="${BUILD_FLAGS} -gl -gw"
