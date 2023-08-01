@@ -75,6 +75,10 @@ Type
 		mX, mY: sInt;
 		Col : uInt
 	end;
+	TPlayerStats = record
+		TotalTime: uInt;
+		PlayerDeaths: uInt;
+	end;
 
 // Progstate and gamestate variables. This isn't a project big enough to actually
 // require having a separate game controller class. I'll just keep everything global...
@@ -99,6 +103,8 @@ Var
 	CentralPalette : Array[0..7] of TSDL_Colour;
 	RoomPalette, DeadTime, Carried, Given : sInt;
 	// Gamestate variables
+
+	Stats: TPlayerStats;
 
 	SaveExists : Array[TGameMode] of Boolean;
 	Shutdown, NoSound : Boolean;
