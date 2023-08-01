@@ -150,6 +150,7 @@ Function ChangeRoom(NX,NY:sInt):Boolean;
 // Used in new game, load game and change room.
 Procedure DestroyEntities(KillHero:Boolean=FALSE);
 Procedure ResetGamestate();
+Procedure ResetStats();
 
 // Convenience function for reducing the amount of copy-pasted code.
 Procedure SaveCurrentGame(Reason: AnsiString = '');
@@ -435,6 +436,11 @@ Begin
 	For C:=Low(Switch) to High(Switch) do Switch[C]:=False;
 
 	Carried:=0; Given:=0;
+End;
+
+Procedure ResetStats();
+Begin
+	FillDWord(Stats, sizeof(TPlayerStats) div 4, 0)
 End;
 
 Procedure SaveCurrentGame(Reason: AnsiString = '');

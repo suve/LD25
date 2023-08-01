@@ -988,7 +988,7 @@ Begin
 	If(GM <> GameMode) then SaveCurrentGame();
 
 	GameMode:=GM;
-	DestroyEntities(True); ResetGamestate();
+	DestroyEntities(True); ResetGamestate(); ResetStats();
 	New(Hero,Create()); ChangeRoom(RespRoom[GM].X,RespRoom[GM].Y);
 	GameOn:=True
 End;
