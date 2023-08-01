@@ -470,6 +470,8 @@ Begin
 	CalculateMonsters(Time);
 	CalculateEnemyBullets(Time);
 	CalculateGibs(Time);
+
+	Stats.TotalTime += Time
 End;
 
 Procedure DrawRoom();
@@ -807,6 +809,8 @@ Begin
 	PlaySfx(SFX_HIT);
 	Hero^.InvTimer := Hero^.InvLength;
 
+	Stats.HitsTaken += 1;
+
 	{$IFDEF LD25_DEBUG}
 	If(CheatInvulnerability) then Exit;
 	{$ENDIF}
@@ -816,7 +820,8 @@ Begin
 		DeadTime:=DeathLength;
 		PlaceGibs(Hero, HeroSprite.GetFrame(AniFra, Hero^.Face));
 		
-		PlaySfx(SFX_EXTRA+2)
+		PlaySfx(SFX_EXTRA+2);
+		Stats.TimesDied += 1
 	end
 End;
 

@@ -77,7 +77,8 @@ Type
 	end;
 	TPlayerStats = record
 		TotalTime: uInt;
-		PlayerDeaths: uInt;
+		TimesDied: uInt;
+		HitsTaken: uInt;
 	end;
 
 // Progstate and gamestate variables. This isn't a project big enough to actually
