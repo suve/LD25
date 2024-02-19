@@ -1,0 +1,3 @@
+- Ported the game to Android.
+- Rewrote the game from the old SDL 1.2 library to the newer SDL 2.24 library.
+- Added a menu screen for customizing game zone colours.
