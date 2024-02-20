@@ -108,7 +108,13 @@ Begin
 			Writeln(F,'not')
 	end;
 	Writeln(F);
-	
+
+	Writeln(F, '[Stats]');
+	Writeln(F, 'TotalTime=', Stats.TotalTime);
+	Writeln(F, 'HitsTaken=', Stats.HitsTaken);
+	Writeln(F, 'TimesDied=', Stats.TimesDied);
+	Writeln(F);
+
 	Writeln(F,'[Switches]');
 	For C:=Low(Switch) to High(Switch) do Writeln(F,Shared.IntToStr(C,2),'=',BoolToStr(Switch[C],'True','False'));
 	
@@ -138,6 +144,11 @@ Begin
 			ColState[C]:=STATE_GIVEN; Given+=1
 		end
 	end;
+
+	Ini.ReadSectionValues('Stats', Str);
+	Stats.TotalTime := StrToQWordDef(Str.Values['TotalTime'], 0);
+	Stats.HitsTaken := StrToQWordDef(Str.Values['HitsTaken'], 0);
+	Stats.TimesDied := StrToQWordDef(Str.Values['TimesDied'], 0);
 
 	Ini.ReadSectionValues('Switches',Str);
 	For C:=Low(Switch) to High(Switch) do Switch[C]:=StrToBoolDef(Str.Values[Shared.IntToStr(C,2)],False);
