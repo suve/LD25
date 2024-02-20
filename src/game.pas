@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2023 suve (a.k.a. Artur Frenszek Iwicki)
+ * Copyright (C) 2012-2024 suve (a.k.a. Artur Frenszek Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -30,7 +30,7 @@ Uses
 	SDL2,
 	{$IFDEF LD25_MOBILE} ctypes, TouchControls, {$ENDIF}
 	Assets, Colours, ConfigFiles, Entities, FloatingText, Fonts, Images,
-	MathUtils, Rendering, Rooms, Shared, Sprites;
+	MathUtils, Rendering, Rooms, Shared, Sprites, Stats;
 
 Type
 	TRoomChange = (

@@ -28,7 +28,7 @@ Implementation
 Uses
 	SysUtils,
 	SDL2,
-	Assets, Fonts, Images, Rendering, Shared
+	Assets, Fonts, Images, Rendering, Shared, Stats
 ;
 
 Function DisplaySlide(Const Img:PImage):Boolean;

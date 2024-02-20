@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2023 suve (a.k.a. Artur Frenszek Iwicki)
+ * Copyright (C) 2012-2024 suve (a.k.a. Artur Frenszek Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -75,11 +75,6 @@ Type
 		mX, mY: sInt;
 		Col : uInt
 	end;
-	TPlayerStats = record
-		TotalTime: uInt;
-		TimesDied: uInt;
-		HitsTaken: uInt;
-	end;
 
 // Progstate and gamestate variables. This isn't a project big enough to actually
 // require having a separate game controller class. I'll just keep everything global...
@@ -104,8 +99,6 @@ Var
 	CentralPalette : Array[0..7] of TSDL_Colour;
 	RoomPalette, DeadTime, Carried, Given : sInt;
 	// Gamestate variables
-
-	Stats: TPlayerStats;
 
 	SaveExists : Array[TGameMode] of Boolean;
 	Shutdown, NoSound : Boolean;
@@ -151,7 +144,6 @@ Function ChangeRoom(NX,NY:sInt):Boolean;
 // Used in new game, load game and change room.
 Procedure DestroyEntities(KillHero:Boolean=FALSE);
 Procedure ResetGamestate();
-Procedure ResetStats();
 
 // Convenience function for reducing the amount of copy-pasted code.
 Procedure SaveCurrentGame(Reason: AnsiString = '');
@@ -437,11 +429,6 @@ Begin
 	For C:=Low(Switch) to High(Switch) do Switch[C]:=False;
 
 	Carried:=0; Given:=0;
-End;
-
-Procedure ResetStats();
-Begin
-	FillDWord(Stats, sizeof(TPlayerStats) div 4, 0)
 End;
 
 Procedure SaveCurrentGame(Reason: AnsiString = '');

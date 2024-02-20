@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2023 suve (a.k.a. Artur Frenszek-Iwicki)
+ * Copyright (C) 2012-2024 suve (a.k.a. Artur Frenszek-Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -26,7 +26,7 @@ uses
 	SysUtils, Math, ctypes,
 	SDL2, SDL2_image, SDL2_mixer,
 	Assets, Colours, ConfigFiles, FloatingText, Fonts, Game, Images, Objects,
-	MathUtils, Menus, Rendering, Rooms, Shared, Slides
+	MathUtils, Menus, Rendering, Rooms, Shared, Slides, Stats
 ;
 
 
@@ -988,8 +988,9 @@ Begin
 	If(GM <> GameMode) then SaveCurrentGame();
 
 	GameMode:=GM;
-	DestroyEntities(True); ResetGamestate(); ResetStats();
+	DestroyEntities(True); ResetGamestate();
 	New(Hero,Create()); ChangeRoom(RespRoom[GM].X,RespRoom[GM].Y);
+	Stats.ResetAll();
 	GameOn:=True
 End;
 
