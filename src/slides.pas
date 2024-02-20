@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2023 suve (a.k.a. Artur Frenszek-Iwicki)
+ * Copyright (C) 2012-2024 suve (a.k.a. Artur Frenszek-Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -77,82 +77,192 @@ Begin
 	DisplaySlide(TitleGfx)
 End;
 
-Procedure ShowOutro();
 Const
-	FADE_IN_TICKS = 500; // Half a second
-Var
-	Idx, YPos, Delta: uInt;
-	Dst: TSDL_Rect;
+	FADE_IN_TICKS = 320; // Slightly under one third of a second
 
-	FadeInTime: sInt;
+Procedure FadeIn(Time: sInt);
+Var
 	FadeColour: TSDL_Color;
+Begin
+	If Time < 0 then Exit();
+
+	FadeColour.R := 0;
+	FadeColour.G := 0;
+	FadeColour.B := 0;
+	FadeColour.A := (255 * Time) div FADE_IN_TICKS;
+	Shared.DrawRectFilled(NIL, @FadeColour)
+End;
+
+Procedure RenderThanksScreen(FadeInTime: sInt);
+Var
+	YPos: uInt;
+	Dst: TSDL_Rect;
+Begin
+	Rendering.BeginFrame();
+
+	Dst.X := 0; Dst.Y := 0;
+	Dst.W := TitleGfx^.W; Dst.H := TitleGfx^.H;
+	DrawImage(TitleGfx, NIL, @Dst, NIL);
+
+	YPos := TitleGfx^.H;
+	Font^.Scale := 2;
+	PrintText('A GAME BY SUVE', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+
+	YPos += (Font^.SpacingY + Font^.CharH) * Font^.Scale * 5 div 2;
+	PrintText('A LUDUM DARE 25 GAME', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+
+	YPos += (Font^.SpacingY + Font^.CharH) * Font^.Scale;
+	Font^.Scale := 1;
+	PrintText('ORIGINALLY MADE IN 48 HOURS IN DECEMBER 2012', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+
+	YPos += (Font^.SpacingY + Font^.CharH) * Font^.Scale * 3;
+	Font^.Scale := 2;
+	PrintText('BIG THANKS TO:', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+
+	YPos += (Font^.SpacingY + Font^.CharH) * Font^.Scale * 2;
+	PrintText('DANIEL REMAR', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+
+	YPos += (Font^.SpacingY + Font^.CharH) * Font^.Scale;
+	Font^.Scale := 1;
+	PrintText('FOR HERO CORE, WHICH THIS GAME WAS BASED UPON',Font,(RESOL_W div 2),YPos,ALIGN_CENTRE, ALIGN_TOP, NIL);
+
+	Font^.Scale := 2;
+	YPos += (Font^.SpacingY + Font^.CharH) * (Font^.Scale + 1);
+	PrintText('DEXTERO',Font,(RESOL_W div 2),YPos,ALIGN_CENTRE, ALIGN_TOP, NIL);
+
+	YPos += (Font^.SpacingY + Font^.CharH) * Font^.Scale;
+	Font^.Scale := 1;
+	PrintText(
+		['FOR INTRODUCING ME TO LUDUM DARE','AND CHEERING ME UP DURING THE COMPO'],
+		Font,
+		(RESOL_W div 2), YPos,
+		ALIGN_CENTRE, ALIGN_TOP, NIL
+	);
+
+	FadeIn(FadeInTime);
+	Rendering.FinishFrame()
+End;
+
+Procedure RenderStatsScreen(
+	FadeInTime: sInt;
+	TimeText, DeathsText, HitCountText: AnsiString
+);
+Const
+	STAT_LINES = 3;
+Var
+	Dst: TSDL_Rect;
+	YStep, YPos: uInt;
+Begin
+	Rendering.BeginFrame();
+
+	Dst.X := 0; Dst.Y := 0;
+	Dst.W := TitleGfx^.W; Dst.H := TitleGfx^.H;
+	DrawImage(TitleGfx, NIL, @Dst, NIL);
+
+	YStep := (Font^.SpacingY + Font^.CharH) * 3 * STAT_LINES;
+	YStep := (RESOL_H - TitleGfx^.H - YStep) div (STAT_LINES + 1);
+
+	YPos := TitleGfx^.H + YStep;
+	Font^.Scale := 2;
+	PrintText('TOTAL TIME', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+	YPos += (Font^.SpacingY + Font^.CharH) * 5 div 2;
+
+	Font^.Scale := 1;
+	PrintText(TimeText, Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+	YPos += (Font^.SpacingY + Font^.CharH) * 4;
+
+	Font^.Scale := 2;
+	PrintText('HITS TAKEN', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+	YPos += (Font^.SpacingY + Font^.CharH) * 5 div 2;
+
+	Font^.Scale := 1;
+	PrintText(HitCountText, Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+	YPos += (Font^.SpacingY + Font^.CharH) * 4;
+
+	Font^.Scale := 2;
+	PrintText('TIMES DIED', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+	YPos += (Font^.SpacingY + Font^.CharH) * 5 div 2;
+
+	Font^.Scale := 1;
+	PrintText(DeathsText, Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+	YPos += (Font^.SpacingY + Font^.CharH) * 4;
+
+	FadeIn(FadeInTime);
+	Rendering.FinishFrame()
+End;
+
+Function FormatTimeString(Time: uInt): AnsiString;
+Const
+	ONE_SECOND = 1000;
+	ONE_MINUTE = 60 * ONE_SECOND;
+	ONE_HOUR = 60 * ONE_MINUTE;
+	ONE_DAY = 24 * ONE_HOUR;
+Var
+	OverOneDay: Boolean;
+	OverOneHour: Boolean;
+Begin
+	Result := '';
+	OverOneDay := (Time >= ONE_DAY);
+	OverOneHour := (Time >= ONE_HOUR);
+
+	If OverOneDay then begin
+		Result += Shared.IntToStr(Time div ONE_DAY) + ':';
+		Time := Time mod ONE_DAY
+	end;
+	If (OverOneDay or OverOneHour) then begin
+		Result += Shared.IntToStr(Time div ONE_HOUR, 2) + ':';
+		Time := Time mod ONE_HOUR
+	end;
+
+	Result += Shared.IntToStr(Time div ONE_MINUTE, 2) + ':';
+	Time := Time mod ONE_MINUTE;
+	Result += Shared.IntToStr(Time div ONE_SECOND, 2);
+
+	If Not OverOneHour then begin
+		Time := Time mod ONE_SECOND;
+		Result += '.' + Shared.IntToStr(Time, 3)
+	end
+End;
+
+Procedure ShowOutro();
+Var
+	Idx, Delta: uInt;
+	FadeInTime: sInt;
+
+	TotalTimeText: AnsiString;
+	DeathsText, HitCountText: AnsiString;
+	ShowTheStats: Boolean;
 Begin
 	For Idx := Low(SlideOut) to High(SlideOut) do
 		If Not DisplaySlide(SlideOut[Idx]) then Exit();
 
+	TotalTimeText := FormatTimeString(Stats.TotalTime);
+	DeathsText := Shared.IntToStr(Stats.TimesDied);
+	HitCountText := Shared.IntToStr(Stats.HitsTaken);
+
+	ShowTheStats := False;
 	FadeInTime := FADE_IN_TICKS;
-	FadeColour.R := 0;
-	FadeColour.G := 0;
-	FadeColour.B := 0;
 
 	Delta := 0;
 	While True do begin
-		Rendering.BeginFrame();
+		If(FadeInTime >= 0) then FadeInTime -= Delta;
 
-		Dst.X := 0; Dst.Y := 0;
-		Dst.W := TitleGfx^.W; Dst.H := TitleGfx^.H;
-		DrawImage(TitleGfx, NIL, @Dst, NIL);
+		If Not ShowTheStats then
+			RenderThanksScreen(FadeInTime)
+		else
+			RenderStatsScreen(FadeInTime, TotalTimeText, DeathsText, HitCountText);
 
-		YPos := TitleGfx^.H;
-		Font^.Scale := 2;
-		PrintText('A GAME BY SUVE', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
-
-		YPos += (Font^.SpacingY + Font^.CharH) * Font^.Scale * 5 div 2;
-		PrintText('A LUDUM DARE 25 GAME', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
-
-		YPos += (Font^.SpacingY + Font^.CharH) * Font^.Scale;
-		Font^.Scale := 1;
-		PrintText('ORIGINALLY MADE IN 48 HOURS IN DECEMBER 2012', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
-
-		YPos += (Font^.SpacingY + Font^.CharH) * Font^.Scale * 3;
-		Font^.Scale := 2;
-		PrintText('BIG THANKS TO:', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
-
-		YPos += (Font^.SpacingY + Font^.CharH) * Font^.Scale * 2;
-		PrintText('DANIEL REMAR', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
-
-		YPos += (Font^.SpacingY + Font^.CharH) * Font^.Scale;
-		Font^.Scale := 1;
-		PrintText('FOR HERO CORE, WHICH THIS GAME WAS BASED UPON',Font,(RESOL_W div 2),YPos,ALIGN_CENTRE, ALIGN_TOP, NIL);
-
-		Font^.Scale := 2;
-		YPos += (Font^.SpacingY + Font^.CharH) * (Font^.Scale + 1);
-		PrintText('DEXTERO',Font,(RESOL_W div 2),YPos,ALIGN_CENTRE, ALIGN_TOP, NIL);
-
-		YPos += (Font^.SpacingY + Font^.CharH) * Font^.Scale;
-		Font^.Scale := 1;
-		PrintText(
-			['FOR INTRODUCING ME TO LUDUM DARE','AND CHEERING ME UP DURING THE COMPO'],
-			Font,
-			(RESOL_W div 2), YPos,
-			ALIGN_CENTRE, ALIGN_TOP, NIL
-		);
-
-		If(FadeInTime >= 0) then begin
-			FadeInTime -= Delta;
-			If(FadeInTime >= 0) then begin
-				FadeColour.A := (255 * FadeInTime) div FADE_IN_TICKS;
-				Shared.DrawRectFilled(NIL, @FadeColour)
-			end
-		end;
-
-		Rendering.FinishFrame();
 		GetDeltaTime(Delta);
 		While (SDL_PollEvent(@Ev)>0) do begin
 			If (Ev.Type_ = SDL_QuitEv) then begin
 				Shutdown:=True; Exit()
 			end else
-			If (Ev.Type_ = SDL_KeyDown) then Exit() else
+			If (Ev.Type_ = SDL_KeyDown) then begin
+				If Not ShowTheStats then begin
+					ShowTheStats := True;
+					FadeInTime := FADE_IN_TICKS;
+				end else Exit()
+			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then begin
 				HandleWindowResizedEvent(@Ev)
 			end
