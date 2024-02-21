@@ -990,7 +990,7 @@ Begin
 	GameMode:=GM;
 	DestroyEntities(True); ResetGamestate();
 	New(Hero,Create()); ChangeRoom(RespRoom[GM].X,RespRoom[GM].Y);
-	Stats.ResetAll();
+	Stats.ZeroAll();
 	GameOn:=True
 End;
 

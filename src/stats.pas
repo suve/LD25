@@ -20,22 +20,69 @@ Unit Stats;
 
 Interface
 
-Var
-	TotalTime: uInt;
-	TimesDied: uInt;
-	HitsTaken: uInt;
+Type
+	Generic TOptional<Thing> = object
+		Private
+			Value: Thing;
+			IsSet: Boolean;
+		Public
+			Type ThingPtr = ^Thing;
 
-Procedure ResetAll();
+			Function Get(Ptr: ThingPtr):Boolean;
+			Procedure Modify(Delta: Thing);
+
+			Procedure SetTo(NewValue: Thing);
+			Procedure Unset();
+	end;
+
+	TOptionalUInt = specialize TOptional<uInt>;
+	POptionalUInt = ^TOptionalUInt;
+
+Var
+	TotalTime: TOptionalUInt;
+	TimesDied: TOptionalUInt;
+	HitsTaken: TOptionalUInt;
+
+Procedure ZeroAll();
+Procedure UnsetAll();
 
 
 Implementation
 
-
-Procedure ResetAll();
+Function TOptional.Get(Ptr: ThingPtr):Boolean;
 Begin
-	TotalTime := 0;
-	TimesDied := 0;
-	HitsTaken := 0;
+	If (Ptr <> Nil) and (Self.IsSet) then Ptr^ := Self.Value;
+	Result := Self.IsSet
+End;
+
+Procedure TOptional.Modify(Delta: Thing);
+Begin
+	If Self.IsSet then Self.Value += Delta
+End;
+
+Procedure TOptional.SetTo(NewValue: Thing);
+Begin
+	Self.Value := NewValue;
+	Self.IsSet := True
+End;
+
+Procedure TOptional.Unset();
+Begin
+	Self.IsSet := False
+End;
+
+Procedure ZeroAll();
+Begin
+	TotalTime.SetTo(0);
+	TimesDied.SetTo(0);
+	HitsTaken.SetTo(0);
+End;
+
+Procedure UnsetAll();
+Begin
+	TotalTime.Unset();
+	TimesDied.Unset();
+	HitsTaken.Unset();
 End;
 
 End.

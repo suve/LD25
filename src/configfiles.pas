@@ -74,7 +74,10 @@ End;
 
 Function SaveGame(Const GM:TGameMode):Boolean;
 Var
-	F:Text; C:uInt; Path:AnsiString;
+	F: Text;
+	Idx: uInt;
+	Path: AnsiString;
+	Value: uInt;
 Begin
 	If (Not CheckConfPath()) then Exit(False);
 	
@@ -98,11 +101,11 @@ Begin
 	Writeln(F,'Version=',GAMEVERS);
 	Writeln(F,'Gameworld=',GameMode);
 	Writeln(F);
-	
+
 	Writeln(F,'[Colours]');
-	For C:=0 to 7 do begin
-		Write(F,ColourName[C],'=');
-		If (ColState[C] = STATE_GIVEN) then
+	For Idx:=0 to 7 do begin
+		Write(F,ColourName[Idx],'=');
+		If (ColState[Idx] = STATE_GIVEN) then
 			Writeln(F,'given')
 		else
 			Writeln(F,'not')
@@ -110,16 +113,31 @@ Begin
 	Writeln(F);
 
 	Writeln(F, '[Stats]');
-	Writeln(F, 'TotalTime=', Stats.TotalTime);
-	Writeln(F, 'HitsTaken=', Stats.HitsTaken);
-	Writeln(F, 'TimesDied=', Stats.TimesDied);
+	If Stats.TotalTime.Get(@Value) then Writeln(F, 'TotalTime=', Value);
+	If Stats.HitsTaken.Get(@Value) then Writeln(F, 'HitsTaken=', Value);
+	If Stats.TimesDied.Get(@Value) then Writeln(F, 'TimesDied=', Value);
 	Writeln(F);
 
 	Writeln(F,'[Switches]');
-	For C:=Low(Switch) to High(Switch) do Writeln(F,Shared.IntToStr(C,2),'=',BoolToStr(Switch[C],'True','False'));
-	
+	For Idx:=Low(Switch) to High(Switch) do
+		Writeln(F,Shared.IntToStr(Idx,2),'=',BoolToStr(Switch[Idx],'True','False'));
+
 	Close(F); SaveExists[GM]:=True;
 	Exit(True)
+End;
+
+Procedure ReadStatsEntry(Ref: POptionalUInt; StrValue: AnsiString);
+Var
+	NumValue: uInt;
+Begin
+	Try
+		NumValue := SysUtils.
+			{$IFDEF CPU64} StrToQWord {$ELSE} StrToDWord {$ENDIF}
+			(StrValue);
+		Ref^.SetTo(NumValue)
+	Except
+		On EConvertError do Ref^.Unset()
+	End
 End;
 
 Function LoadGame(Const GM:TGameMode):Boolean;
@@ -145,10 +163,11 @@ Begin
 		end
 	end;
 
+	Stats.UnsetAll();
 	Ini.ReadSectionValues('Stats', Str);
-	Stats.TotalTime := StrToQWordDef(Str.Values['TotalTime'], 0);
-	Stats.HitsTaken := StrToQWordDef(Str.Values['HitsTaken'], 0);
-	Stats.TimesDied := StrToQWordDef(Str.Values['TimesDied'], 0);
+	ReadStatsEntry(@Stats.TotalTime, Str.Values['TotalTime']);
+	ReadStatsEntry(@Stats.HitsTaken, Str.Values['HitsTaken']);
+	ReadStatsEntry(@Stats.TimesDied, Str.Values['TimesDied']);
 
 	Ini.ReadSectionValues('Switches',Str);
 	For C:=Low(Switch) to High(Switch) do Switch[C]:=StrToBoolDef(Str.Values[Shared.IntToStr(C,2)],False);

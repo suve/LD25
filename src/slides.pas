@@ -229,6 +229,7 @@ Var
 	Idx, Delta: uInt;
 	FadeInTime: sInt;
 
+	Value: uInt;
 	TotalTimeText: AnsiString;
 	DeathsText, HitCountText: AnsiString;
 	ShowTheStats: Boolean;
@@ -236,9 +237,20 @@ Begin
 	For Idx := Low(SlideOut) to High(SlideOut) do
 		If Not DisplaySlide(SlideOut[Idx]) then Exit();
 
-	TotalTimeText := FormatTimeString(Stats.TotalTime);
-	DeathsText := Shared.IntToStr(Stats.TimesDied);
-	HitCountText := Shared.IntToStr(Stats.HitsTaken);
+	If Stats.TotalTime.Get(@Value) then
+		TotalTimeText := FormatTimeString(Value)
+	else
+		TotalTimeText := '???';
+
+	If Stats.HitsTaken.Get(@Value) then
+		HitCountText := Shared.IntToStr(Value)
+	else
+		HitCountText := '???';
+
+	If Stats.TimesDied.Get(@Value) then
+		DeathsText := Shared.IntToStr(Value)
+	else
+		DeathsText := '???';
 
 	ShowTheStats := False;
 	FadeInTime := FADE_IN_TICKS;
