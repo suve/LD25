@@ -387,6 +387,7 @@ Begin
 			end;
 			
 			If (Overlap(PBul[B],Mob[M])) then begin
+				Stats.ShotsHit.Modify(+1);
 				DamageMob(M,PBul[B]^.Power);
 				Dispose(PBul[B],Destroy()); PBul[B]:=NIL;
 				M:=High(Mob)*2

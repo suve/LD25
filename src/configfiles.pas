@@ -116,6 +116,8 @@ Begin
 	If Stats.TotalTime.Get(@Value) then Writeln(F, 'TotalTime=', Value);
 	If Stats.HitsTaken.Get(@Value) then Writeln(F, 'HitsTaken=', Value);
 	If Stats.TimesDied.Get(@Value) then Writeln(F, 'TimesDied=', Value);
+	If Stats.ShotsFired.Get(@Value) then Writeln(F, 'ShotsFired=', Value);
+	If Stats.ShotsHit.Get(@Value) then Writeln(F, 'ShotsHit=', Value);
 	Writeln(F);
 
 	Writeln(F,'[Switches]');
@@ -168,6 +170,8 @@ Begin
 	ReadStatsEntry(@Stats.TotalTime, Str.Values['TotalTime']);
 	ReadStatsEntry(@Stats.HitsTaken, Str.Values['HitsTaken']);
 	ReadStatsEntry(@Stats.TimesDied, Str.Values['TimesDied']);
+	ReadStatsEntry(@Stats.ShotsFired, Str.Values['ShotsFired']);
+	ReadStatsEntry(@Stats.ShotsHit, Str.Values['ShotsHit']);
 
 	Ini.ReadSectionValues('Switches',Str);
 	For C:=Low(Switch) to High(Switch) do Switch[C]:=StrToBoolDef(Str.Values[Shared.IntToStr(C,2)],False);

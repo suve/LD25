@@ -217,7 +217,7 @@ Type
 Implementation
 Uses
 	Math,
-	Assets, Colours, MathUtils, Shared;
+	Assets, Colours, MathUtils, Shared, Stats;
 
 Const
 	TwoRoot = Sqrt(2);
@@ -310,6 +310,8 @@ End;
 Procedure TPlayer.Calculate(dt:uInt);
 Const
 	FireInterval = 250;
+Var
+	FireDir: sInt;
 Begin
 	XVel:=0; YVel:=0;
 	If (Key[KEY_UP   ]) then YVel-=HERO_SPEED;
@@ -320,18 +322,24 @@ Begin
 		XVel/=TwoRoot; YVel/=TwoRoot
 	end;
 	
-	If (FireTimer > 0) then
-		FireTimer-=dt
+	If (Self.FireTimer > 0) then
+		Self.FireTimer-=dt
 	else begin
-		If (Key[KEY_ShootLeft]) then begin
-			Face:=FACE_LEFT; PlaySfx(SFX_SHOT+2);
-			FireTimer:=FireInterval+FireTimer;
-			PlaceBullet(@Self, (-2)*HERO_SPEED, 0, FirePower, @HeroBulletSprite)
+		FireDir := 0;
+		If Key[KEY_ShootLeft] then begin
+			Self.Face := FACE_LEFT;
+			FireDir := -1
 		end else
-		If (Key[KEY_ShootRight]) then begin
-			FACE:=FACE_RIGHT; PlaySfx(SFX_SHOT+2);
-			FireTimer:=FireInterval+FireTimer;
-			PlaceBullet(@Self, (+2)*HERO_SPEED, 0, FirePower, @HeroBulletSprite)
+		If Key[KEY_ShootRight] then begin
+			Self.Face := FACE_RIGHT;
+			FireDir := +1
+		end;
+	
+		If FireDir <> 0 then begin
+			PlaySfx(SFX_SHOT+2);
+			Self.FireTimer += FireInterval;
+			PlaceBullet(@Self, FireDir * 2.0 * HERO_SPEED, 0, FirePower, @HeroBulletSprite);
+			Stats.ShotsFired.Modify(+1)
 		end
 	end;
 	If (InvTimer > 0) then InvTimer-=dt

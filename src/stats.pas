@@ -44,6 +44,8 @@ Var
 	TotalTime: TOptionalUInt;
 	TimesDied: TOptionalUInt;
 	HitsTaken: TOptionalUInt;
+	ShotsFired: TOptionalUInt;
+	ShotsHit: TOptionalUInt;
 
 Procedure ZeroAll();
 Procedure UnsetAll();
@@ -86,6 +88,8 @@ Begin
 	TotalTime.SetTo(0);
 	TimesDied.SetTo(0);
 	HitsTaken.SetTo(0);
+	ShotsFired.SetTo(0);
+	ShotsHit.SetTo(0);
 End;
 
 Procedure UnsetAll();
@@ -93,6 +97,8 @@ Begin
 	TotalTime.Unset();
 	TimesDied.Unset();
 	HitsTaken.Unset();
+	ShotsFired.Unset();
+	ShotsHit.Unset();
 End;
 
 End.

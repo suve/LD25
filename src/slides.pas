@@ -148,6 +148,9 @@ Type
 		TotalTime: AnsiString;
 		HitsTaken: AnsiString;
 		TimesDied: AnsiString;
+		ShotsFired: AnsiString;
+		ShotsHit: AnsiString;
+		Accuracy: AnsiString;
 	end;
 
 Function FormatTimeString(Time: uInt): AnsiString;
@@ -185,7 +188,7 @@ End;
 
 Function RenderStatsTexts():TStatsTexts;
 Var
-	Time: uInt;
+	Time, Fired, Hit: uInt;
 Begin
 	If Stats.TotalTime.Get(@Time) then
 		Result.TotalTime := FormatTimeString(Time)
@@ -194,6 +197,16 @@ Begin
 
 	Result.HitsTaken := Stats.HitsTaken.ToString();
 	Result.TimesDied := Stats.TimesDied.ToString();
+	Result.ShotsFired := Stats.ShotsFired.ToString();
+	Result.ShotsHit := Stats.ShotsHit.ToString();
+
+	If Stats.ShotsFired.Get(@Fired) and Stats.ShotsHit.Get(@Hit) then begin
+		If Fired > 0 then
+			WriteStr(Result.Accuracy, (Hit * 100) div Fired, '%')
+		else
+			Result.Accuracy := '-'
+	end else
+		Result.Accuracy := '???';
 End;
 
 
@@ -229,6 +242,18 @@ Begin
 
 	PrintText('TIMES DIED: ', Font, OffCenter, YPos, ALIGN_RIGHT, ALIGN_TOP, NIL);
 	PrintText(Texts.TimesDied, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
+	YPos += (Font^.SpacingY + Font^.CharH) * 5 div 2;
+
+	PrintText('SHOTS FIRED: ', Font, OffCenter, YPos, ALIGN_RIGHT, ALIGN_TOP, NIL);
+	PrintText(Texts.ShotsFired, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
+	YPos += (Font^.SpacingY + Font^.CharH) * 5 div 2;
+
+	PrintText('SHOTS HIT: ', Font, OffCenter, YPos, ALIGN_RIGHT, ALIGN_TOP, NIL);
+	PrintText(Texts.ShotsFired, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
+	YPos += (Font^.SpacingY + Font^.CharH) * 5 div 2;
+
+	PrintText('ACCURACY: ', Font, OffCenter, YPos, ALIGN_RIGHT, ALIGN_TOP, NIL);
+	PrintText(Texts.Accuracy, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
 	YPos += (Font^.SpacingY + Font^.CharH) * 5 div 2;
 
 	FadeIn(FadeInTime);
