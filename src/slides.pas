@@ -143,53 +143,12 @@ Begin
 	Rendering.FinishFrame()
 End;
 
-Procedure RenderStatsScreen(
-	FadeInTime: sInt;
-	TimeText, DeathsText, HitCountText: AnsiString
-);
-Const
-	STAT_LINES = 3;
-Var
-	Dst: TSDL_Rect;
-	YStep, YPos: uInt;
-Begin
-	Rendering.BeginFrame();
-
-	Dst.X := 0; Dst.Y := 0;
-	Dst.W := TitleGfx^.W; Dst.H := TitleGfx^.H;
-	DrawImage(TitleGfx, NIL, @Dst, NIL);
-
-	YStep := (Font^.SpacingY + Font^.CharH) * 3 * STAT_LINES;
-	YStep := (RESOL_H - TitleGfx^.H - YStep) div (STAT_LINES + 1);
-
-	YPos := TitleGfx^.H + YStep;
-	Font^.Scale := 2;
-	PrintText('TOTAL TIME', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
-	YPos += (Font^.SpacingY + Font^.CharH) * 5 div 2;
-
-	Font^.Scale := 1;
-	PrintText(TimeText, Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
-	YPos += (Font^.SpacingY + Font^.CharH) * 4;
-
-	Font^.Scale := 2;
-	PrintText('HITS TAKEN', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
-	YPos += (Font^.SpacingY + Font^.CharH) * 5 div 2;
-
-	Font^.Scale := 1;
-	PrintText(HitCountText, Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
-	YPos += (Font^.SpacingY + Font^.CharH) * 4;
-
-	Font^.Scale := 2;
-	PrintText('TIMES DIED', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
-	YPos += (Font^.SpacingY + Font^.CharH) * 5 div 2;
-
-	Font^.Scale := 1;
-	PrintText(DeathsText, Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
-	YPos += (Font^.SpacingY + Font^.CharH) * 4;
-
-	FadeIn(FadeInTime);
-	Rendering.FinishFrame()
-End;
+Type
+	TStatsTexts = record
+		TotalTime: AnsiString;
+		HitsTaken: AnsiString;
+		TimesDied: AnsiString;
+	end;
 
 Function FormatTimeString(Time: uInt): AnsiString;
 Const
@@ -224,35 +183,71 @@ Begin
 	end
 End;
 
+Function RenderStatsTexts():TStatsTexts;
+Var
+	Time: uInt;
+Begin
+	If Stats.TotalTime.Get(@Time) then
+		Result.TotalTime := FormatTimeString(Time)
+	else
+		Result.TotalTime := '???';
+
+	Result.HitsTaken := Stats.HitsTaken.ToString();
+	Result.TimesDied := Stats.TimesDied.ToString();
+End;
+
+
+Procedure RenderStatsScreen(
+	FadeInTime: sInt;
+	Texts: TStatsTexts
+);
+Var
+	Dst: TSDL_Rect;
+	YPos, OffCenter: uInt;
+Begin
+	Rendering.BeginFrame();
+
+	Dst.X := 0; Dst.Y := 0;
+	Dst.W := TitleGfx^.W; Dst.H := TitleGfx^.H;
+	DrawImage(TitleGfx, NIL, @Dst, NIL);
+
+	YPos := TitleGfx^.H + (Font^.CharH * 2);
+	Font^.Scale := 2;
+	PrintText('YOUR STATS', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+	YPos += (Font^.SpacingY + Font^.CharH) * Font^.Scale * 2;
+
+	Font^.Scale := 1;
+	OffCenter := (RESOL_W + Font^.CharW + Font^.SpacingX * 2) div 2;
+
+	PrintText('TOTAL TIME: ', Font, OffCenter, YPos, ALIGN_RIGHT, ALIGN_TOP, NIL);
+	PrintText(Texts.TotalTime, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
+	YPos += (Font^.SpacingY + Font^.CharH) * 5 div 2;
+
+	PrintText('HITS TAKEN: ', Font, OffCenter, YPos, ALIGN_RIGHT, ALIGN_TOP, NIL);
+	PrintText(Texts.HitsTaken, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
+	YPos += (Font^.SpacingY + Font^.CharH) * 5 div 2;
+
+	PrintText('TIMES DIED: ', Font, OffCenter, YPos, ALIGN_RIGHT, ALIGN_TOP, NIL);
+	PrintText(Texts.TimesDied, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
+	YPos += (Font^.SpacingY + Font^.CharH) * 5 div 2;
+
+	FadeIn(FadeInTime);
+	Rendering.FinishFrame()
+End;
+
 Procedure ShowOutro();
 Var
 	Idx, Delta: uInt;
 	FadeInTime: sInt;
 
-	Value: uInt;
-	TotalTimeText: AnsiString;
-	DeathsText, HitCountText: AnsiString;
 	ShowTheStats: Boolean;
+	StatsTexts: TStatsTexts;
 Begin
 	For Idx := Low(SlideOut) to High(SlideOut) do
 		If Not DisplaySlide(SlideOut[Idx]) then Exit();
 
-	If Stats.TotalTime.Get(@Value) then
-		TotalTimeText := FormatTimeString(Value)
-	else
-		TotalTimeText := '???';
-
-	If Stats.HitsTaken.Get(@Value) then
-		HitCountText := Shared.IntToStr(Value)
-	else
-		HitCountText := '???';
-
-	If Stats.TimesDied.Get(@Value) then
-		DeathsText := Shared.IntToStr(Value)
-	else
-		DeathsText := '???';
-
 	ShowTheStats := False;
+	StatsTexts := RenderStatsTexts();
 	FadeInTime := FADE_IN_TICKS;
 
 	Delta := 0;
@@ -262,7 +257,7 @@ Begin
 		If Not ShowTheStats then
 			RenderThanksScreen(FadeInTime)
 		else
-			RenderStatsScreen(FadeInTime, TotalTimeText, DeathsText, HitCountText);
+			RenderStatsScreen(FadeInTime, StatsTexts);
 
 		GetDeltaTime(Delta);
 		While (SDL_PollEvent(@Ev)>0) do begin

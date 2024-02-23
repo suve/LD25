@@ -31,6 +31,8 @@ Type
 			Function Get(Ptr: ThingPtr):Boolean;
 			Procedure Modify(Delta: Thing);
 
+			Function ToString():AnsiString;
+
 			Procedure SetTo(NewValue: Thing);
 			Procedure Unset();
 	end;
@@ -53,6 +55,14 @@ Function TOptional.Get(Ptr: ThingPtr):Boolean;
 Begin
 	If (Ptr <> Nil) and (Self.IsSet) then Ptr^ := Self.Value;
 	Result := Self.IsSet
+End;
+
+Function TOptional.ToString():AnsiString;
+Begin
+	If Self.IsSet then
+		WriteStr(Result, Self.Value)
+	else
+		WriteStr(Result, '???')
 End;
 
 Procedure TOptional.Modify(Delta: Thing);
