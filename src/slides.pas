@@ -146,6 +146,7 @@ End;
 Type
 	TStatsTexts = record
 		TotalTime: AnsiString;
+		BestTime: AnsiString;
 		HitsTaken: AnsiString;
 		TimesDied: AnsiString;
 		ShotsFired: AnsiString;
@@ -195,6 +196,11 @@ Begin
 	else
 		Result.TotalTime := '???';
 
+	If Stats.BestTime.Get(@Time) then
+		Result.BestTime := FormatTimeString(Time)
+	else
+		Result.BestTime := '???';
+
 	Result.HitsTaken := Stats.HitsTaken.ToString();
 	Result.TimesDied := Stats.TimesDied.ToString();
 	Result.ShotsFired := Stats.ShotsFired.ToString();
@@ -212,7 +218,8 @@ End;
 
 Procedure RenderStatsScreen(
 	FadeInTime: sInt;
-	Texts: TStatsTexts
+	Texts: TStatsTexts;
+	BestTimeCheck: TBestTimeCheck
 );
 Var
 	Dst: TSDL_Rect;
@@ -234,7 +241,15 @@ Begin
 
 	PrintText('TOTAL TIME: ', Font, OffCenter, YPos, ALIGN_RIGHT, ALIGN_TOP, NIL);
 	PrintText(Texts.TotalTime, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
-	YPos += (Font^.SpacingY + Font^.CharH) * 5 div 2;
+	YPos += (Font^.SpacingY + Font^.CharH) * 3 div 2;
+
+	If (BestTimeCheck = BTC_BETTER) or (BestTimeCheck = BTC_FIRST) then begin
+		PrintText('! NEW RECORD !', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+	end else begin
+		PrintText('BEST: ', Font, OffCenter, YPos, ALIGN_RIGHT, ALIGN_TOP, NIL);
+		PrintText(Texts.BestTime, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
+	end;
+	YPos += (Font^.SpacingY + Font^.CharH) * 3;
 
 	PrintText('HITS TAKEN: ', Font, OffCenter, YPos, ALIGN_RIGHT, ALIGN_TOP, NIL);
 	PrintText(Texts.HitsTaken, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
@@ -267,7 +282,13 @@ Var
 
 	ShowTheStats: Boolean;
 	StatsTexts: TStatsTexts;
+	BestTimeCheck: TBestTimeCheck;
 Begin
+	// FIXME: Calling this here really, really stinks.
+	//        Should probably do this in main function,
+	//        or when exiting the game loop.
+	BestTimeCheck := Stats.CheckBestTime();
+
 	For Idx := Low(SlideOut) to High(SlideOut) do
 		If Not DisplaySlide(SlideOut[Idx]) then Exit();
 
@@ -282,7 +303,7 @@ Begin
 		If Not ShowTheStats then
 			RenderThanksScreen(FadeInTime)
 		else
-			RenderStatsScreen(FadeInTime, StatsTexts);
+			RenderStatsScreen(FadeInTime, StatsTexts, BestTimeCheck);
 
 		GetDeltaTime(Delta);
 		While (SDL_PollEvent(@Ev)>0) do begin

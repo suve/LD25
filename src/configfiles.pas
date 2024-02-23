@@ -165,7 +165,7 @@ Begin
 		end
 	end;
 
-	Stats.UnsetAll();
+	Stats.UnsetSaveStats();
 	Ini.ReadSectionValues('Stats', Str);
 	ReadStatsEntry(@Stats.TotalTime, Str.Values['TotalTime']);
 	ReadStatsEntry(@Stats.HitsTaken, Str.Values['HitsTaken']);
@@ -203,6 +203,7 @@ Var
 	F:Text;
 	C:sInt;
 	K:TPlayerKey;
+	Value: uInt;
 Begin
 	If (Not CheckConfPath()) then Exit(False);
 	
@@ -236,6 +237,10 @@ Begin
 
 	Writeln(F, '[Colours]');
 	For C:=0 to 7 do Writeln(F, Capitalise(ColourName[C]),'=',ColourToStr(MapColour[C]));
+	Writeln(F);
+
+	Writeln(F, '[Stats]');
+	If Stats.BestTime.Get(@Value) then Writeln(F, 'BestTimeClassic=', Value);
 
 	Close(F); Exit(True);
 End;
@@ -282,7 +287,10 @@ Begin
 			Except
 				Writeln(stderr, 'Unexpected value for colour ',ColourName[C],': "', Str.Values[CapitalisedColourName],'"')
 			end
-		end
+		end;
+
+		Ini.ReadSectionValues('Stats', Str);
+		ReadStatsEntry(@Stats.BestTime, Str.Values['BestTimeClassic']);
 	end;
 	
 	Ini.Destroy(); Str.Destroy();
@@ -342,8 +350,10 @@ Begin
 	ResetMapColoursToDefault();
 
 	{$IFDEF LD25_MOBILE}
-	SwapTouchControls := False
+	SwapTouchControls := False;
 	{$ENDIF}
+
+	Stats.UnsetGlobalStats()
 End;
 
 {$IFNDEF ANDROID}

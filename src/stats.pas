@@ -40,15 +40,29 @@ Type
 	TOptionalUInt = specialize TOptional<uInt>;
 	POptionalUInt = ^TOptionalUInt;
 
+	TBestTimeCheck = (
+		BTC_NOTIME, // Cannot determine (TotalTime was unset)
+		BTC_FIRST,  // First time playing (BestTime was unset)
+		BTC_WORSE,  // Slower than best time
+		BTC_BETTER  // Best time beaten!
+	);
+
 Var
+	// Game-wide stats
+	BestTime: TOptionalUInt;
+
+	// Save-specific stats
 	TotalTime: TOptionalUInt;
 	TimesDied: TOptionalUInt;
 	HitsTaken: TOptionalUInt;
 	ShotsFired: TOptionalUInt;
 	ShotsHit: TOptionalUInt;
 
-Procedure ZeroAll();
-Procedure UnsetAll();
+Function CheckBestTime():TBestTimeCheck;
+
+Procedure ZeroSaveStats();
+Procedure UnsetSaveStats();
+Procedure UnsetGlobalStats();
 
 
 Implementation
@@ -83,7 +97,7 @@ Begin
 	Self.IsSet := False
 End;
 
-Procedure ZeroAll();
+Procedure ZeroSaveStats();
 Begin
 	TotalTime.SetTo(0);
 	TimesDied.SetTo(0);
@@ -92,13 +106,34 @@ Begin
 	ShotsHit.SetTo(0);
 End;
 
-Procedure UnsetAll();
+Procedure UnsetSaveStats();
 Begin
 	TotalTime.Unset();
 	TimesDied.Unset();
 	HitsTaken.Unset();
 	ShotsFired.Unset();
 	ShotsHit.Unset();
+End;
+
+Procedure UnsetGlobalStats();
+Begin
+	BestTime.Unset();
+End;
+
+Function CheckBestTime(): TBestTimeCheck;
+Begin
+	If Not TotalTime.IsSet then Exit(BTC_NOTIME);
+
+	If Not BestTime.IsSet then begin
+		BestTime.SetTo(TotalTime.Value);
+		Exit(BTC_FIRST)
+	end;
+
+	If TotalTime.Value < BestTime.Value then begin
+		BestTime.SetTo(TotalTime.Value);
+		Result := BTC_BETTER
+	end else
+		Result := BTC_WORSE
 End;
 
 End.
