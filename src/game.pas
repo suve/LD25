@@ -793,6 +793,7 @@ Begin
 
 		PlaceGibs(Mob[mID], Mob[mID]^.Sprite^.GetFrame(AniFra, Mob[mID]^.Face));
 		PlaySfx(Mob[mID]^.SfxID);
+		Stats.KillsMade.Modify(+1);
 
 		If (Length(Mob[mID]^.Children) > 0) then begin
 			For Idx := Low(Mob[mID]^.Children) to High(Mob[mID]^.Children) do begin

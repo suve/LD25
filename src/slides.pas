@@ -149,6 +149,7 @@ Type
 		BestTime: AnsiString;
 		HitsTaken: AnsiString;
 		TimesDied: AnsiString;
+		KillsMade: AnsiString;
 		ShotsFired: AnsiString;
 		ShotsHit: AnsiString;
 		Accuracy: AnsiString;
@@ -203,6 +204,7 @@ Begin
 
 	Result.HitsTaken := Stats.HitsTaken.ToString();
 	Result.TimesDied := Stats.TimesDied.ToString();
+	Result.KillsMade := Stats.KillsMade.ToString();
 	Result.ShotsFired := Stats.ShotsFired.ToString();
 	Result.ShotsHit := Stats.ShotsHit.ToString();
 
@@ -223,7 +225,8 @@ Procedure RenderStatsScreen(
 );
 Var
 	Dst: TSDL_Rect;
-	YPos, OffCenter: uInt;
+	YPos, YStep: uInt;
+	OffCenter: uInt;
 Begin
 	Rendering.BeginFrame();
 
@@ -231,7 +234,7 @@ Begin
 	Dst.W := TitleGfx^.W; Dst.H := TitleGfx^.H;
 	DrawImage(TitleGfx, NIL, @Dst, NIL);
 
-	YPos := TitleGfx^.H + (Font^.CharH * 2);
+	YPos := TitleGfx^.H + (Font^.CharH * 3 div 2);
 	Font^.Scale := 2;
 	PrintText('YOUR STATS', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
 	YPos += (Font^.SpacingY + Font^.CharH) * Font^.Scale * 2;
@@ -250,26 +253,31 @@ Begin
 		PrintText(Texts.BestTime, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
 	end;
 	YPos += (Font^.SpacingY + Font^.CharH) * 3;
+	YStep := (Font^.SpacingY + Font^.CharH) * 9 div 4;
 
 	PrintText('HITS TAKEN: ', Font, OffCenter, YPos, ALIGN_RIGHT, ALIGN_TOP, NIL);
 	PrintText(Texts.HitsTaken, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
-	YPos += (Font^.SpacingY + Font^.CharH) * 5 div 2;
+	YPos += YStep;
 
 	PrintText('TIMES DIED: ', Font, OffCenter, YPos, ALIGN_RIGHT, ALIGN_TOP, NIL);
 	PrintText(Texts.TimesDied, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
-	YPos += (Font^.SpacingY + Font^.CharH) * 5 div 2;
+	YPos += YStep;
 
 	PrintText('SHOTS FIRED: ', Font, OffCenter, YPos, ALIGN_RIGHT, ALIGN_TOP, NIL);
 	PrintText(Texts.ShotsFired, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
-	YPos += (Font^.SpacingY + Font^.CharH) * 5 div 2;
+	YPos += YStep;
 
 	PrintText('SHOTS HIT: ', Font, OffCenter, YPos, ALIGN_RIGHT, ALIGN_TOP, NIL);
-	PrintText(Texts.ShotsFired, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
-	YPos += (Font^.SpacingY + Font^.CharH) * 5 div 2;
+	PrintText(Texts.ShotsHit, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
+	YPos += YStep;
 
 	PrintText('ACCURACY: ', Font, OffCenter, YPos, ALIGN_RIGHT, ALIGN_TOP, NIL);
 	PrintText(Texts.Accuracy, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
-	YPos += (Font^.SpacingY + Font^.CharH) * 5 div 2;
+	YPos += YStep;
+	
+	PrintText('FOES SLAIN: ', Font, OffCenter, YPos, ALIGN_RIGHT, ALIGN_TOP, NIL);
+	PrintText(Texts.KillsMade, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
+	YPos += YStep;
 
 	FadeIn(FadeInTime);
 	Rendering.FinishFrame()
