@@ -55,6 +55,7 @@ Var
 	TotalTime: TOptionalUInt;
 	TimesDied: TOptionalUInt;
 	HitsTaken: TOptionalUInt;
+	KillsMade: TOptionalUInt;
 	ShotsFired: TOptionalUInt;
 	ShotsHit: TOptionalUInt;
 
@@ -111,6 +112,7 @@ Begin
 	TotalTime.Unset();
 	TimesDied.Unset();
 	HitsTaken.Unset();
+	KillsMade.Unset();
 	ShotsFired.Unset();
 	ShotsHit.Unset();
 End;

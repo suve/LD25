@@ -116,6 +116,7 @@ Begin
 	If Stats.TotalTime.Get(@Value) then Writeln(F, 'TotalTime=', Value);
 	If Stats.HitsTaken.Get(@Value) then Writeln(F, 'HitsTaken=', Value);
 	If Stats.TimesDied.Get(@Value) then Writeln(F, 'TimesDied=', Value);
+	If Stats.KillsMade.Get(@Value) then Writeln(F, 'KillsMade=', Value);
 	If Stats.ShotsFired.Get(@Value) then Writeln(F, 'ShotsFired=', Value);
 	If Stats.ShotsHit.Get(@Value) then Writeln(F, 'ShotsHit=', Value);
 	Writeln(F);
@@ -170,6 +171,7 @@ Begin
 	ReadStatsEntry(@Stats.TotalTime, Str.Values['TotalTime']);
 	ReadStatsEntry(@Stats.HitsTaken, Str.Values['HitsTaken']);
 	ReadStatsEntry(@Stats.TimesDied, Str.Values['TimesDied']);
+	ReadStatsEntry(@Stats.KillsMade, Str.Values['KillsMade']);
 	ReadStatsEntry(@Stats.ShotsFired, Str.Values['ShotsFired']);
 	ReadStatsEntry(@Stats.ShotsHit, Str.Values['ShotsHit']);
 
