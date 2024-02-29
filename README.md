@@ -6,6 +6,11 @@ for the [Ludum Dare](https://ldjam.com) event, 25th edition (December 2012).
 This is the "post-compo" version of the game - it has received numerous
 enhancements and bug fixes.
 
+[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
+     alt="Get it on F-Droid"
+     height="80">](https://f-droid.org/packages/pl.suve.colorful.android/)
+
+Or download the latest version from the [Releases Section](https://github.com/suve/LD25/releases/latest).
 
 ## Building the game
 
