@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2023 suve (a.k.a. Artur Frenszek Iwicki)
+ * Copyright (C) 2012-2024 suve (a.k.a. Artur Frenszek Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -87,11 +87,14 @@ Const
 
 	PORTRAIT_HEIGHT = RESOL_H + DPAD_SIZE;
 	PORTRAIT_RATIO = (RESOL_W * ASPECT_RATIO_MUL) div PORTRAIT_HEIGHT;
+
+	SQRT_TWO = Sqrt(2);
 Var
 	AspectRatio: uInt;
 	SquareSize: uInt;
 	TotalHeight, TotalWidth: uInt;
 	VerticalOffset, HorizontalOffset: sInt;
+	Overlap: uInt;
 	DPad, ShootBtns: TSDL_Rect;
 Begin
 	AspectRatio := (Wnd_W * ASPECT_RATIO_MUL) div Wnd_H;
@@ -161,16 +164,6 @@ Begin
 			HorizontalOffset := 0
 		end;
 
-		(* TODO:
-		 * The game area can be made slightly bigger by accounting for the fact
-		 * that the DPad is an octagon, and making the game area stretch all the way
-		 * to touch the angled side of the DPad, i.e.:
-		 *
-		 *  __v  Touch the middle of this side
-		 * /  \< instead of the corner of the bounding box.
-		 * |  |
-		 * \__/
-		 *)
 		GameArea.Y := VerticalOffset;
 		GameArea.W := (RESOL_W * SquareSize) div (RESOL_W + DPAD_SIZE);
 		GameArea.H := (RESOL_H * SquareSize) div (RESOL_H + DPAD_SIZE);
@@ -183,15 +176,42 @@ Begin
 		ShootBtns.W := (ShootBtns.H * 7) div 2;
 		ShootBtns.Y := DPad.Y + ((DPad.H - ShootBtns.H) div 2);
 
+		(*
+		 * The game area can be made slightly bigger by accounting for the fact
+		 * that the DPad is an octagon, and making the game area stretch
+		 * all the way to touch the sloped side of the DPad, i.e.:
+		 *
+		 *  __v  Touch the middle of this side
+		 * /  \< instead of the corner of the bounding box.
+		 * |  |
+		 * \__/
+		 *
+		 * If we assume a regular octagon, then the triangle formed between
+		 * the sloped side of the polygon and the bounding box is isosceles,
+		 * with angles of 90, 45 and 45 degrees. If the side shared with the
+		 * octagon has a length of a, then the other two sides of the triangle
+		 * have a length of a / sqrt(2).
+		 *
+		 * This means the length of a side of the bounding box is:
+		 *   b = a + 2 * (a / sqrt(2)) = a + a * sqrt(2) = a * (1 + sqrt(2))
+		 * To make the game area touch the middle of the octagon's sloped
+		 * side, we need to calculate "a / sqrt(2) / 2":
+		 *   a = b / (1 + sqrt(2))
+		 *   a / (2 * sqrt(2)) = b / (2 * (sqrt(2) + 2))
+		 * This is the value we put in the Overlap variable.
+		 *)
+		Overlap := Trunc( ((DPad.W + DPad.H) / 2.0) / (2.0 * (SQRT_TWO + 2.0)) );
 		If(Not SwapTouchControls) then begin
 			DPad.X := HorizontalOffset;
-			GameArea.X := DPad.X + DPad.W + HorizontalOffset;
+			GameArea.X := DPad.X + DPad.W + HorizontalOffset - Overlap;
 			ShootBtns.X := Wnd_W - ShootBtns.W - (Wnd_H - ShootBtns.Y - ShootBtns.H);
 		end else begin
 			GameArea.X := HorizontalOffset;
 			DPad.X := GameArea.X + GameArea.W + HorizontalOffset;
 			ShootBtns.X := (Wnd_H - ShootBtns.Y - ShootBtns.H);
 		end;
+		GameArea.W += Overlap;
+		GameArea.H += Overlap;
 	end;
 
 	{$IFDEF LD25_DEBUG}
