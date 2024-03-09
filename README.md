@@ -7,7 +7,28 @@ This is the "post-compo" version of the game - it has received numerous
 enhancements and bug fixes.
 
 
-## Building the game
+## Screenshots
+
+<img src="https://github.com/suve/LD25/raw/trunk/.github/screenshot0.png" height="320" width="320" alt="First">    <img src="https://github.com/suve/LD25/raw/trunk/.github/screenshot1.png" height="320" width="320" alt="Second">
+
+
+## Download
+
+<a href="https://repology.org/project/colorful/versions">
+	<img src="https://repology.org/badge/vertical-allrepos/colorful.svg?exclude_unsupported=1" alt="Packaging status" align="right">
+</a>
+
+You can download the game from [Itch.io](https://suve.itch.io/colorful),
+[F-Droid](https://f-droid.org/en/packages/pl.suve.colorful.android/),
+or from the [Releases tab](https://github.com/suve/LD25/releases/latest) here on GitHub.
+
+The game is available for Linux, Windows, and Android.
+
+<a href="https://suve.itch.io/colorful"><img src="https://static.itch.io/images/badge-color.svg" alt="Get it on Itch.io" height="64" align="middle"></a>
+<a href="https://f-droid.org/packages/pl.suve.colorful.android/"><img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="95" align="middle"></a>
+
+
+## Build it yourself
 
 To build Colorful, you'll need the following dependencies:
 
