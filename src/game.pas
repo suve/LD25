@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2023 suve (a.k.a. Artur Frenszek Iwicki)
+ * Copyright (C) 2012-2024 suve (a.k.a. Artur Frenszek Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -279,16 +279,17 @@ End;
 
 Procedure CalculateMonsters(Const Time:uInt);
 Var
-	M: sInt;
+	Idx, Count: sInt;
 	E: PEntity;
 	XDif, YDif, ChkX, ChkY: Double;
 Begin
-	If(Length(Mob)=0) then Exit;
+	Count := Mobs.GetCount();
+	If(Count = 0) then Exit;
 
-	For M:=Low(Mob) to High(Mob) do begin
-		If (Mob[M]=NIL) then Continue;
+	For Idx := 0 to (Count - 1) do begin
+		E := Mobs[Idx];
+		If (E = NIL) then Continue;
 
-		E:=Mob[M];
 		{$IFDEF LD25_DEBUG}
 		If(CheatFreeze = FREEZE_NONE) then begin
 		{$ENDIF}
@@ -323,8 +324,8 @@ Begin
 		end;
 		{$ENDIF}
 
-		If (Hero^.HP > 0) and (Hero^.InvTimer <= 0) and (Overlap(Hero,E)) then begin 
-			DamageMob(M,9.5); DamagePlayer(9.5) 
+		If (Hero^.HP > 0) and (Hero^.InvTimer <= 0) and (Overlap(Hero,E)) then begin
+			DamageMob(Idx, 9.5); DamagePlayer(9.5)
 		end
 	end
 End;
@@ -361,36 +362,39 @@ End;
 
 Procedure CalculatePlayerBullets(Const Time:uInt);
 Var
-	B, M: sInt;
+	B, BulCount: sInt;
+	M, MobCount: sInt;
 Begin
-	If (Length(PBul)=0) then Exit;
-	
-	For B:=Low(PBul) to High(PBul) do begin
-		If (PBul[B]=NIL) then Continue;
+	BulCount := PlayerBullets.GetCount();
+	For B := 0 to (BulCount - 1) do begin
+		If (PlayerBullets[B]=NIL) then Continue;
 
 		{$IFDEF LD25_DEBUG}
 		If(CheatFreeze <> FREEZE_ALL) then begin
 		{$ENDIF}
-			CalculateBulletMovement(PBul[B], Time);
-			If (PBul[B]^.HP <= 0) then begin
-				Dispose(PBul[B],Destroy()); PBul[B]:=NIL;
+			CalculateBulletMovement(PlayerBullets[B], Time);
+			If (PlayerBullets[B]^.HP <= 0) then begin
+				Dispose(PlayerBullets[B],Destroy());
+				PlayerBullets[B]:=NIL;
 				Continue
 			end;
 		{$IFDEF LD25_DEBUG}
 		end;
 		{$ENDIF}
 
-		If (Length(Mob)>0) then M:=Low(Mob) else M:=High(M);
-		While (M<=High(Mob)) do begin
-			If (Mob[M]=NIL) then begin 
+		M := 0;
+		MobCount := Mobs.GetCount();
+		While (M < MobCount) do begin
+			If (Mobs[M]=NIL) then begin
 				M+=1; Continue
 			end;
-			
-			If (Overlap(PBul[B],Mob[M])) then begin
-				DamageMob(M,PBul[B]^.Power);
-				Dispose(PBul[B],Destroy()); PBul[B]:=NIL;
-				M:=High(Mob)*2
-			end else 
+
+			If (Overlap(PlayerBullets[B], Mobs[M])) then begin
+				DamageMob(M,PlayerBullets[B]^.Power);
+				Dispose(PlayerBullets[B],Destroy());
+				PlayerBullets[B]:=NIL;
+				M:=MobCount
+			end else
 				M+=1
 		end
 	end
@@ -398,64 +402,68 @@ End;
 
 Procedure CalculateEnemyBullets(Const Time:uInt);
 Var
-	B: sInt;
+	B, Count: sInt;
 Begin
-	If (Length(EBul)=0) then Exit;
-	
-	For B:=Low(EBul) to High(EBul) do begin
-		If (EBul[B]=NIL) then Continue;
+	Count := EnemyBullets.GetCount();
+	For B := 0 to (Count - 1) do begin
+		If (EnemyBullets[B]=NIL) then Continue;
 
 		{$IFDEF LD25_DEBUG}
 		If(CheatFreeze <> FREEZE_ALL) then begin
 		{$ENDIF}
-			CalculateBulletMovement(EBul[B], Time);
-			If (EBul[B]^.HP <= 0) then begin
-				Dispose(EBul[B],Destroy()); EBul[B]:=NIL;
+			CalculateBulletMovement(EnemyBullets[B], Time);
+			If (EnemyBullets[B]^.HP <= 0) then begin
+				Dispose(EnemyBullets[B],Destroy());
+				EnemyBullets[B]:=NIL;
 				Continue
 			end;
 		{$IFDEF LD25_DEBUG}
 		end;
 		{$ENDIF}
 
-		If (Hero^.HP > 0) and (Hero^.InvTimer <= 0) and (Overlap(EBul[B],Hero)) then begin 
-			DamagePlayer(EBul[B]^.Power);
-			Dispose(EBul[B],Destroy()); EBul[B]:=NIL
+		If (Hero^.HP > 0) and (Hero^.InvTimer <= 0) and (Overlap(EnemyBullets[B],Hero)) then begin
+			DamagePlayer(EnemyBullets[B]^.Power);
+			Dispose(EnemyBullets[B],Destroy());
+			EnemyBullets[B]:=NIL
 		end;
 	end;
 End;
 
 Procedure CalculateGibs(Const Time:uInt);
 Var
-	G: sInt;
+	Idx, Count: sInt;
+	G: PGib;
 	XDif, YDif, ChkX, ChkY: Double;
 Begin
-	If (Length(Gib)=0) then Exit;
 	{$IFDEF LD25_DEBUG} If(CheatFreeze = FREEZE_ALL) then Exit; {$ENDIF}
-	
-	For G:=Low(Gib) to High(Gib) do begin
-		If (Gib[G]=NIL) then Continue;
-		
-		XDif:=Gib[G]^.XVel*Time/1000; 
-		YDif:=Gib[G]^.YVel*Time/1000;
-		
+
+	Count := Gibs.GetCount();
+	For Idx := 0 to (Count - 1) do begin
+		G := Gibs[Idx];
+		If (G = NIL) then Continue;
+
+		XDif:=G^.XVel*Time/1000;
+		YDif:=G^.YVel*Time/1000;
+
 		If (XDif<>0) then begin
-			If (XDif<0) then ChkX:=Gib[G]^.X else ChkX:=Gib[G]^.X+Gib[G]^.W-1;
-			
-			If (Room^.CollidesOrOutside(ChkX+XDif,Gib[G]^.Y)) or (Room^.CollidesOrOutside(ChkX+XDif,Gib[G]^.Y+Gib[G]^.H-1))
-				then Gib[G]^.HP:=-10 
-				else Gib[G]^.X:=Gib[G]^.X+XDif
+			If (XDif<0) then ChkX:=G^.X else ChkX:=G^.X + G^.W - 1;
+
+			If (Room^.CollidesOrOutside(ChkX+XDif,G^.Y)) or (Room^.CollidesOrOutside(ChkX+XDif,G^.Y+G^.H-1))
+				then G^.HP:=-10
+				else G^.X:=G^.X+XDif
 		end;
-		
+
 		If (YDif<>0) then begin
-			If (YDif<0) then ChkY:=Gib[G]^.Y else ChkY:=Gib[G]^.Y+Gib[G]^.H-1;
-			
-			If (Room^.CollidesOrOutside(Gib[G]^.X,ChkY+YDif)) or (Room^.CollidesOrOutside(Gib[G]^.X+Gib[G]^.W-1,ChkY+YDif))
-				then Gib[G]^.HP:=-10 
-				else Gib[G]^.Y:=Gib[G]^.Y+YDif
+			If (YDif<0) then ChkY:=G^.Y else ChkY:=G^.Y + G^.H - 1;
+
+			If (Room^.CollidesOrOutside(G^.X,ChkY+YDif)) or (Room^.CollidesOrOutside(G^.X+G^.W-1,ChkY+YDif))
+				then G^.HP:=-10
+				else G^.Y:=G^.Y+YDif
 		end;
-		
-		If (Gib[G]^.HP <= 0) then begin
-			Dispose(Gib[G],Destroy()); Gib[G]:=NIL 
+
+		If (G^.HP <= 0) then begin
+			Dispose(Gibs[Idx],Destroy());
+			Gibs[Idx]:=NIL
 		end
 	end;
 End;
@@ -492,21 +500,25 @@ End;
 
 Procedure DrawGibs();
 Var
-	G: sInt;
+	Idx, Count: sInt;
+	G: PGib;
 	Rect: TSDL_Rect;
 Begin
-	For G:=Low(Gib) to High(Gib) do
-		If (Gib[G]<>NIL) then begin
-			Rect.X := Gib[G]^.iX;
-			Rect.Y := Gib[G]^.iY;
-			Rect.W := Gib[G]^.Rect.W;
-			Rect.H := Gib[G]^.Rect.H;
+	Count := Gibs.GetCount();
+	For Idx := 0 to (Count - 1) do begin
+		G := Gibs[Idx];
+		If (G <> NIL) then begin
+			Rect.X := G^.iX;
+			Rect.Y := G^.iY;
+			Rect.W := G^.Rect.W;
+			Rect.H := G^.Rect.H;
 
 			{$IFDEF LD25_DEBUG}
 			If(CheatHitboxes) then DrawRectOutline(@Rect, @YellowColour);
 			{$ENDIF}
-			DrawImage(EntityGfx, @Gib[G]^.Rect, @Rect, Gib[G]^.Col)
+			DrawImage(EntityGfx, @G^.Rect, @Rect, G^.Col)
 		end
+	end
 End;
 
 Procedure SetEntityDrawRects(Const E: PEntity; Const Sprite: PSprite; Out Src, Dst: TSDL_Rect);
@@ -536,29 +548,41 @@ End;
 
 Procedure DrawMonsters();
 Var
-	M: sInt;
+	Idx, Count: sInt;
+	M: PEnemy;
 Begin
-	For M:=Low(Mob) to High(Mob) do
-		If (Mob[M]<>NIL) then
-			DrawEntity(Mob[M], Mob[M]^.Sprite {$IFDEF LD25_DEBUG}, @RedColour {$ENDIF})
+	Count := Mobs.GetCount();
+	For Idx := 0 to (Count - 1) do begin
+		M := Mobs[Idx];
+		If (M <> NIL) then
+			DrawEntity(M, M^.Sprite {$IFDEF LD25_DEBUG}, @RedColour {$ENDIF})
+	end
 End;
 
 Procedure DrawPlayerBullets();
 Var
-	B: sInt;
+	Idx, Count: sInt;
+	B: PBullet;
 Begin
-	For B:=Low(PBul) to High(PBul) do
-		If (PBul[B]<>NIL) then
-			DrawEntity(PBul[B], PBul[B]^.Sprite {$IFDEF LD25_DEBUG}, @LimeColour {$ENDIF})
+	Count := PlayerBullets.GetCount();
+	For Idx := 0 to (Count - 1) do begin
+		B := PlayerBullets[Idx];
+		If (B <> NIL) then
+			DrawEntity(B, B^.Sprite {$IFDEF LD25_DEBUG}, @LimeColour {$ENDIF})
+	end
 End;
 
 Procedure DrawEnemyBullets();
 Var
-	B: sInt;
+	Idx, Count: sInt;
+	B: PBullet;
 Begin
-	For B:=Low(EBul) to High(EBul) do
-		If (EBul[B]<>NIL) then
-			DrawEntity(EBul[B], EBul[B]^.Sprite {$IFDEF LD25_DEBUG}, @RedColour {$ENDIF})
+	Count := EnemyBullets.GetCount();
+	For Idx := 0 to (Count - 1) do begin
+		B := EnemyBullets[Idx];
+		If (B <> NIL) then
+			DrawEntity(B, B^.Sprite {$IFDEF LD25_DEBUG}, @RedColour {$ENDIF})
+	end
 End;
 
 Procedure DrawHero();
@@ -727,10 +751,10 @@ Begin
 	Rendering.BeginFrame();
 	DrawRoom();
 
-	If (Length(Gib)>0) then DrawGibs();
-	If (Length(Mob)>0) then DrawMonsters();
-	If (Length(PBul)>0) then DrawPlayerBullets();
-	If (Length(EBul)>0) then DrawEnemyBullets();
+	If (Gibs.GetCount() > 0) then DrawGibs();
+	If (Mobs.GetCount() > 0) then DrawMonsters();
+	If (PlayerBullets.GetCount() > 0) then DrawPlayerBullets();
+	If (EnemyBullets.GetCount() > 0) then DrawEnemyBullets();
 
 	DrawHero();
 	DrawCrystal();
@@ -783,23 +807,28 @@ End;
 Procedure DamageMob(Const mID:uInt; Const Power:Double);
 Var
 	Idx, ChildID: sInt;
+	Mob: PEnemy;
 Begin
-	Mob[mID]^.HP-=Power;
-	If (Mob[mID]^.HP <= 0) then begin
-		If (Mob[mID]^.SwitchNum >= 0) then Switch[Mob[mID]^.SwitchNum]:=True;
+	Mob := Mobs[mID];
+	If (Mob = NIL) then Exit;
 
-		PlaceGibs(Mob[mID], Mob[mID]^.Sprite^.GetFrame(AniFra, Mob[mID]^.Face));
-		PlaySfx(Mob[mID]^.SfxID);
+	Mob^.HP-=Power;
+	If (Mob^.HP <= 0) then begin
+		If (Mob^.SwitchNum >= 0) then Switch[Mob^.SwitchNum]:=True;
 
-		If (Length(Mob[mID]^.Children) > 0) then begin
-			For Idx := Low(Mob[mID]^.Children) to High(Mob[mID]^.Children) do begin
-				ChildID := Mob[mID]^.Children[Idx];
-				If Mob[ChildID] <> NIL then DamageMob(ChildID, 1000);
+		PlaceGibs(Mob, Mob^.Sprite^.GetFrame(AniFra, Mob^.Face));
+		PlaySfx(Mob^.SfxID);
+
+		If (Length(Mob^.Children) > 0) then begin
+			For Idx := Low(Mob^.Children) to High(Mob^.Children) do begin
+				ChildID := Mob^.Children[Idx];
+				If Mobs[ChildID] <> NIL then DamageMob(ChildID, 1000);
 			end;
 		end;
 
-		Dispose(Mob[mID],Destroy()); Mob[mID]:=NIL
-	end 
+		Dispose(Mob,Destroy());
+		Mobs[mID] := NIL
+	end
 End;
 
 Procedure DamagePlayer(Const Power:Double);

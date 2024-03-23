@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2023 suve (a.k.a. Artur Frenszek Iwicki)
+ * Copyright (C) 2012-2024 suve (a.k.a. Artur Frenszek Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -23,7 +23,7 @@ Interface
 Uses
 	SysUtils,
 	SDL2, SDL2_mixer,
-	Entities, Sprites;
+	Buffers, Entities, Sprites;
 
 
 // A shitload of constants - but hey, this is the 'shared' unit, isn't it?
@@ -36,6 +36,10 @@ const
 	TILE_W = 16; TILE_H = 16; TILE_S = ((TILE_W + TILE_H) div 2);
 	ROOM_W = 20; ROOM_H = 20;
 	SWITCHES = 100;
+
+	GIBS_PIECES_X = 4;
+	GIBS_PIECES_Y = 4;
+	GIBS_PIECES_TOTAL = (GIBS_PIECES_X * GIBS_PIECES_Y);
 
 Type
 	TGameMode = (GM_TUTORIAL, GM_ORIGINAL);
@@ -81,11 +85,17 @@ Type
 
 Var 
 	Ev: TSDL_Event;    // For retrieving SDL events
+	Hero: PPlayer;
 
-	Hero : PPlayer;
-	PBul, EBul : Array of PBullet;
-	Mob  : Array of PEnemy;
-	Gib  : Array of PGib; //Entity arrays
+Type
+	TBulletBuffer = specialize GenericBuffer<PBullet>;
+	TEnemyBuffer = specialize GenericBuffer<PEnemy>;
+	TGibBuffer = specialize GenericBuffer<PGib>;
+
+Var
+	PlayerBullets, EnemyBullets: TBulletBuffer;
+	Mobs: TEnemyBuffer;
+	Gibs: TGibBuffer;
 
 	Key     : Array[TPlayerKey] of Boolean;
 	KeyBind :Array[TPlayerKey] of TSDL_Keycode; //Playa controls
@@ -289,13 +299,10 @@ Begin
 	B^.HP := Power;
 	B^.Col := Owner^.Col;
 	
-	If (Owner <> PEntity(Hero)) then begin
-		SetLength(EBul,Length(EBul)+1);
-		EBul[High(EBul)]:=B
-	end else begin
-		SetLength(PBul,Length(PBul)+1);
-		PBul[High(PBul)]:=B
-	end
+	If (Owner <> PEntity(Hero)) then
+		EnemyBullets.Append(B)
+	else
+		PlayerBullets.Append(B)
 End;
 
 Procedure SpawnEnemy(Tp: TEnemyType; mapX, mapY:sInt; SwitchNum: sInt = -1);
@@ -308,8 +315,6 @@ Var
 	Gene: PGenerator;
 	Turr: PTurret;
 	E: PEnemy;
-
-	Len: sInt;
 Begin
 	If (mapX<0) or (mapY<0) or (mapX>=ROOM_W) or (mapY>=ROOM_H) then Exit;
 
@@ -327,39 +332,32 @@ Begin
 	E^.mX:=mapX; E^.mY:=mapY; E^.SwitchNum:=SwitchNum;
 	If (RoomPalette < 8) then E^.Col:=@PaletteColour[RoomPalette];
 
-	Len := Length(Mob);
-	SetLength(Mob, Len + 1);
-	Mob[Len]:=E
+	Mobs.Append(E)
 End;
 
 Procedure PlaceGibs(Const E: PEntity; Const Frame: TSDL_Rect);
 Const
-	GIB_X = 4;
-	GIB_Y = 4;
 	GIB_SPEED = TILE_S*8;
 Var
-	X, Y, W, H, Idx: uInt;
+	X, Y, W, H: uInt;
 	Angle: Double;
 	G: PGib;
 begin
-	Idx:=Length(Gib);
-	SetLength(Gib, Length(Gib) + (GIB_X*GIB_Y));
+	W := Frame.W div GIBS_PIECES_X;
+	H := Frame.H div GIBS_PIECES_Y;
+	For Y:=0 to (GIBS_PIECES_Y-1) do
+		For X:=0 to (GIBS_PIECES_X-1) do begin
+			New(G, Create(Frame.X + (X*W), Frame.Y + (Y*H), W, H));
 
-	W := Frame.W div GIB_X;
-	H := Frame.H div GIB_Y;
-	For Y:=0 to (GIB_Y-1) do For X:=0 to (GIB_X-1) do begin
-		New(G, Create(Frame.X + (X*W), Frame.Y + (Y*H), W, H));
+			G^.X := E^.X+(X*W);
+			G^.Y := E^.Y+(Y*H);
+			Angle:=Random(3600)*Pi/1800;
+			G^.XVel := Cos(Angle) * GIB_SPEED;
+			G^.YVel := Sin(Angle) * GIB_SPEED;
+			G^.Col := E^.Col;
 
-		G^.X := E^.X+(X*W);
-		G^.Y := E^.Y+(Y*H);
-		Angle:=Random(3600)*Pi/1800;
-		G^.XVel := Cos(Angle) * GIB_SPEED;
-		G^.YVel := Sin(Angle) * GIB_SPEED;
-		G^.Col := E^.Col;
-
-		Gib[Idx] := G;
-		Idx += 1
-	end
+			Gibs.Append(G)
+		end
 end;
 
 Function ChangeRoom(NX,NY:sInt):Boolean;
@@ -392,27 +390,36 @@ Begin
 	Exit(True)
 end;
 
+Procedure FreeBullet(B: PBullet);
+Begin
+	Dispose(B, Destroy())
+End;
+
+Procedure FreeEnemy(E: PEnemy);
+Begin
+	Dispose(E, Destroy())
+End;
+
+Procedure FreeGib(G: PGib);
+Begin
+	Dispose(G, Destroy())
+End;
+
 Procedure DestroyEntities(KillHero:Boolean=FALSE);
-   Var C:uInt;
-   begin
-   If (Length(Mob)>0) then
-      For C:=Low(Mob) to High(Mob) do
-          If (Mob[C]<>NIL) then Dispose(Mob[C],Destroy());
-   If (Length(PBul)>0) then
-      For C:=Low(PBul) to High(PBul) do
-          If (PBul[C]<>NIL) then Dispose(PBul[C],Destroy());
-   If (Length(EBul)>0) then
-      For C:=Low(EBul) to High(EBul) do
-          If (EBul[C]<>NIL) then Dispose(EBul[C],Destroy());
-   If (Length(Gib)>0) then
-      For C:=Low(Gib) to High(Gib) do
-          If (Gib[C]<>NIL) then Dispose(Gib[C],Destroy());
-   SetLength(Mob,0); SetLength(EBul,0); SetLength(PBul,0); SetLength(Gib,0);
-   FlushFloatTxt(); Crystal.IsSet:=False;
-   If (KillHero) then begin
-      If (Hero<>NIL) then Dispose(Hero,Destroy());
-      Hero:=NIL; end
-   end;
+begin
+	PlayerBullets.Flush(@FreeBullet);
+	EnemyBullets.Flush(@FreeBullet);
+	Mobs.Flush(@FreeEnemy);
+	Gibs.Flush(@FreeGib);
+
+	FlushFloatTxt();
+	Crystal.IsSet:=False;
+
+	If (KillHero) then begin
+		If (Hero<>NIL) then Dispose(Hero,Destroy());
+		Hero:=NIL
+	end
+end;
 
 Procedure ResetGamestate();
 Var C:sInt;

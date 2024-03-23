@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2023 suve (a.k.a. Artur Frenszek-Iwicki)
+ * Copyright (C) 2012-2024 suve (a.k.a. Artur Frenszek-Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -979,7 +979,13 @@ Begin
 	end else
 		SDL_Log('All assets loaded successfully.', []);
 
-	SetLength(Mob,0); SetLength(EBul,0); SetLength(PBul,0); SetLength(Gib,0); Hero:=NIL;
+	PlayerBullets.Create(16);
+	EnemyBullets.Create(16);
+	Gibs.Create(GIBS_PIECES_TOTAL * 4);
+
+	Mobs.Create(8);
+	Hero:=NIL;
+
 	SDL_Log('All done! Initialization finished in %ld ms.', [clong(TimeStampDiffMillis(StartTime, GetTimeStamp()))])
 End;
 
