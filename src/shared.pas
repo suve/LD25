@@ -298,11 +298,14 @@ Begin
 	B^.Power := Power;
 	B^.HP := Power;
 	B^.Col := Owner^.Col;
-	
-	If (Owner <> PEntity(Hero)) then
+
+	If (Owner <> PEntity(Hero)) then begin
+		If ((EnemyBullets.GetCount() mod 256) = 0) then EnemyBullets.Compact();
 		EnemyBullets.Append(B)
-	else
+	end else begin
+		If ((PlayerBullets.GetCount() mod 256) = 0) then PlayerBullets.Compact();
 		PlayerBullets.Append(B)
+	end;
 End;
 
 Procedure SpawnEnemy(Tp: TEnemyType; mapX, mapY:sInt; SwitchNum: sInt = -1);
