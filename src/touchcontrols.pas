@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2022-2023 suve (a.k.a. Artur Frenszek Iwicki)
+ * Copyright (C) 2022-2024 suve (a.k.a. Artur Frenszek Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -26,7 +26,7 @@ Uses
 Procedure Draw();
 Procedure HandleEvent(ev: PSDL_Event);
 
-Procedure SetPosition(NewDPadPos, NewShootBtnsPos: PSDL_Rect);
+Procedure SetPosition(NewDPadPos, NewShootBtnsPos, NewGoBackPos: PSDL_Rect);
 Procedure SetVisibility(NewVisible: Boolean);
 
 
@@ -40,7 +40,8 @@ Type
 	UnfingerResult = (
 		UF_NONE,
 		UF_MOVEMENT,
-		UF_SHOOT
+		UF_SHOOT,
+		UF_BACK
 	);
 
 	ButtonProps = record
@@ -60,6 +61,7 @@ Var
 	// Note: the "position" field in these records is used purely for rendering.
 	MovementButton: Array[0..7] of ButtonProps;
 	ShootLeftButton, ShootRightButton: ButtonProps;
+	GoBackButton: ButtonProps;
 
 	MovementWheel: MovementWheelProps;
 	ShootLeftTouchArea, ShootLeftExtraTouchArea: TSDL_Rect;
@@ -87,6 +89,14 @@ Begin
 End;
 
 {$IFDEF LD25_DEBUG}
+Procedure SetOutlineColour(Touched: Boolean); Inline;
+Begin
+	If Touched then
+		SDL_SetRenderDrawColor(Renderer, 0, 255, 0, 255)
+	else
+		SDL_SetRenderDrawColor(Renderer, 255, 0, 0, 255)
+end;
+
 Procedure DrawDebug(); Inline;
 Var
 	Idx: uInt;
@@ -122,45 +132,59 @@ Begin
 		RightRect := @ShootRightTouchArea
 	end;
 
-	If ShootLeftButton.Touched then
-		SDL_SetRenderDrawColor(Renderer, 0, 255, 0, 255)
-	else
-		SDL_SetRenderDrawColor(Renderer, 255, 0, 0, 255);
+	SetOutlineColour(ShootLeftButton.Touched);
 	SDL_RenderDrawRect(Renderer, LeftRect);
 
-	If ShootRightButton.Touched then
-		SDL_SetRenderDrawColor(Renderer, 0, 255, 0, 255)
-	else
-		SDL_SetRenderDrawColor(Renderer, 255, 0, 0, 255);
+	SetOutlineColour(ShootRightButton.Touched);
 	SDL_RenderDrawRect(Renderer, RightRect);
+
+	SetOutlineColour(GoBackButton.Touched);
+	SDL_RenderDrawRect(Renderer, @GoBackButton.Position)
 End;
 {$ENDIF}
 
 Procedure DrawGfx(); Inline;
 Const
+	BACK_BUTTON_SIZE = 40;
 	MOVEMENT_BUTTON_SIZE = 60;
 	SHOOT_BUTTON_SIZE = 32;
+
+	TOUCHED_OFFSET = 60;
 Var
-	Idx: uInt;
+	Idx, Flip: uInt;
 	Src: TSDL_Rect;
 Begin
+	// Movement wheel
 	Src.W := MOVEMENT_BUTTON_SIZE;
 	Src.H := MOVEMENT_BUTTON_SIZE;
 	For Idx := 0 to 7 do begin
-		Src.X := BoolToInt(MovementButton[Idx].Touched) * MOVEMENT_BUTTON_SIZE;
+		Src.X := BoolToInt(MovementButton[Idx].Touched) * TOUCHED_OFFSET;
 		Src.Y := (Idx mod 2) * MOVEMENT_BUTTON_SIZE;
 		SDL_RenderCopyEx(Renderer, Assets.TouchControlsGfx^.Tex, @Src, @MovementButton[Idx].Position, (Idx div 2) * 90.0, NIL, SDL_FLIP_NONE)
 	end;
 
+	// "Shoot" buttons
 	Src.Y := MOVEMENT_BUTTON_SIZE * 2;
 	Src.W := SHOOT_BUTTON_SIZE;
 	Src.H := SHOOT_BUTTON_SIZE;
 
-	Src.X := BoolToInt(ShootLeftButton.Touched) * MOVEMENT_BUTTON_SIZE;
+	Src.X := BoolToInt(ShootLeftButton.Touched) * TOUCHED_OFFSET;
 	SDL_RenderCopy(Renderer, Assets.TouchControlsGfx^.Tex, @Src, @ShootLeftButton.Position);
 
-	Src.X := BoolToInt(ShootRightButton.Touched) * MOVEMENT_BUTTON_SIZE;
-	SDL_RenderCopyEx(Renderer, Assets.TouchControlsGfx^.Tex, @Src, @ShootRightButton.Position, 0, NIL, SDL_FLIP_HORIZONTAL)
+	Src.X := BoolToInt(ShootRightButton.Touched) * TOUCHED_OFFSET;
+	SDL_RenderCopyEx(Renderer, Assets.TouchControlsGfx^.Tex, @Src, @ShootRightButton.Position, 0, NIL, SDL_FLIP_HORIZONTAL);
+
+	// "Go back" button
+	Src.X := BoolToInt(GoBackButton.Touched) * TOUCHED_OFFSET;
+	Src.Y := (MOVEMENT_BUTTON_SIZE * 2) + SHOOT_BUTTON_SIZE;
+	Src.W := BACK_BUTTON_SIZE;
+	Src.H := BACK_BUTTON_SIZE;
+
+	Flip := 0;
+	If (GoBackButton.Position.X > 0) then Flip := Flip or SDL_FLIP_HORIZONTAL;
+	If (GoBackButton.Position.Y > 0) then Flip := Flip or SDL_FLIP_VERTICAL;
+
+	SDL_RenderCopyEx(Renderer, Assets.TouchControlsGfx^.Tex, @Src, @GoBackButton.Position, 0, NIL, Flip)
 End;
 
 Procedure Draw();
@@ -198,6 +222,10 @@ Begin
 			Exit(UF_MOVEMENT)
 		end
 	end;
+	If (GoBackButton.Touched) and (GoBackButton.Finger = Finger) then begin
+		GoBackButton.Touched := False;
+		Exit(UF_BACK)
+	end;
 	Result := UF_NONE
 End;
 
@@ -227,6 +255,25 @@ Begin
 End;
 
 Procedure HandleEvent(ev: PSDL_Event);
+Const
+	// TODO: Make this non-const and populate the Timestamp and WindowID
+	EscapeKeyPressed: TSDL_Event = (
+		Key: (
+			Type_: SDL_KEYDOWN;
+			Timestamp: 0;
+			WindowID: 0;
+			State: 0;
+			Repeat_: SDL_PRESSED;
+			padding2: 0;
+			padding3: 0;
+			Keysym: (
+				Scancode: SDL_SCANCODE_ESCAPE;
+				Sym: SDLK_ESCAPE;
+				Mod_: KMOD_NONE;
+				Unicode: 0;
+			)
+		)
+	);
 Var
 	Idx: sInt;
 	FingerX, FingerY: sInt;
@@ -236,7 +283,11 @@ Var
 	ShootLeftRect, ShootRightRect: PSDL_Rect;
 Begin
 	If (Ev^.Type_ = SDL_FingerUp) then begin
-		UnfingerButtons(Ev^.TFinger.FingerID);
+		// Contrary to other touch controls, the "go back" button is not
+		// a "hold" button, but rather a "release" button.
+		If UnfingerButtons(Ev^.TFinger.FingerID) = UF_BACK then
+			SDL_PushEvent(@EscapeKeyPressed);
+
 		Exit()
 	end;
 
@@ -274,11 +325,13 @@ Begin
 	end;
 
 	(*
-	 * If this finger was touching the movement wheel, do not perform
-	 * any checks for the "shoot" buttons, effectively "locking" it
-	 * to the movement wheel until it stops touching the screen.
+	 * Perform checks for the "shoot" buttons ONLY if this finger was already
+	 * touching a "shoot" button before (or it didn't touch anything at all).
+	 * This will "lock" the finger to the "shoot" buttons, preventing it from
+	 * activating the movement wheel or the "go back" button until the player
+	 * lifts the finger up and stops touching the screen.
 	 *)
-	If (UFResult <> UF_MOVEMENT) then begin
+	If (UFResult = UF_NONE) or (UFResult = UF_SHOOT) then begin
 		If FingerInRect(FingerX, FingerY, ShootLeftRect) then begin
 			ShootLeftButton.Touched := True;
 			ShootLeftButton.Finger := Ev^.TFinger.FingerID;
@@ -293,16 +346,22 @@ Begin
 		end
 	end;
 
-	(*
-	 * And vice versa - do not allow the player to move the finger
-	 * from the "shoot" buttons to the movement wheel.
-	 *)
-	If (UFResult <> UF_SHOOT) then begin
+	// Same here - lock the finger to the movement wheel.
+	If (UFResult = UF_NONE) or (UFResult = UF_MOVEMENT) then begin
 		Idx := FingerPosToMovementButtonIdx(FingerX, FingerY, MovementWheelSize);
 		If (Idx >= 0) then begin
 			MovementButton[Idx].Touched := True;
 			MovementButton[Idx].Finger := Ev^.TFinger.FingerID;
 			PressMovementKeys();
+			Exit()
+		end
+	end;
+
+	// And once again, the same for the "go back" button.
+	If (UFResult = UF_NONE) or (UFResult = UF_BACK) then begin
+		If FingerInRect(FingerX, FingerY, @GoBackButton.Position) then begin
+			GoBackButton.Touched := True;
+			GoBackButton.Finger := Ev^.TFinger.FingerID;
 			Exit()
 		end
 	end
@@ -316,7 +375,7 @@ Begin
 	Result.H := Source.H + (2 * EnlargeY)
 End;
 
-Procedure SetPosition(NewDPadPos, NewShootBtnsPos: PSDL_Rect);
+Procedure SetPosition(NewDPadPos, NewShootBtnsPos, NewGoBackPos: PSDL_Rect);
 Const
 	(*
 	 * The movement wheel has a dual nature: it is rendered as an octagon,
@@ -435,6 +494,10 @@ Begin
 		// Mark virtual "shoot" keys as not being pressed
 		Key[KEY_SHOOTLEFT] := False;
 		Key[KEY_SHOOTRIGHT] := False;
+	end;
+	If (NewGoBackPos <> NIL) then begin
+		GoBackButton.Position := NewGoBackPos^;
+		GoBackButton.Touched := False
 	end
 End;
 
