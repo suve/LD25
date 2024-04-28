@@ -110,12 +110,11 @@ Begin
 		SDL_SetRenderDrawColor(Renderer, 255, 0, 0, 255)
 end;
 
-Procedure DrawDebug(); Inline;
+Procedure DebugGameButtonsVisible();
 Var
 	Idx: uInt;
 	WheelOutline: MovementButtonOutlinePtr;
 	LeftRect, RightRect: PSDL_Rect;
-	TriVerts: Array[0..3] of TSDL_Point;
 Begin
 	WheelOutline := MovBtnOutline;
 	For Idx := 0 to 7 do begin
@@ -150,9 +149,33 @@ Begin
 	SDL_RenderDrawRect(Renderer, LeftRect);
 
 	SetOutlineColour(ShootRightButton.Touched);
-	SDL_RenderDrawRect(Renderer, RightRect);
+	SDL_RenderDrawRect(Renderer, RightRect)
+End;
 
-	SetOutlineColour(GoBackButton.Touched);
+Procedure DebugGameButtonsHidden();
+Var
+	Idx: uInt;
+	WheelOutline: MovementButtonOutlinePtr;
+	LeftRect, RightRect: PSDL_Rect;
+Begin
+	SDL_SetRenderDrawColor(Renderer, 127, 127, 63, 255);
+	For Idx := 0 to 7 do
+		SDL_RenderDrawLines(Renderer, MovBtnOutline[Idx], OUTLINE_POINTS);
+
+	SDL_RenderDrawRect(Renderer, @ShootLeftTouchArea);
+	SDL_RenderDrawRect(Renderer, @ShootRightTouchArea)
+End;
+
+Procedure DebugGoBackTriangle();
+Var
+	Idx: uInt;
+	TriVerts: Array[0..3] of TSDL_Point;
+Begin
+	If (Visibility = TCV_NONE) then
+		SDL_SetRenderDrawColor(Renderer, 127, 127, 63, 255)
+	else
+		SetOutlineColour(GoBackButton.Touched);
+
 	For Idx := 0 to 3 do begin
 		TriVerts[Idx].X := GoBackTriangle.X;
 		TriVerts[Idx].Y := GoBackTriangle.Y
@@ -218,7 +241,14 @@ Begin
 		If Visibility >= TCV_ALL then DrawGameButtons();
 		DrawBackButton()
 	end;
-	{$IFDEF LD25_DEBUG} DrawDebug(); {$ENDIF}
+
+	{$IFDEF LD25_DEBUG}
+		If Visibility >= TCV_ALL then
+			DebugGameButtonsVisible()
+		else
+			DebugGameButtonsHidden();
+		DebugGoBackTriangle()
+	{$ENDIF}
 End;
 
 Procedure PressMovementKeys();
