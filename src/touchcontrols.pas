@@ -334,6 +334,9 @@ Var
 	MovementWheelSize: sInt;
 	ShootLeftRect, ShootRightRect: PSDL_Rect;
 Begin
+	// If no touch controls are visible, we can just disregard any events.
+	If (Visibility = TCV_NONE) then Exit();
+
 	If (Ev^.Type_ = SDL_FingerUp) then begin
 		// Contrary to other touch controls, the "go back" button is not
 		// a "hold" button, but rather a "release" button.
@@ -377,11 +380,29 @@ Begin
 	end;
 
 	(*
-	 * Perform checks for the "shoot" buttons ONLY if this finger was already
-	 * touching a "shoot" button before (or it didn't touch anything at all).
-	 * This will "lock" the finger to the "shoot" buttons, preventing it from
-	 * activating the movement wheel or the "go back" button until the player
-	 * lifts the finger up and stops touching the screen.
+	 * Perform checks for the "go back" button ONLY if this finger was already
+	 * touching said button before (or it didn't touch anything at all). This
+	 * will "lock" the finger to the "go back" button, preventing it from
+	 * activating the movement wheel or one of the "shoot" buttons until
+	 * the player lifts the finger up and stops touching the screen.
+	 *)
+	If (UFResult = UF_NONE) or (UFResult = UF_BACK) then begin
+		If FingerInGoBackTriangle(FingerX, FingerY) then begin
+			GoBackButton.Touched := True;
+			GoBackButton.Finger := Ev^.TFinger.FingerID;
+			Exit()
+		end
+	end;
+
+	// If the movement wheel and shoot buttons are not visible,
+	// do not allow interacting with them.
+	If (Visibility < TCV_ALL) then Exit();
+
+	(*
+	 * Same here - lock the finger to the shoot buttons.
+	 * Note that both "shoot" buttons share the same single lock;
+	 * the player is allowed to move their finger from one button
+	 * to the other and back.
 	 *)
 	If (UFResult = UF_NONE) or (UFResult = UF_SHOOT) then begin
 		If FingerInRect(FingerX, FingerY, ShootLeftRect) then begin
@@ -408,15 +429,6 @@ Begin
 			Exit()
 		end
 	end;
-
-	// And once again, the same for the "go back" button.
-	If (UFResult = UF_NONE) or (UFResult = UF_BACK) then begin
-		If FingerInGoBackTriangle(FingerX, FingerY) then begin
-			GoBackButton.Touched := True;
-			GoBackButton.Finger := Ev^.TFinger.FingerID;
-			Exit()
-		end
-	end
 End;
 
 Function EnlargeRect(Const Source: TSDL_Rect; Const EnlargeX, EnlargeY: uInt): TSDL_Rect;
