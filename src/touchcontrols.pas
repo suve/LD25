@@ -23,11 +23,18 @@ Interface
 Uses
 	SDL2;
 
+Type
+	TouchControlVisibility = (
+		TCV_NONE,
+		TCV_ONLY_BACK,
+		TCV_ALL
+	);
+
 Procedure Draw();
 Procedure HandleEvent(ev: PSDL_Event);
 
 Procedure SetPosition(NewDPadPos, NewShootBtnsPos, NewGoBackPos: PSDL_Rect);
-Procedure SetVisibility(NewVisible: Boolean);
+Procedure SetVisibility(NewValue: TouchControlVisibility);
 
 
 Implementation
@@ -56,7 +63,7 @@ Type
 	end;
 
 Var
-	Visible: Boolean;
+	Visibility: TouchControlVisibility;
 
 	// Note: the "position" field in these records is used purely for rendering.
 	MovementButton: Array[0..7] of ButtonProps;
@@ -143,42 +150,47 @@ Begin
 End;
 {$ENDIF}
 
-Procedure DrawGfx(); Inline;
 Const
-	BACK_BUTTON_SIZE = 40;
-	MOVEMENT_BUTTON_SIZE = 60;
-	SHOOT_BUTTON_SIZE = 32;
+	GFX_BACK_BUTTON_SIZE = 40;
+	GFX_MOVEMENT_BUTTON_SIZE = 60;
+	GFX_SHOOT_BUTTON_SIZE = 32;
+	GFX_TOUCHED_OFFSET = 60;
 
-	TOUCHED_OFFSET = 60;
+Procedure DrawGameButtons(); Inline;
 Var
-	Idx, Flip: uInt;
+	Idx: uInt;
 	Src: TSDL_Rect;
 Begin
 	// Movement wheel
-	Src.W := MOVEMENT_BUTTON_SIZE;
-	Src.H := MOVEMENT_BUTTON_SIZE;
+	Src.W := GFX_MOVEMENT_BUTTON_SIZE;
+	Src.H := GFX_MOVEMENT_BUTTON_SIZE;
 	For Idx := 0 to 7 do begin
-		Src.X := BoolToInt(MovementButton[Idx].Touched) * TOUCHED_OFFSET;
-		Src.Y := (Idx mod 2) * MOVEMENT_BUTTON_SIZE;
+		Src.X := BoolToInt(MovementButton[Idx].Touched) * GFX_TOUCHED_OFFSET;
+		Src.Y := (Idx mod 2) * GFX_MOVEMENT_BUTTON_SIZE;
 		SDL_RenderCopyEx(Renderer, Assets.TouchControlsGfx^.Tex, @Src, @MovementButton[Idx].Position, (Idx div 2) * 90.0, NIL, SDL_FLIP_NONE)
 	end;
 
 	// "Shoot" buttons
-	Src.Y := MOVEMENT_BUTTON_SIZE * 2;
-	Src.W := SHOOT_BUTTON_SIZE;
-	Src.H := SHOOT_BUTTON_SIZE;
+	Src.Y := GFX_MOVEMENT_BUTTON_SIZE * 2;
+	Src.W := GFX_SHOOT_BUTTON_SIZE;
+	Src.H := GFX_SHOOT_BUTTON_SIZE;
 
-	Src.X := BoolToInt(ShootLeftButton.Touched) * TOUCHED_OFFSET;
+	Src.X := BoolToInt(ShootLeftButton.Touched) * GFX_TOUCHED_OFFSET;
 	SDL_RenderCopy(Renderer, Assets.TouchControlsGfx^.Tex, @Src, @ShootLeftButton.Position);
 
-	Src.X := BoolToInt(ShootRightButton.Touched) * TOUCHED_OFFSET;
-	SDL_RenderCopyEx(Renderer, Assets.TouchControlsGfx^.Tex, @Src, @ShootRightButton.Position, 0, NIL, SDL_FLIP_HORIZONTAL);
+	Src.X := BoolToInt(ShootRightButton.Touched) * GFX_TOUCHED_OFFSET;
+	SDL_RenderCopyEx(Renderer, Assets.TouchControlsGfx^.Tex, @Src, @ShootRightButton.Position, 0, NIL, SDL_FLIP_HORIZONTAL)
+End;
 
-	// "Go back" button
-	Src.X := BoolToInt(GoBackButton.Touched) * TOUCHED_OFFSET;
-	Src.Y := (MOVEMENT_BUTTON_SIZE * 2) + SHOOT_BUTTON_SIZE;
-	Src.W := BACK_BUTTON_SIZE;
-	Src.H := BACK_BUTTON_SIZE;
+Procedure DrawBackButton(); Inline;
+Var
+	Flip: uInt;
+	Src: TSDL_Rect;
+Begin
+	Src.X := BoolToInt(GoBackButton.Touched) * GFX_TOUCHED_OFFSET;
+	Src.Y := (GFX_MOVEMENT_BUTTON_SIZE * 2) + GFX_SHOOT_BUTTON_SIZE;
+	Src.W := GFX_BACK_BUTTON_SIZE;
+	Src.H := GFX_BACK_BUTTON_SIZE;
 
 	Flip := 0;
 	If (GoBackButton.Position.X > 0) then Flip := Flip or SDL_FLIP_HORIZONTAL;
@@ -189,7 +201,10 @@ End;
 
 Procedure Draw();
 Begin
-	If Visible then DrawGfx();
+	If Visibility >= TCV_ONLY_BACK then begin
+		If Visibility >= TCV_ALL then DrawGameButtons();
+		DrawBackButton()
+	end;
 	{$IFDEF LD25_DEBUG} DrawDebug(); {$ENDIF}
 End;
 
@@ -507,12 +522,16 @@ Begin
 	end
 End;
 
-Procedure SetVisibility(NewVisible: Boolean);
+Procedure SetVisibility(NewValue: TouchControlVisibility);
 Var
 	Idx: uInt;
 Begin
-	Visible := NewVisible;
-	If Not Visible then begin
+	Visibility := NewValue;
+
+	If Visibility < TCV_ONLY_BACK then
+		GoBackButton.Touched := False;
+
+	If Visibility < TCV_ALL then begin
 		ShootLeftButton.Touched := False;
 		ShootRightButton.Touched := False;
 		For Idx := 0 to 7 do MovementButton[Idx].Touched := False

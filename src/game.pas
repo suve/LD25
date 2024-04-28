@@ -873,7 +873,7 @@ Begin
 	SDL_ShowCursor(0);
 	
 	For pk := Low(TPlayerKey) to High(TPlayerKey) do Key[pk]:=False;
-	{$IFDEF LD25_MOBILE} TouchControls.SetVisibility(True); {$ENDIF}
+	{$IFDEF LD25_MOBILE} TouchControls.SetVisibility(TCV_ALL); {$ENDIF}
 	
 	RoomChange:=RCHANGE_NONE;
 	Paused:=False; WantToQuit:=False; 
@@ -904,7 +904,7 @@ Begin
 
 	Until WantToQuit;
 
-	{$IFDEF LD25_MOBILE} TouchControls.SetVisibility(False); {$ENDIF}
+	{$IFDEF LD25_MOBILE} TouchControls.SetVisibility(TCV_NONE); {$ENDIF}
 
 	SetAllowScreensaver(True);
 	SDL_ShowCursor(1);
