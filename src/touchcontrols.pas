@@ -254,10 +254,11 @@ Begin
 	Result := (Trunc(Angle + (360 * 10.5 / 8)) div 45) mod 8
 End;
 
-Procedure HandleEvent(ev: PSDL_Event);
+
+Procedure TriggerBackButton();
 Const
 	// TODO: Make this non-const and populate the Timestamp and WindowID
-	EscapeKeyPressed: TSDL_Event = (
+	BackKeyPressed: TSDL_Event = (
 		Key: (
 			Type_: SDL_KEYDOWN;
 			Timestamp: 0;
@@ -267,13 +268,18 @@ Const
 			padding2: 0;
 			padding3: 0;
 			Keysym: (
-				Scancode: SDL_SCANCODE_ESCAPE;
-				Sym: SDLK_ESCAPE;
+				Scancode: SDL_SCANCODE_AC_BACK;
+				Sym: SDLK_AC_BACK;
 				Mod_: KMOD_NONE;
 				Unicode: 0;
 			)
 		)
 	);
+Begin
+	SDL_PushEvent(@BackKeyPressed)
+End;
+
+Procedure HandleEvent(ev: PSDL_Event);
 Var
 	Idx: sInt;
 	FingerX, FingerY: sInt;
@@ -285,8 +291,8 @@ Begin
 	If (Ev^.Type_ = SDL_FingerUp) then begin
 		// Contrary to other touch controls, the "go back" button is not
 		// a "hold" button, but rather a "release" button.
-		If UnfingerButtons(Ev^.TFinger.FingerID) = UF_BACK then
-			SDL_PushEvent(@EscapeKeyPressed);
+		UFResult := UnfingerButtons(Ev^.TFinger.FingerID);
+		If UFResult = UF_BACK then TriggerBackButton();
 
 		Exit()
 	end;
