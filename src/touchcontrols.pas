@@ -62,6 +62,11 @@ Type
 		DeadZoneSize, TouchSize, TouchExtraSize: uInt;
 	end;
 
+	BackButtonProps = record
+		X, Y, Size: uInt;
+		Flip: uInt;
+	end;
+
 Var
 	Visibility: TouchControlVisibility;
 
@@ -73,6 +78,7 @@ Var
 	MovementWheel: MovementWheelProps;
 	ShootLeftTouchArea, ShootLeftExtraTouchArea: TSDL_Rect;
 	ShootRightTouchArea, ShootRightExtraTouchArea: TSDL_Rect;
+	GoBackTriangle: BackButtonProps;
 
 {$IFDEF LD25_DEBUG}
 Const
@@ -109,6 +115,7 @@ Var
 	Idx: uInt;
 	WheelOutline: MovementButtonOutlinePtr;
 	LeftRect, RightRect: PSDL_Rect;
+	TriVerts: Array[0..3] of TSDL_Point;
 Begin
 	WheelOutline := MovBtnOutline;
 	For Idx := 0 to 7 do begin
@@ -146,7 +153,19 @@ Begin
 	SDL_RenderDrawRect(Renderer, RightRect);
 
 	SetOutlineColour(GoBackButton.Touched);
-	SDL_RenderDrawRect(Renderer, @GoBackButton.Position)
+	For Idx := 0 to 3 do begin
+		TriVerts[Idx].X := GoBackTriangle.X;
+		TriVerts[Idx].Y := GoBackTriangle.Y
+	end;
+	If ((GoBackTriangle.Flip and SDL_FLIP_HORIZONTAL) = 0) then
+		TriVerts[1].X += GoBackTriangle.Size
+	else
+		TriVerts[1].X -= GoBackTriangle.Size;
+	If ((GoBackTriangle.Flip and SDL_FLIP_VERTICAL) = 0) then
+		TriVerts[2].Y += GoBackTriangle.Size
+	else
+		TriVerts[2].Y -= GoBackTriangle.Size;
+	SDL_RenderDrawLines(Renderer, @TriVerts[0], 4)
 End;
 {$ENDIF}
 
@@ -184,19 +203,13 @@ End;
 
 Procedure DrawBackButton(); Inline;
 Var
-	Flip: uInt;
 	Src: TSDL_Rect;
 Begin
 	Src.X := BoolToInt(GoBackButton.Touched) * GFX_TOUCHED_OFFSET;
 	Src.Y := (GFX_MOVEMENT_BUTTON_SIZE * 2) + GFX_SHOOT_BUTTON_SIZE;
 	Src.W := GFX_BACK_BUTTON_SIZE;
 	Src.H := GFX_BACK_BUTTON_SIZE;
-
-	Flip := 0;
-	If (GoBackButton.Position.X > 0) then Flip := Flip or SDL_FLIP_HORIZONTAL;
-	If (GoBackButton.Position.Y > 0) then Flip := Flip or SDL_FLIP_VERTICAL;
-
-	SDL_RenderCopyEx(Renderer, Assets.TouchControlsGfx^.Tex, @Src, @GoBackButton.Position, 0, NIL, Flip)
+	SDL_RenderCopyEx(Renderer, Assets.TouchControlsGfx^.Tex, @Src, @GoBackButton.Position, 0, NIL, GoBackTriangle.Flip)
 End;
 
 Procedure Draw();
@@ -269,6 +282,24 @@ Begin
 	Result := (Trunc(Angle + (360 * 10.5 / 8)) div 45) mod 8
 End;
 
+Function FingerInGoBackTriangle(Const FingerX, FingerY: sInt): Boolean;
+Var
+	DiffX, DiffY: sInt;
+Begin
+	If ((GoBackTriangle.Flip and SDL_FLIP_HORIZONTAL) = 0) then
+		DiffX := FingerX - GoBackTriangle.X
+	else
+		DiffX := GoBackTriangle.X - FingerX;
+	If (DiffX < 0) then Exit(False);
+
+	If ((GoBackTriangle.Flip and SDL_FLIP_VERTICAL) = 0) then
+		DiffY := FingerY - GoBackTriangle.Y
+	else
+		DiffY := GoBackTriangle.Y - FingerY;
+	If (DiffY < 0) then Exit(False);
+
+	Result := (DiffX + DiffY) <= GoBackTriangle.Size
+End;
 
 Procedure TriggerBackButton();
 Const
@@ -380,7 +411,7 @@ Begin
 
 	// And once again, the same for the "go back" button.
 	If (UFResult = UF_NONE) or (UFResult = UF_BACK) then begin
-		If FingerInRect(FingerX, FingerY, @GoBackButton.Position) then begin
+		If FingerInGoBackTriangle(FingerX, FingerY) then begin
 			GoBackButton.Touched := True;
 			GoBackButton.Finger := Ev^.TFinger.FingerID;
 			Exit()
@@ -517,6 +548,23 @@ Begin
 		Key[KEY_SHOOTRIGHT] := False;
 	end;
 	If (NewGoBackPos <> NIL) then begin
+		GoBackTriangle.X := NewGoBackPos^.X;
+		GoBackTriangle.Y := NewGoBackPos^.Y;
+		If (NewGoBackPos^.W > NewGoBackPos^.H) then
+			GoBackTriangle.Size := NewGoBackPos^.W
+		else
+			GoBackTriangle.Size := NewGoBackPos^.H;
+
+		GoBackTriangle.Flip := 0;
+		If (GoBackTriangle.X > 0) then begin
+			GoBackTriangle.X += NewGoBackPos^.W - 1;
+			GoBackTriangle.Flip := GoBackTriangle.Flip or SDL_FLIP_HORIZONTAL
+		end;
+		If (GoBackTriangle.Y > 0) then begin
+			GoBackTriangle.Y += NewGoBackPos^.H - 1;
+			GoBackTriangle.Flip := GoBackTriangle.Flip or SDL_FLIP_VERTICAL
+		end;
+
 		GoBackButton.Position := NewGoBackPos^;
 		GoBackButton.Touched := False
 	end
