@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2023 suve (a.k.a. Artur Frenszek-Iwicki)
+ * Copyright (C) 2012-2024 suve (a.k.a. Artur Frenszek-Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -29,6 +29,7 @@ Uses
 	SysUtils,
 	SDL2,
 	Assets, Fonts, Images, Rendering, Shared
+	{$IFDEF LD25_MOBILE}, TouchControls {$ENDIF}
 ;
 
 Function DisplaySlide(Const Img:PImage):Boolean;
@@ -71,6 +72,10 @@ Procedure ShowIntro();
 Var
 	Idx: uInt;
 Begin
+	{$IFDEF LD25_MOBILE}
+		TouchControls.SetVisibility(TCV_NONE);
+	{$ENDIF}
+
 	For Idx := Low(SlideIn) to High(SlideIn) do
 		If (Not DisplaySlide(SlideIn[Idx])) then Exit();
 
@@ -87,6 +92,10 @@ Var
 	FadeInTime: sInt;
 	FadeColour: TSDL_Color;
 Begin
+	{$IFDEF LD25_MOBILE}
+		TouchControls.SetVisibility(TCV_NONE);
+	{$ENDIF}
+
 	For Idx := Low(SlideOut) to High(SlideOut) do
 		If Not DisplaySlide(SlideOut[Idx]) then Exit();
 

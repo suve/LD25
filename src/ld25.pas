@@ -27,6 +27,7 @@ uses
 	SDL2, SDL2_image, SDL2_mixer,
 	Assets, Colours, ConfigFiles, FloatingText, Fonts, Game, Images, Objects,
 	MathUtils, Menus, Rendering, Rooms, Shared, Slides
+	{$IFDEF LD25_MOBILE}, TouchControls {$ENDIF}
 ;
 
 
@@ -369,6 +370,9 @@ Begin
 						Break
 					end
 			end else
+			If (Ev.Type_ = SDL_FingerUp) or (Ev.Type_ = SDL_FingerDown) or (Ev.Type_ = SDL_FingerMotion) then begin
+				TouchControls.HandleEvent(@Ev)
+			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
 				HandleWindowResizedEvent(@Ev)
 		end;
@@ -624,6 +628,11 @@ Begin
 					BackToMenu := True
 				end
 			end else
+			{$IFDEF LD25_MOBILE}
+			If (Ev.Type_ = SDL_FingerUp) or (Ev.Type_ = SDL_FingerDown) or (Ev.Type_ = SDL_FingerMotion) then begin
+				TouchControls.HandleEvent(@Ev)
+			end else
+			{$ENDIF}
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
 				HandleWindowResizedEvent(@Ev)
 		end;
@@ -744,6 +753,10 @@ Begin
 		Menu.AddItem('D', 'DONATE', @WhiteColour);
 	{$ENDIF}
 	Menu.AddItem('Q', 'QUIT', @WhiteColour);
+
+	{$IFDEF LD25_MOBILE}
+		TouchControls.SetVisibility(TCV_ONLY_BACK);
+	{$ENDIF}
 
 	Result := '?';
 	While (Result = '?') do begin
