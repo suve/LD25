@@ -333,8 +333,7 @@ End;
 
 Procedure TriggerBackButton();
 Const
-	// TODO: Make this non-const and populate the Timestamp and WindowID
-	BackKeyPressed: TSDL_Event = (
+	PROTOTYPE: TSDL_Event = (
 		Key: (
 			Type_: SDL_KEYDOWN;
 			Timestamp: 0;
@@ -351,8 +350,14 @@ Const
 			)
 		)
 	);
+Var
+	Event: TSDL_Event;
 Begin
-	SDL_PushEvent(@BackKeyPressed)
+	Event := PROTOTYPE;
+	Event.Key.Timestamp := SDL_GetTicks();
+	Event.Key.WindowID := SDL_GetWindowID(Window);
+
+	SDL_PushEvent(@Event)
 End;
 
 Procedure HandleEvent(ev: PSDL_Event);
