@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2023 suve (a.k.a. Artur Frenszek-Iwicki)
+ * Copyright (C) 2012-2024 suve (a.k.a. Artur Frenszek-Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -57,6 +57,7 @@ Const
 
 Var
 	MapColour: Array[0..7] of TSDL_Colour;
+	MenuActiveColour, MenuInactiveColour: TSDL_Colour;
 
 Operator = (A, B: TSDL_Colour):Boolean;
 
@@ -66,6 +67,15 @@ Function RGBToColour(RGB: LongWord):TSDL_Colour;
 Function StrToColour(Str: AnsiString):TSDL_Colour;
 
 Procedure ResetMapColoursToDefault();
+
+(*
+ * TODO: Instead of retrieving the time-delta and doing its own bookkeeping,
+ *       this function could just calculate its result based on SDL's tick
+ *       count. Most of the game relies on Shared.GetDeltaTime(), which calls
+ *       SDL_GetTicks() internally, so this could probably be done in a way
+ *       that avoids calling GetTicks() twice.
+ *)
+Procedure UpdateMenuColours(TimeDelta: uInt);
 
 
 Implementation
@@ -116,5 +126,54 @@ Var
 Begin
 	For C:=Low(MapColour) to High(MapColour) do MapColour[C]:=DefaultMapColour[C]
 End;
+
+Const
+	ACTIVE_COLOUR_MAX = 256 - 16;
+	ACTIVE_COLOUR_MIN = 256 - 64;
+	ACTIVE_COLOUR_SECONDARY = ACTIVE_COLOUR_MIN - 16;
+
+	INACTIVE_COLOUR_MAX = 127 + 16;
+	INACTIVE_COLOUR_MIN = 127 - 15;
+	INACTIVE_COLOUR_SECONDARY = INACTIVE_COLOUR_MIN - 24;
+
+Var
+	MenuTicks: uInt;
+
+Procedure UpdateMenuColours(TimeDelta: uInt);
+Const
+	TRANSITION_TICKS = 1920;
+	ACTIVE_TRANSITION_AMOUNT = (ACTIVE_COLOUR_MAX - ACTIVE_COLOUR_MIN);
+	INACTIVE_TRANSITION_AMOUNT = (INACTIVE_COLOUR_MAX - INACTIVE_COLOUR_MIN);
+Var
+	Amount, InAmount: uInt;
+Begin
+	MenuTicks := (MenuTicks + TimeDelta) mod (TRANSITION_TICKS * 2);
+
+	Amount := ((MenuTicks mod TRANSITION_TICKS) * ACTIVE_TRANSITION_AMOUNT) div TRANSITION_TICKS;
+	InAmount := ((MenuTicks mod TRANSITION_TICKS) * INACTIVE_TRANSITION_AMOUNT) div TRANSITION_TICKS;
+
+	If MenuTicks < TRANSITION_TICKS then begin
+		MenuActiveColour.G := ACTIVE_COLOUR_MAX - Amount;
+		MenuInactiveColour.R := INACTIVE_COLOUR_MIN + InAmount
+	end else begin
+		MenuActiveColour.G := ACTIVE_COLOUR_MIN + Amount;
+		MenuInactiveColour.R := INACTIVE_COLOUR_MAX - InAmount
+	end
+End;
+
+Initialization
+	With MenuActiveColour do begin
+		R := ACTIVE_COLOUR_SECONDARY;
+		G := ACTIVE_COLOUR_MAX;
+		B := ACTIVE_COLOUR_SECONDARY;
+		A := 255
+	end;
+	With MenuInActiveColour do begin
+		R := INACTIVE_COLOUR_MIN;
+		G := INACTIVE_COLOUR_SECONDARY;
+		B := INACTIVE_COLOUR_SECONDARY;
+		A := 255
+	end;
+	MenuTicks := 0
 
 End.

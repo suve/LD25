@@ -184,8 +184,8 @@ Var
 { Subproc }
 	Procedure OnVolumeChanged();
 	Begin
-		If(Volume = 0) then VolDownColour := @GreyColour else VolDownColour := @WhiteColour;
-		If(Volume = VOL_LEVEL_MAX) then VolUpColour := @GreyColour else VolUpColour := @WhiteColour;
+		If(Volume = 0) then VolDownColour := @MenuInactiveColour else VolDownColour := @MenuActiveColour;
+		If(Volume = VOL_LEVEL_MAX) then VolUpColour := @MenuInactiveColour else VolUpColour := @MenuActiveColour;
 		VolumeText := IntToStr(Volume)
 	End;
 
@@ -327,10 +327,11 @@ Begin
 		PrintText(['MOVEMENT', 'WHEEL'], Font, WheelRect.X + (WHEEL_SIZE div 2), WheelRect.Y + (WHEEL_SIZE div 2), ALIGN_CENTRE, ALIGN_MIDDLE, @GreyColour);
 
 		Font^.Scale := 2;
-		PrintText('SWAP', Font, SwapButton.X, SwapButton.Y, ALIGN_LEFT, ALIGN_TOP, @WhiteColour);
+		PrintText('SWAP', Font, SwapButton.X, SwapButton.Y, ALIGN_LEFT, ALIGN_TOP, @MenuActiveColour);
 
 		Rendering.FinishFrame();
 		GetDeltaTime(dt);
+		UpdateMenuColours(dt);
 
 		VolumeChanged := False;
 		TouchControlsSwapChanged := False;
@@ -444,10 +445,10 @@ Begin
 
 	Menu.Create();
 	Menu.SetFontScale(2);
-	Menu.AddItem('R', 'RED:   #'+HexStr(CurrentCol.R, 2), @WhiteColour);
-	Menu.AddItem('G', 'GREEN: #'+HexStr(CurrentCol.G, 2), @WhiteColour);
-	Menu.AddItem('B', 'BLUE:  #'+HexStr(CurrentCol.B, 2), @WhiteColour);
-	Menu.AddItem('D', 'DEFAULT', @WhiteColour);
+	Menu.AddItem('R', 'RED:   #'+HexStr(CurrentCol.R, 2), @MenuActiveColour);
+	Menu.AddItem('G', 'GREEN: #'+HexStr(CurrentCol.G, 2), @MenuActiveColour);
+	Menu.AddItem('B', 'BLUE:  #'+HexStr(CurrentCol.B, 2), @MenuActiveColour);
+	Menu.AddItem('D', 'DEFAULT', @MenuActiveColour);
 
 	Finished := False;
 	While Not Finished do begin
@@ -469,6 +470,7 @@ Begin
 		
 		Rendering.FinishFrame();
 		GetDeltaTime(dt);
+		UpdateMenuColours(dt);
 
 		Changed := False;
 		While (SDL_PollEvent(@Ev)>0) do begin
@@ -521,7 +523,7 @@ Var
 Begin
 	Menu.Create(8);
 	Menu.SetFontScale(2);
-	For Idx := 0 to 7 do Menu.AddItem(Chr(48 + Idx), UpperCase(ColourName[Idx]), @WhiteColour);
+	For Idx := 0 to 7 do Menu.AddItem(Chr(48 + Idx), UpperCase(ColourName[Idx]), @MenuActiveColour);
 	Menu.SetVerticalOffset(TitleGfx^.H + (Font^.CharH * 3));
 
 	Finished := False;
@@ -536,6 +538,8 @@ Begin
 		Rendering.FinishFrame();
 
 		GetDeltaTime(dt);
+		UpdateMenuColours(dt);
+
 		Selection := -1;
 		While (SDL_PollEvent(@Ev)>0) do begin
 			Choice := Menu.ProcessEvent(@Ev);
@@ -588,16 +592,17 @@ Begin
 		PrintText('YOU CAN DONATE VIA:', Font,(RESOL_W div 2),YPos,ALIGN_CENTRE,ALIGN_TOP,NIL);
 
 		YPos += Font^.CharH * Font^.Scale * 3;
-		PrintMenuText(GitHubText, XPos, YPos, Alignment, @WhiteColour, GitHubRect);
+		PrintMenuText(GitHubText, XPos, YPos, Alignment, @MenuActiveColour, GitHubRect);
 
 		YPos += Font^.CharH * Font^.Scale * 2;
-		PrintMenuText(LiberapayText, XPos, YPos, Alignment, @WhiteColour, LiberaPayRect);
+		PrintMenuText(LiberapayText, XPos, YPos, Alignment, @MenuActiveColour, LiberaPayRect);
 
 		YPos += Font^.CharH * Font^.Scale * 3;
-		PrintText('THANKS!', Font,(RESOL_W div 2),YPos,ALIGN_CENTRE,ALIGN_TOP,NIL);
+		PrintText('THANKS!', Font,(RESOL_W div 2),YPos,ALIGN_CENTRE,ALIGN_TOP, @WhiteColour);
 
 		Rendering.FinishFrame();
 		GetDeltaTime(dt);
+		UpdateMenuColours(dt);
 
 		While (SDL_PollEvent(@Ev)>0) do begin
 			If (Ev.Type_ = SDL_QuitEv) then begin
@@ -663,9 +668,9 @@ Begin
 	Menu.SetFontScale(2);
 	For GM := Low(GM) to High(GM) do begin
 		If (Ok[GM]) then
-			Col := @WhiteColour
+			Col := @MenuActiveColour
 		else
-			Col := @GreyColour;
+			Col := @MenuInactiveColour;
 		Menu.AddItem(WorldName[GM][1], WorldName[GM], Col)
 	end;
 
@@ -686,6 +691,8 @@ Begin
 
 		Rendering.FinishFrame();
 		GetDeltaTime(dt);
+		UpdateMenuColours(dt);
+
 		While (SDL_PollEvent(@Ev)>0) do begin
 			Choice := Menu.ProcessEvent(@Ev);
 			If (Choice = 'T') then begin
@@ -717,9 +724,9 @@ Var
 	Choice: Char;
 Begin
 	If (GameOn) then
-		ContinueColour := @WhiteColour
+		ContinueColour := @MenuActiveColour
 	else
-		ContinueColour := @GreyColour;
+		ContinueColour := @MenuInactiveColour;
 
 	IHasSaves := False;
 	For GM:=Low(GM) to High(GM) do If (SaveExists[GM]) then begin
@@ -727,26 +734,26 @@ Begin
 		Break
 	end;
 	If (IHasSaves) then
-		LoadColour := @WhiteColour
+		LoadColour := @MenuActiveColour
 	else
-		LoadColour := @GreyColour;
+		LoadColour := @MenuInactiveColour;
 
 	Menu.Create(8);
 	Menu.SetFontScale(2);
-	Menu.AddItem('I', 'INTRODUCTION', @WhiteColour);
+	Menu.AddItem('I', 'INTRODUCTION', @MenuActiveColour);
 	Menu.AddItem('C', 'CONTINUE', ContinueColour);
-	Menu.AddItem('N', 'NEW GAME', @WhiteColour);
+	Menu.AddItem('N', 'NEW GAME', @MenuActiveColour);
 	Menu.AddItem('L', 'LOAD GAME', LoadColour);
 	{$IFNDEF LD25_MOBILE}
-		Menu.AddItem('B', 'BIND KEYS', @WhiteColour);
+		Menu.AddItem('B', 'BIND KEYS', @MenuActiveColour);
 	{$ELSE}
-		Menu.AddItem('O', 'CHANGE OPTIONS', @WhiteColour);
+		Menu.AddItem('O', 'CHANGE OPTIONS', @MenuActiveColour);
 	{$ENDIF}
-	Menu.AddItem('S', 'SET COLOURS', @WhiteColour);
+	Menu.AddItem('S', 'SET COLOURS', @MenuActiveColour);
 	{$IFDEF LD25_DONATE}
-		Menu.AddItem('D', 'DONATE', @WhiteColour);
+		Menu.AddItem('D', 'DONATE', @MenuActiveColour);
 	{$ENDIF}
-	Menu.AddItem('Q', 'QUIT', @WhiteColour);
+	Menu.AddItem('Q', 'QUIT', @MenuActiveColour);
 
 	Result := '?';
 	While (Result = '?') do begin
@@ -756,6 +763,8 @@ Begin
 		Rendering.FinishFrame();
 
 		GetDeltaTime(dt);
+		UpdateMenuColours(dt);
+
 		While (SDL_PollEvent(@Ev)>0) do begin
 			Choice := Menu.ProcessEvent(@Ev);
 			If (Choice = CHOICE_QUIT) or (Choice = CHOICE_BACK) then begin
