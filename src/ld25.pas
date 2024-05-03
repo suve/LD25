@@ -558,6 +558,9 @@ Const
 	GitHubText    = {$IFNDEF LD25_MOBILE} 'G - ' + {$ENDIF} 'GITHUB SPONSORS';
 	LiberapayText = {$IFNDEF LD25_MOBILE} 'L - ' + {$ENDIF} 'LIBERAPAY';
 	Alignment = {$IFNDEF LD25_MOBILE} ALIGN_LEFT {$ELSE} ALIGN_CENTRE {$ENDIF};
+
+	GitHubLink: PChar = 'https://github.com/sponsors/suve';
+	LiberapayLink: PChar = 'https://liberapay.com/suve';
 Var
 	dt: uInt;
 	XPos, YPos: sInt;
@@ -605,22 +608,22 @@ Begin
 					BackToMenu := True
 				else
 				If (Ev.Key.Keysym.Sym = SDLK_G) then begin
-					SDL_OpenUrl(PChar('https://github.com/sponsors/suve'));
+					SDL_OpenUrl(GitHubLink);
 					BackToMenu := True
 				end else
 				If (Ev.Key.Keysym.Sym = SDLK_L) then begin
-					SDL_OpenUrl(PChar('https://liberapay.com/suve'));
+					SDL_OpenUrl(LiberapayLink);
 					BackToMenu := True
 				end
 			end else
 			If (Ev.Type_ = SDL_MouseButtonDown) then begin
 				{$IFDEF LD25_MOBILE} TranslateMouseEventCoords(@Ev); {$ENDIF}
 				If(MouseInRect(GitHubRect)) then begin
-					SDL_OpenUrl(PChar('https://github.com/sponsors/suve'));
+					SDL_OpenUrl(GitHubLink);
 					BackToMenu := True
 				end else
 				If(MouseInRect(LiberaPayRect)) then begin
-					SDL_OpenUrl(PChar('https://liberapay.com/suve'));
+					SDL_OpenUrl(LiberaPayLink);
 					BackToMenu := True
 				end
 			end else
