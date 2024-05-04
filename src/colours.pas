@@ -129,10 +129,10 @@ End;
 
 Const
 	ACTIVE_COLOUR_MAX = 256 - 16;
-	ACTIVE_COLOUR_MIN = 256 - 64;
-	ACTIVE_COLOUR_SECONDARY = ACTIVE_COLOUR_MIN - 16;
+	ACTIVE_COLOUR_MIN = 256 - 48;
+	ACTIVE_COLOUR_SECONDARY = ACTIVE_COLOUR_MIN - 48;
 
-	INACTIVE_COLOUR_MAX = 127 + 16;
+	INACTIVE_COLOUR_MAX = 127 + 32;
 	INACTIVE_COLOUR_MIN = 127 - 15;
 	INACTIVE_COLOUR_SECONDARY = INACTIVE_COLOUR_MIN - 24;
 
@@ -141,24 +141,40 @@ Var
 
 Procedure UpdateMenuColours(TimeDelta: uInt);
 Const
-	TRANSITION_TICKS = 1920;
+	DWELL_TICKS = 1280;
+	TRANSITION_TICKS = 1280;
+
 	ACTIVE_TRANSITION_AMOUNT = (ACTIVE_COLOUR_MAX - ACTIVE_COLOUR_MIN);
 	INACTIVE_TRANSITION_AMOUNT = (INACTIVE_COLOUR_MAX - INACTIVE_COLOUR_MIN);
 Var
-	Amount, InAmount: uInt;
+	Progress, Active, Inactive: uInt;
 Begin
-	MenuTicks := (MenuTicks + TimeDelta) mod (TRANSITION_TICKS * 2);
+	MenuTicks := (MenuTicks + TimeDelta) mod ((DWELL_TICKS + TRANSITION_TICKS) * 2);
 
-	Amount := ((MenuTicks mod TRANSITION_TICKS) * ACTIVE_TRANSITION_AMOUNT) div TRANSITION_TICKS;
-	InAmount := ((MenuTicks mod TRANSITION_TICKS) * INACTIVE_TRANSITION_AMOUNT) div TRANSITION_TICKS;
-
-	If MenuTicks < TRANSITION_TICKS then begin
-		MenuActiveColour.G := ACTIVE_COLOUR_MAX - Amount;
-		MenuInactiveColour.R := INACTIVE_COLOUR_MIN + InAmount
+	If MenuTicks < DWELL_TICKS then begin
+		// Pre-transition dwell
+		Active := ACTIVE_COLOUR_MAX;
+		Inactive := INACTIVE_COLOUR_MIN
+	end else
+	If MenuTicks < (DWELL_TICKS + TRANSITION_TICKS) then begin
+		// Forwards transition
+		Progress := MenuTicks - DWELL_TICKS;
+		Active := ACTIVE_COLOUR_MAX - ((Progress * ACTIVE_TRANSITION_AMOUNT) div TRANSITION_TICKS);
+		Inactive := INACTIVE_COLOUR_MIN + ((Progress * INACTIVE_TRANSITION_AMOUNT) div TRANSITION_TICKS)
+	end else
+	If MenuTicks < (DWELL_TICKS + TRANSITION_TICKS + DWELL_TICKS) then begin
+		// Post-transition dwell
+		Active := ACTIVE_COLOUR_MIN;
+		Inactive := INACTIVE_COLOUR_MAX
 	end else begin
-		MenuActiveColour.G := ACTIVE_COLOUR_MIN + Amount;
-		MenuInactiveColour.R := INACTIVE_COLOUR_MAX - InAmount
-	end
+		// Backwards transition
+		Progress := MenuTicks - DWELL_TICKS - TRANSITION_TICKS - DWELL_TICKS;
+		Active := ACTIVE_COLOUR_MIN + ((Progress * ACTIVE_TRANSITION_AMOUNT) div TRANSITION_TICKS);
+		Inactive := INACTIVE_COLOUR_MAX - ((Progress * INACTIVE_TRANSITION_AMOUNT) div TRANSITION_TICKS)
+	end;
+
+	MenuActiveColour.G := Active;
+	MenuInactiveColour.R := Inactive
 End;
 
 Initialization
