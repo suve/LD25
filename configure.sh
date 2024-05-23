@@ -188,8 +188,8 @@ pascal_string() {
 	output_str="''"
 	open_apos=0
 	while [ "${#input_str}" -gt 0 ]; do
-		letter="$(echo "${input_str}" | cut -c1)"
-		input_str="$(echo "${input_str}" | cut -c2-)"
+		letter="$(echo "${input_str}" | cut -b1)"
+		input_str="$(echo "${input_str}" | cut -b2-)"
 
 		letter_ord="$(printf "%d" "'${letter}")"
 		if [ "${letter_ord}" -ge 32 ] && [ "${letter_ord}" -le 126 ]; then
