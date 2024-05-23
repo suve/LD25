@@ -20,7 +20,7 @@ BUILD_DIR="$(pwd)/build/colorful-2.0"
 # -- Clean before starting anything
 
 if [[ -d build/ ]]; then
-	if [[ ! -f Makefile ]]; then
+	if [[ ! -f src/buildconfig.pas ]] || [[ ! -f Makefile ]]; then
 		./configure.sh
 	fi
 	make clean

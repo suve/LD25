@@ -55,7 +55,7 @@ Implementation
 Uses
 	Classes, IniFiles, SysUtils,
 	SDL2,
-	Colours, Rendering, SDL1Keys;
+	BuildConfig, Colours, Rendering, SDL1Keys;
 
 Const
 	ConfFileName = 'settings.ini';
@@ -348,7 +348,7 @@ Begin
 			 * If we are building in "systemwide" mode, data files should be found
 			 * in this pre-determined location.
 			 *)
-			DataPath:='/usr/share/suve/colorful/';
+			DataPath := BuildConfig.Prefix + '/share/suve/colorful/';
 		{$ELSE}
 			(*
 			 * If we're not building in "systemwide" mode, grab the path to the executable.

@@ -76,7 +76,7 @@ The script takes the following options:
   * `standalone`: Assets are expected to be found in the same directory,
     right next to the executable.
   * `systemwide`: Assets are expected to be found
-  in `/usr/share/suve/colorful`.
+  in `${PREFIX}/share/suve/colorful`.
 
   The default value is `standalone`.
 
@@ -105,6 +105,11 @@ The script takes the following options:
   The default value is `auto`, which resolves to `mobile` when building
   for Android, and `desktop` otherwise.
 
+- `--prefix PREFIX`    
+  Controls the path prefix used when installing the app and - if built with
+  `assets` set to `systemwide`- when loading assets.
+  The default value is `/usr/local`.
+
 - `--strip`    
   Controls whether the built executable should be stripped of debug symbols.
   The default value is `false`.
@@ -129,13 +134,11 @@ its configuration file and savestates inside the user's home directory,
 it should continue to work even if moved to a non-writeable location.
 
 If you're trying to package the game for Linux, go back and ensure you've
-configured `assets` to `systemwide`. If everything checks out, you can
-go ahead and use the `install` target defined in the Makefile.
+configured `assets` to `systemwide`, and specified the `prefix`.
+If everything checks out, you can go ahead and use the `install` target
+defined in the Makefile.
 
     $ make install [DESTDIR=]
-
-Note that, currently, there is no support for specifying the installation prefix;
-it is hard-coded to `/usr`.
 
 
 ## Building for Android

@@ -38,32 +38,32 @@ clean:
 
 install: all
 	# Executable
-	install -m 755 -p -D "$(EXECUTABLE)" "$(DESTDIR)/usr/bin/colorful"
+	install -m 755 -p -D "$(EXECUTABLE)" "$(DESTDIR)$(PREFIX)/bin/colorful"
 	# Data files
-	install -m 755 -d "$(DESTDIR)/usr/share/suve/colorful"
-	cp -t "$(DESTDIR)/usr/share/suve/colorful/" -a build/gfx build/map build/sfx build/slides
+	install -m 755 -d "$(DESTDIR)$(PREFIX)/share/suve/colorful"
+	cp -t "$(DESTDIR)$(PREFIX)/share/suve/colorful/" -a build/gfx build/map build/sfx build/slides
 	# Icons
-	install -m 644 -p -D "pkg/colorful.svg"         "$(DESTDIR)/usr/share/icons/hicolor/scalable/apps/colorful.svg"
-	install -m 644 -p -D "pkg/colorful-32x32.png"   "$(DESTDIR)/usr/share/icons/hicolor/32x32/apps/colorful.png"
-	install -m 644 -p -D "pkg/colorful-64x64.png"   "$(DESTDIR)/usr/share/icons/hicolor/64x64/apps/colorful.png"
-	install -m 644 -p -D "pkg/colorful-128x128.png" "$(DESTDIR)/usr/share/icons/hicolor/128x128/apps/colorful.png"
+	install -m 644 -p -D "pkg/colorful.svg"         "$(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/colorful.svg"
+	install -m 644 -p -D "pkg/colorful-32x32.png"   "$(DESTDIR)$(PREFIX)/share/icons/hicolor/32x32/apps/colorful.png"
+	install -m 644 -p -D "pkg/colorful-64x64.png"   "$(DESTDIR)$(PREFIX)/share/icons/hicolor/64x64/apps/colorful.png"
+	install -m 644 -p -D "pkg/colorful-128x128.png" "$(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/colorful.png"
 	# Desktop file and AppStream metadata
-	install -m 644 -p -D "pkg/pl.suve.colorful.desktop"      "$(DESTDIR)/usr/share/applications/pl.suve.colorful.desktop"
-	install -m 644 -p -D "pkg/pl.suve.colorful.metainfo.xml" "$(DESTDIR)/usr/share/metainfo/pl.suve.colorful.metainfo.xml"
+	install -m 644 -p -D "pkg/pl.suve.colorful.desktop"      "$(DESTDIR)$(PREFIX)/share/applications/pl.suve.colorful.desktop"
+	install -m 644 -p -D "pkg/pl.suve.colorful.metainfo.xml" "$(DESTDIR)$(PREFIX)/share/metainfo/pl.suve.colorful.metainfo.xml"
 	# Man pages
-	install -m 644 -p -D "pkg/man/en.man"    "$(DESTDIR)/usr/share/man/man6/colorful.6"
-	install -m 644 -p -D "pkg/man/de.man"    "$(DESTDIR)/usr/share/man/de/man6/colorful.6"
-	install -m 644 -p -D "pkg/man/es.man"    "$(DESTDIR)/usr/share/man/es/man6/colorful.6"
-	install -m 644 -p -D "pkg/man/fr.man"    "$(DESTDIR)/usr/share/man/fr/man6/colorful.6"
-	install -m 644 -p -D "pkg/man/he.man"    "$(DESTDIR)/usr/share/man/he/man6/colorful.6"
-	install -m 644 -p -D "pkg/man/id.man"    "$(DESTDIR)/usr/share/man/id/man6/colorful.6"
-	install -m 644 -p -D "pkg/man/nl.man"    "$(DESTDIR)/usr/share/man/nl/man6/colorful.6"
-	install -m 644 -p -D "pkg/man/pl.man"    "$(DESTDIR)/usr/share/man/pl/man6/colorful.6"
-	install -m 644 -p -D "pkg/man/pt.man"    "$(DESTDIR)/usr/share/man/pt/man6/colorful.6"
-	install -m 644 -p -D "pkg/man/pt_BR.man" "$(DESTDIR)/usr/share/man/pt_BR/man6/colorful.6"
-	install -m 644 -p -D "pkg/man/ro.man"    "$(DESTDIR)/usr/share/man/ro/man6/colorful.6"
-	install -m 644 -p -D "pkg/man/ru.man"    "$(DESTDIR)/usr/share/man/ru/man6/colorful.6"
-	install -m 644 -p -D "pkg/man/uk.man"    "$(DESTDIR)/usr/share/man/uk/man6/colorful.6"
+	install -m 644 -p -D "pkg/man/en.man"    "$(DESTDIR)$(PREFIX)/share/man/man6/colorful.6"
+	install -m 644 -p -D "pkg/man/de.man"    "$(DESTDIR)$(PREFIX)/share/man/de/man6/colorful.6"
+	install -m 644 -p -D "pkg/man/es.man"    "$(DESTDIR)$(PREFIX)/share/man/es/man6/colorful.6"
+	install -m 644 -p -D "pkg/man/fr.man"    "$(DESTDIR)$(PREFIX)/share/man/fr/man6/colorful.6"
+	install -m 644 -p -D "pkg/man/he.man"    "$(DESTDIR)$(PREFIX)/share/man/he/man6/colorful.6"
+	install -m 644 -p -D "pkg/man/id.man"    "$(DESTDIR)$(PREFIX)/share/man/id/man6/colorful.6"
+	install -m 644 -p -D "pkg/man/nl.man"    "$(DESTDIR)$(PREFIX)/share/man/nl/man6/colorful.6"
+	install -m 644 -p -D "pkg/man/pl.man"    "$(DESTDIR)$(PREFIX)/share/man/pl/man6/colorful.6"
+	install -m 644 -p -D "pkg/man/pt.man"    "$(DESTDIR)$(PREFIX)/share/man/pt/man6/colorful.6"
+	install -m 644 -p -D "pkg/man/pt_BR.man" "$(DESTDIR)$(PREFIX)/share/man/pt_BR/man6/colorful.6"
+	install -m 644 -p -D "pkg/man/ro.man"    "$(DESTDIR)$(PREFIX)/share/man/ro/man6/colorful.6"
+	install -m 644 -p -D "pkg/man/ru.man"    "$(DESTDIR)$(PREFIX)/share/man/ru/man6/colorful.6"
+	install -m 644 -p -D "pkg/man/uk.man"    "$(DESTDIR)$(PREFIX)/share/man/uk/man6/colorful.6"
 
 # -- Real targets
 
