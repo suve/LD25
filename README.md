@@ -18,15 +18,17 @@ enhancements and bug fixes.
 	<img src="https://repology.org/badge/vertical-allrepos/colorful.svg?exclude_unsupported=1" alt="Packaging status" align="right">
 </a>
 
-You can download the game from [Itch.io](https://suve.itch.io/colorful),
+You can download the game from
+[Itch.io](https://suve.itch.io/colorful),
+[Flathub](https://flathub.org/apps/pl.suve.colorful),
 [F-Droid](https://f-droid.org/en/packages/pl.suve.colorful.android/),
 or from the [Releases tab](https://github.com/suve/LD25/releases/latest) here on GitHub.
 
 The game is available for Linux, Windows, and Android.
 
-<a href="https://suve.itch.io/colorful"><img src="https://static.itch.io/images/badge-color.svg" alt="Get it on Itch.io" height="64" align="middle"></a>
-<a href="https://f-droid.org/packages/pl.suve.colorful.android/"><img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="95" align="middle"></a>
-
+<a href="https://flathub.org/apps/pl.suve.colorful"><img src="https://github.com/suve/LD25/raw/trunk/.github/flathub.png" alt="Get it from Flathub"></a>
+<a href="https://suve.itch.io/colorful"><img src="https://github.com/suve/LD25/raw/trunk/.github/itch.png" alt="Get it on Itch.io"></a>
+<a href="https://f-droid.org/packages/pl.suve.colorful.android/"><img src="https://github.com/suve/LD25/raw/trunk/.github/fdroid.png" alt="Get it on F-Droid"></a>
 
 ## Build it yourself
 
