@@ -801,7 +801,7 @@ Begin
 	end else
 		SDL_Log('Configuration file not found.', []);
 
-	{$IFNDEF ANDROID}
+	{$IFDEF LD25_COMPAT_V1}
 		If (IHasIni(INIVER_1_0)) then begin
 			SDL_Log('Loading legacy v1.x configuration file...', []);
 			If (LoadIni(INIVER_1_0)) then begin
@@ -903,7 +903,7 @@ Begin
 	NoSound:=False;
 
 	ConfigFiles.SetPaths();
-	{$IFNDEF ANDROID}
+	{$IFDEF LD25_COMPAT_V1}
 	ConfigFiles.CopyOldSavegames();
 	{$ENDIF}
 

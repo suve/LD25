@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2023 suve (a.k.a. Artur Frenszek-Iwicki)
+ * Copyright (C) 2012-2024 suve (a.k.a. Artur Frenszek-Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -23,14 +23,18 @@ interface
 
 Var
 	ConfPath: AnsiString; // Configuration (.ini, savegame) paths - v2.X
-	{$IFNDEF ANDROID}
+
+	{$IFDEF LD25_COMPAT_V1}
 		OldConfPath: AnsiString; // Configuration (.ini, savegame) paths - legacy v1.X location
-		DataPath : AnsiString; // Location of assets
+	{$ENDIF}
+
+	{$IFNDEF ANDROID}
+		DataPath : AnsiString; // Location of assets. On Android, SDL auto-locates assets for us
 	{$ENDIF}
 
 Procedure SetPaths();
 
-{$IFNDEF ANDROID}
+{$IFDEF LD25_COMPAT_V1}
 Procedure CopyOldSavegames();
 {$ENDIF}
 
@@ -260,7 +264,7 @@ Begin
 	If Version > INIVER_1_0 then
 		Result := ConfPath + ConfFileName
 	else
-		{$IFNDEF ANDROID}
+		{$IFDEF LD25_COMPAT_V1}
 			Result := OldConfPath + ConfFileName
 		{$ELSE}
 			Result := '/dev/null'
@@ -279,7 +283,7 @@ End;
 
 Function IHasIni(Const Version: TIniVersion):Boolean;
 Begin
-	{$IFNDEF ANDROID}
+	{$IFDEF LD25_COMPAT_V1}
 		Result := FileExists(GetIniPath(Version))
 	{$ELSE}
 		If Version > INIVER_1_0 then
@@ -312,7 +316,7 @@ Begin
 	{$ENDIF}
 End;
 
-{$IFNDEF ANDROID}
+{$IFDEF LD25_COMPAT_V1}
 Procedure SetOldConfPath();
 Const
 	// Consts used to determine the locations of v1.X config files.
@@ -334,7 +338,7 @@ Var
 	{$IFNDEF ANDROID} BasePath: PChar; {$ENDIF}
 	PrefPath: PChar;
 Begin
-	{$IFNDEF ANDROID}
+	{$IFDEF LD25_COMPAT_V1}
 		SetOldConfPath();
 	{$ENDIF}
 
@@ -365,7 +369,7 @@ Begin
 	{$ENDIF}
 End;
 
-{$IFNDEF ANDROID}
+{$IFDEF LD25_COMPAT_V1}
 Procedure CopyFile(OldPath, NewPath: AnsiString);
 Const
 	BufferSize = 4096;

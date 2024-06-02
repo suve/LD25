@@ -39,6 +39,12 @@ Accepted options:
   The default value is "standalone".
   This setting is ignored in Android builds.
 
+--compat-v1 BOOLEAN
+  Controls whether the game should be built with compatibility for v1.x config
+  files and savegames. This ensures that users who previously played v1.x
+  of the game and update to v2.x have their settings and savegames preserved.
+  The default value is "true".
+
 --debug BOOLEAN
   Controls whether debugging features are enabled.
   The default value is "false".
@@ -98,6 +104,7 @@ parse_bool() {
 
 ANDROID="false"
 ASSETS="standalone"
+COMPAT_V1="true"
 DEBUG="false"
 DONATE="true"
 FPC="fpc"
@@ -128,6 +135,8 @@ while [ "${#}" -gt 0 ]; do
 			exit 1
 		fi
 		ASSETS="${val}"
+	elif [ "${opt}" = "--compat-v1" ]; then
+		COMPAT_V1="$(parse_bool "--compat-v1" "${val}")"
 	elif [ "${opt}" = "--debug" ]; then
 		DEBUG="$(parse_bool "--debug" "${val}")"
 	elif [ "${opt}" = "--donate" ]; then
@@ -170,6 +179,7 @@ cat <<EOF
 Config values:
   ANDROID = ${ANDROID}
   ASSETS = ${ASSETS}
+  COMPAT_V1 = ${COMPAT_V1}
   DEBUG = ${DEBUG}
   DONATE = ${DONATE}
   FPC = ${FPC}
@@ -235,6 +245,10 @@ if [ "${ANDROID}" = "true" ]; then
 else
 	EXE_PREFIX=""
 	EXE_SUFFIX=""
+fi
+
+if [ "${COMPAT_V1}" = "true" ]; then
+	BUILD_FLAGS="${BUILD_FLAGS} -dLD25_COMPAT_V1"
 fi
 
 if [ "${DEBUG}" = "true" ]; then

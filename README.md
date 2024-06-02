@@ -82,6 +82,12 @@ The script takes the following options:
 
   The default value is `standalone`.
 
+- `--compat-v1`    
+  Controls whether the game should be built with compatibility for v1.x config
+  files and savegames. This ensures that users who previously played v1.x
+  of the game and update to v2.x have their settings and savegames preserved.
+  The default value is `true`.
+
 - `--debug`    
   Controls whether debugging features are enabled.
   The default value is `false`.
