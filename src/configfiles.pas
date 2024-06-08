@@ -59,7 +59,8 @@ Implementation
 Uses
 	Classes, IniFiles, SysUtils,
 	SDL2,
-	BuildConfig, Colours, Rendering, SDL1Keys;
+	{$IFDEF LD25_COMPAT_V1} SDL1Keys, {$ENDIF}
+	BuildConfig, Colours, Rendering;
 
 Const
 	ConfFileName = 'settings.ini';
@@ -234,8 +235,10 @@ Begin
 	For K:=Low(K) to High(K) do begin
 		WriteStr(KeyBindName,K);
 		KeyBind[K]:=StrToIntDef(Str.Values[KeyBindName], SDLK_Escape);
-		
-		If(Version = 1) then KeyBind[K]:=TranslateSDL1KeyToSDL2Keycode(KeyBind[K])
+
+		{$IFDEF LD25_COMPAT_V1}
+			If(Version = 1) then KeyBind[K]:=TranslateSDL1KeyToSDL2Keycode(KeyBind[K])
+		{$ENDIF}
 	end;
 	
 	If(Version = 2) then begin
