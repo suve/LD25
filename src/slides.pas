@@ -80,20 +80,20 @@ End;
 Const
 	FADE_IN_TICKS = 320; // Slightly under one third of a second
 
-Procedure FadeIn(Time: sInt);
+Procedure FadeIn(Time: uInt);
 Var
 	FadeColour: TSDL_Color;
 Begin
-	If Time < 0 then Exit();
+	If Time > FADE_IN_TICKS then Exit();
 
 	FadeColour.R := 0;
 	FadeColour.G := 0;
 	FadeColour.B := 0;
-	FadeColour.A := (255 * Time) div FADE_IN_TICKS;
+	FadeColour.A := (255 * (FADE_IN_TICKS - Time)) div FADE_IN_TICKS;
 	Shared.DrawRectFilled(NIL, @FadeColour)
 End;
 
-Procedure RenderThanksScreen(FadeInTime: sInt);
+Procedure RenderThanksScreen(SlideTime: sInt);
 Var
 	YPos: uInt;
 	Dst: TSDL_Rect;
@@ -139,7 +139,7 @@ Begin
 		ALIGN_CENTRE, ALIGN_TOP, NIL
 	);
 
-	FadeIn(FadeInTime);
+	FadeIn(SlideTime);
 	Rendering.FinishFrame()
 End;
 
@@ -219,7 +219,7 @@ End;
 
 
 Procedure RenderStatsScreen(
-	FadeInTime: sInt;
+	SlideTime: sInt;
 	Texts: TStatsTexts;
 	BestTimeCheck: TBestTimeCheck
 );
@@ -279,14 +279,13 @@ Begin
 	PrintText(Texts.KillsMade, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
 	YPos += YStep;
 
-	FadeIn(FadeInTime);
+	FadeIn(SlideTime);
 	Rendering.FinishFrame()
 End;
 
 Procedure ShowOutro();
 Var
-	Idx, Delta: uInt;
-	FadeInTime: sInt;
+	Idx, Delta, SlideTime: uInt;
 
 	ShowTheStats: Boolean;
 	StatsTexts: TStatsTexts;
@@ -302,16 +301,14 @@ Begin
 
 	ShowTheStats := False;
 	StatsTexts := RenderStatsTexts();
-	FadeInTime := FADE_IN_TICKS;
+	SlideTime := 0;
 
 	Delta := 0;
 	While True do begin
-		If(FadeInTime >= 0) then FadeInTime -= Delta;
-
 		If Not ShowTheStats then
-			RenderThanksScreen(FadeInTime)
+			RenderThanksScreen(SlideTime)
 		else
-			RenderStatsScreen(FadeInTime, StatsTexts, BestTimeCheck);
+			RenderStatsScreen(SlideTime, StatsTexts, BestTimeCheck);
 
 		GetDeltaTime(Delta);
 		While (SDL_PollEvent(@Ev)>0) do begin
@@ -321,13 +318,14 @@ Begin
 			If (Ev.Type_ = SDL_KeyDown) then begin
 				If Not ShowTheStats then begin
 					ShowTheStats := True;
-					FadeInTime := FADE_IN_TICKS;
+					SlideTime := 0
 				end else Exit()
 			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then begin
 				HandleWindowResizedEvent(@Ev)
 			end
-		end
+		end;
+		SlideTime += Delta
 	end
 End;
 
