@@ -60,7 +60,7 @@ Uses
 	Classes, IniFiles, SysUtils,
 	SDL2,
 	{$IFDEF LD25_COMPAT_V1} SDL1Keys, {$ENDIF}
-	BuildConfig, Colours, Rendering;
+	BuildConfig, Colours, Rendering, Stats;
 
 Const
 	ConfFileName = 'settings.ini';
@@ -79,7 +79,10 @@ End;
 
 Function SaveGame(Const GM:TGameMode):Boolean;
 Var
-	F:Text; C:uInt; Path:AnsiString;
+	F: Text;
+	Idx: uInt;
+	Path: AnsiString;
+	Value: uInt;
 Begin
 	If (Not CheckConfPath()) then Exit(False);
 	
@@ -103,22 +106,46 @@ Begin
 	Writeln(F,'Version=',GAMEVERS);
 	Writeln(F,'Gameworld=',GameMode);
 	Writeln(F);
-	
+
 	Writeln(F,'[Colours]');
-	For C:=0 to 7 do begin
-		Write(F,ColourName[C],'=');
-		If (ColState[C] = STATE_GIVEN) then
+	For Idx:=0 to 7 do begin
+		Write(F,ColourName[Idx],'=');
+		If (ColState[Idx] = STATE_GIVEN) then
 			Writeln(F,'given')
 		else
 			Writeln(F,'not')
 	end;
 	Writeln(F);
-	
+
+	Writeln(F, '[Stats]');
+	If Stats.TotalTime.Get(@Value) then Writeln(F, 'TotalTime=', Value);
+	If Stats.HitsTaken.Get(@Value) then Writeln(F, 'HitsTaken=', Value);
+	If Stats.TimesDied.Get(@Value) then Writeln(F, 'TimesDied=', Value);
+	If Stats.KillsMade.Get(@Value) then Writeln(F, 'KillsMade=', Value);
+	If Stats.ShotsFired.Get(@Value) then Writeln(F, 'ShotsFired=', Value);
+	If Stats.ShotsHit.Get(@Value) then Writeln(F, 'ShotsHit=', Value);
+	Writeln(F);
+
 	Writeln(F,'[Switches]');
-	For C:=Low(Switch) to High(Switch) do Writeln(F,Shared.IntToStr(C,2),'=',BoolToStr(Switch[C],'True','False'));
-	
+	For Idx:=Low(Switch) to High(Switch) do
+		Writeln(F,Shared.IntToStr(Idx,2),'=',BoolToStr(Switch[Idx],'True','False'));
+
 	Close(F); SaveExists[GM]:=True;
 	Exit(True)
+End;
+
+Procedure ReadStatsEntry(Ref: POptionalUInt; StrValue: AnsiString);
+Var
+	NumValue: uInt;
+Begin
+	Try
+		NumValue := SysUtils.
+			{$IFDEF CPU64} StrToQWord {$ELSE} StrToDWord {$ENDIF}
+			(StrValue);
+		Ref^.SetTo(NumValue)
+	Except
+		On EConvertError do Ref^.Unset()
+	End
 End;
 
 Function LoadGame(Const GM:TGameMode):Boolean;
@@ -143,6 +170,15 @@ Begin
 			ColState[C]:=STATE_GIVEN; Given+=1
 		end
 	end;
+
+	Stats.UnsetSaveStats();
+	Ini.ReadSectionValues('Stats', Str);
+	ReadStatsEntry(@Stats.TotalTime, Str.Values['TotalTime']);
+	ReadStatsEntry(@Stats.HitsTaken, Str.Values['HitsTaken']);
+	ReadStatsEntry(@Stats.TimesDied, Str.Values['TimesDied']);
+	ReadStatsEntry(@Stats.KillsMade, Str.Values['KillsMade']);
+	ReadStatsEntry(@Stats.ShotsFired, Str.Values['ShotsFired']);
+	ReadStatsEntry(@Stats.ShotsHit, Str.Values['ShotsHit']);
 
 	Ini.ReadSectionValues('Switches',Str);
 	For C:=Low(Switch) to High(Switch) do Switch[C]:=StrToBoolDef(Str.Values[Shared.IntToStr(C,2)],False);
@@ -174,6 +210,7 @@ Var
 	F:Text;
 	C:sInt;
 	K:TPlayerKey;
+	Value: uInt;
 Begin
 	If (Not CheckConfPath()) then Exit(False);
 	
@@ -207,6 +244,10 @@ Begin
 
 	Writeln(F, '[Colours]');
 	For C:=0 to 7 do Writeln(F, Capitalise(ColourName[C]),'=',ColourToStr(MapColour[C]));
+	Writeln(F);
+
+	Writeln(F, '[Stats]');
+	If Stats.BestTime.Get(@Value) then Writeln(F, 'BestTimeClassic=', Value);
 
 	Close(F); Exit(True);
 End;
@@ -255,7 +296,10 @@ Begin
 			Except
 				Writeln(stderr, 'Unexpected value for colour ',ColourName[C],': "', Str.Values[CapitalisedColourName],'"')
 			end
-		end
+		end;
+
+		Ini.ReadSectionValues('Stats', Str);
+		ReadStatsEntry(@Stats.BestTime, Str.Values['BestTimeClassic']);
 	end;
 	
 	Ini.Destroy(); Str.Destroy();
@@ -315,8 +359,10 @@ Begin
 	ResetMapColoursToDefault();
 
 	{$IFDEF LD25_MOBILE}
-	SwapTouchControls := False
+	SwapTouchControls := False;
 	{$ENDIF}
+
+	Stats.UnsetGlobalStats()
 End;
 
 {$IFDEF LD25_COMPAT_V1}

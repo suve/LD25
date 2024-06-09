@@ -30,7 +30,7 @@ Uses
 	SDL2,
 	{$IFDEF LD25_MOBILE} ctypes, TouchControls, {$ENDIF}
 	Assets, Colours, ConfigFiles, Entities, FloatingText, Fonts, Images,
-	MathUtils, Rendering, Rooms, Shared, Sprites;
+	MathUtils, Rendering, Rooms, Shared, Sprites, Stats;
 
 Type
 	TRoomChange = (
@@ -390,6 +390,7 @@ Begin
 			end;
 
 			If (Overlap(PlayerBullets[B], Mobs[M])) then begin
+				Stats.ShotsHit.Increase(1);
 				DamageMob(M,PlayerBullets[B]^.Power);
 				Dispose(PlayerBullets[B],Destroy());
 				PlayerBullets[B]:=NIL;
@@ -478,6 +479,8 @@ Begin
 	CalculateMonsters(Time);
 	CalculateEnemyBullets(Time);
 	CalculateGibs(Time);
+
+	Stats.TotalTime.Increase(Time)
 End;
 
 Procedure DrawRoom();
@@ -815,6 +818,7 @@ Begin
 	Mob^.HP-=Power;
 	If (Mob^.HP <= 0) then begin
 		If (Mob^.SwitchNum >= 0) then Switch[Mob^.SwitchNum]:=True;
+		Stats.KillsMade.Increase(1);
 
 		PlaceGibs(Mob, Mob^.Sprite^.GetFrame(AniFra, Mob^.Face));
 		PlaySfx(Mob^.SfxID);
@@ -836,6 +840,8 @@ Begin
 	PlaySfx(SFX_HIT);
 	Hero^.InvTimer := Hero^.InvLength;
 
+	Stats.HitsTaken.Increase(1);
+
 	{$IFDEF LD25_DEBUG}
 	If(CheatInvulnerability) then Exit;
 	{$ENDIF}
@@ -845,7 +851,8 @@ Begin
 		DeadTime:=DeathLength;
 		PlaceGibs(Hero, HeroSprite.GetFrame(AniFra, Hero^.Face));
 		
-		PlaySfx(SFX_EXTRA+2)
+		PlaySfx(SFX_EXTRA+2);
+		Stats.TimesDied.Increase(1)
 	end
 End;
 

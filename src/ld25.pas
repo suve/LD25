@@ -26,7 +26,7 @@ uses
 	SysUtils, Math, ctypes,
 	SDL2, SDL2_image, SDL2_mixer,
 	Assets, Colours, ConfigFiles, FloatingText, Fonts, Game, Images, Objects,
-	MathUtils, Menus, Rendering, Rooms, Shared, Slides
+	MathUtils, Menus, Rendering, Rooms, Shared, Slides, Stats
 ;
 
 
@@ -1008,6 +1008,7 @@ Begin
 	GameMode:=GM;
 	DestroyEntities(True); ResetGamestate();
 	New(Hero,Create()); ChangeRoom(RespRoom[GM].X,RespRoom[GM].Y);
+	Stats.ZeroSaveStats();
 	GameOn:=True
 End;
 
