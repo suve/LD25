@@ -31,50 +31,94 @@ Uses
 	Assets, Fonts, Images, Rendering, Shared, Stats
 ;
 
-Function DisplaySlide(Const Img:PImage):Boolean;
+Procedure RenderSlide(SlideTime: uInt; Data: Pointer);
 Var
-	Q:sInt; dt:uInt;
+	Img: PImage;
 	Dst: TSDL_Rect;
 Begin
-	Q:=0;
-	While (Q = 0) do begin
+	Img := Data;
+	Dst.X := (RESOL_W - Img^.W) div 2;
+	Dst.Y := 0;
+	Dst.W := Img^.W;
+	Dst.H := Img^.H;
+	DrawImage(Img, NIL, @Dst, NIL)
+End;
+
+Type
+	PSlideFunc = ^TSlideFunc;
+	TSlideFunc = Procedure(SlideTime: uInt; Data: Pointer);
+
+Procedure ShowSlides(Funcs: PSlideFunc; Data: PPointer; Count: uInt);
+Type
+	TSlideAction = (
+		ACT_NONE,
+		ACT_PREV,
+		ACT_NEXT,
+		ACT_QUIT
+	);
+Var
+	Idx, DeltaTime, SlideTime: uInt;
+	Action: TSlideAction;
+Begin
+	Idx := 0;
+	SlideTime := 0;
+	While (Idx < Count) do begin
 		Rendering.BeginFrame();
-		Dst.X := (RESOL_W - Img^.W) div 2;
-		Dst.Y := 0;
-		Dst.W := Img^.W;
-		Dst.H := Img^.H;
-		DrawImage(Img,NIL,@Dst,NIL);
+		Funcs[Idx](SlideTime, Data[Idx]);
 		Rendering.FinishFrame();
 
-		GetDeltaTime(dt);
+		Action := ACT_NONE;
+		GetDeltaTime(DeltaTime);
 		While (SDL_PollEvent(@Ev)>0) do begin
 			If (Ev.Type_ = SDL_QuitEv) then begin
-				Shutdown:=True; Exit(False)
+				Shutdown:=True; Exit()
 			end else
 			{$IFDEF LD25_MOBILE}
-			If (Ev.Type_ = SDL_FingerDown) then Q:=1 else
+			If (Ev.Type_ = SDL_FingerDown) then Action := ACT_NEXT else
 			{$ENDIF}
-			If (Ev.Type_ = SDL_KeyDown) then begin
-				If (Ev.Key.Keysym.Sym = SDLK_ESCAPE) or (Ev.Key.Keysym.Sym = SDLK_AC_BACK) then
-					Q:=-1
-				else
-					Q:=1
+			If (Ev.Type_ = SDL_KeyDown) then Case(Ev.Key.Keysym.Sym) of
+				SDLK_ESCAPE, SDLK_AC_BACK:
+					Action := ACT_QUIT;
+				SDLK_RIGHT, SDLK_RETURN, SDLK_SPACE:
+					Action := ACT_NEXT;
+				SDLK_LEFT:
+					Action := ACT_PREV;
 			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
 				HandleWindowResizedEvent(@Ev)
+		end;
+
+		Case Action of
+			ACT_PREV:
+				If(Idx > 0) then begin
+					SlideTime := 0;
+					Idx -= 1
+				end;
+			ACT_NEXT: begin
+				SlideTime := 0;
+				Idx += 1
+			end;
+			ACT_QUIT: Idx := Count;
+			ACT_NONE: SlideTime += DeltaTime
 		end
-	end;
-	Exit(Q >= 0)
+	end
 End;
 
 Procedure ShowIntro();
 Var
+	Funcs: Array[0..SLIDES_IN] of TSlideFunc;
+	Data: Array[0..SLIDES_IN] of Pointer;
 	Idx: uInt;
 Begin
-	For Idx := Low(SlideIn) to High(SlideIn) do
-		If (Not DisplaySlide(SlideIn[Idx])) then Exit();
+	For Idx := 0 to (SLIDES_IN - 1) do begin
+		Funcs[Idx] := @RenderSlide;
+		Data[Idx] := SlideIn[Idx]
+	end;
 
-	DisplaySlide(TitleGfx)
+	Funcs[SLIDES_IN] := @RenderSlide;
+	Data[SLIDES_IN] := TitleGfx;
+
+	ShowSlides(Funcs, Data, SLIDES_IN + 1)
 End;
 
 Const
@@ -93,13 +137,11 @@ Begin
 	Shared.DrawRectFilled(NIL, @FadeColour)
 End;
 
-Procedure RenderThanksScreen(SlideTime: sInt);
+Procedure RenderThanksScreen(SlideTime: uInt; Data: Pointer);
 Var
 	YPos: uInt;
 	Dst: TSDL_Rect;
 Begin
-	Rendering.BeginFrame();
-
 	Dst.X := 0; Dst.Y := 0;
 	Dst.W := TitleGfx^.W; Dst.H := TitleGfx^.H;
 	DrawImage(TitleGfx, NIL, @Dst, NIL);
@@ -139,12 +181,12 @@ Begin
 		ALIGN_CENTRE, ALIGN_TOP, NIL
 	);
 
-	FadeIn(SlideTime);
-	Rendering.FinishFrame()
+	FadeIn(SlideTime)
 End;
 
 Type
-	TStatsTexts = record
+	PPlayerStats = ^TPlayerStats;
+	TPlayerStats = record
 		TotalTime: AnsiString;
 		BestTime: AnsiString;
 		HitsTaken: AnsiString;
@@ -153,6 +195,7 @@ Type
 		ShotsFired: AnsiString;
 		ShotsHit: AnsiString;
 		Accuracy: AnsiString;
+		BestTimeCheck: TBestTimeCheck;
 	end;
 
 Function FormatTimeString(Time: uInt): AnsiString;
@@ -188,47 +231,44 @@ Begin
 	end
 End;
 
-Function RenderStatsTexts():TStatsTexts;
+Procedure RenderStatsTexts(Ptr: PPlayerStats);
 Var
 	Time, Fired, Hit: uInt;
 Begin
 	If Stats.TotalTime.Get(@Time) then
-		Result.TotalTime := FormatTimeString(Time)
+		Ptr^.TotalTime := FormatTimeString(Time)
 	else
-		Result.TotalTime := '???';
+		Ptr^.TotalTime := '???';
 
 	If Stats.BestTime.Get(@Time) then
-		Result.BestTime := FormatTimeString(Time)
+		Ptr^.BestTime := FormatTimeString(Time)
 	else
-		Result.BestTime := '???';
+		Ptr^.BestTime := '???';
 
-	Result.HitsTaken := Stats.HitsTaken.ToString();
-	Result.TimesDied := Stats.TimesDied.ToString();
-	Result.KillsMade := Stats.KillsMade.ToString();
-	Result.ShotsFired := Stats.ShotsFired.ToString();
-	Result.ShotsHit := Stats.ShotsHit.ToString();
+	Ptr^.HitsTaken := Stats.HitsTaken.ToString();
+	Ptr^.TimesDied := Stats.TimesDied.ToString();
+	Ptr^.KillsMade := Stats.KillsMade.ToString();
+	Ptr^.ShotsFired := Stats.ShotsFired.ToString();
+	Ptr^.ShotsHit := Stats.ShotsHit.ToString();
 
 	If Stats.ShotsFired.Get(@Fired) and Stats.ShotsHit.Get(@Hit) then begin
 		If Fired > 0 then
-			WriteStr(Result.Accuracy, (Hit * 100) div Fired, '%')
+			WriteStr(Ptr^.Accuracy, (Hit * 100) div Fired, '%')
 		else
-			Result.Accuracy := '-'
+			Ptr^.Accuracy := '-'
 	end else
-		Result.Accuracy := '???';
+		Ptr^.Accuracy := '???';
 End;
 
 
-Procedure RenderStatsScreen(
-	SlideTime: sInt;
-	Texts: TStatsTexts;
-	BestTimeCheck: TBestTimeCheck
-);
+Procedure RenderStatsScreen(SlideTime: uInt; Data: Pointer);
 Var
+	PlaSta: PPlayerStats;
 	Dst: TSDL_Rect;
 	YPos, YStep: uInt;
 	OffCenter: uInt;
 Begin
-	Rendering.BeginFrame();
+	PlaSta := Data;
 
 	Dst.X := 0; Dst.Y := 0;
 	Dst.W := TitleGfx^.W; Dst.H := TitleGfx^.H;
@@ -243,90 +283,71 @@ Begin
 	OffCenter := (RESOL_W + Font^.CharW + Font^.SpacingX * 2) div 2;
 
 	PrintText('TOTAL TIME: ', Font, OffCenter, YPos, ALIGN_RIGHT, ALIGN_TOP, NIL);
-	PrintText(Texts.TotalTime, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
+	PrintText(PlaSta^.TotalTime, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
 	YPos += (Font^.SpacingY + Font^.CharH) * 3 div 2;
 
-	If (BestTimeCheck = BTC_BETTER) or (BestTimeCheck = BTC_FIRST) then begin
+	If (PlaSta^.BestTimeCheck = BTC_BETTER) or (PlaSta^.BestTimeCheck = BTC_FIRST) then begin
 		PrintText('! NEW RECORD !', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
 	end else begin
 		PrintText('BEST: ', Font, OffCenter, YPos, ALIGN_RIGHT, ALIGN_TOP, NIL);
-		PrintText(Texts.BestTime, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
+		PrintText(PlaSta^.BestTime, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
 	end;
 	YPos += (Font^.SpacingY + Font^.CharH) * 3;
 	YStep := (Font^.SpacingY + Font^.CharH) * 9 div 4;
 
 	PrintText('HITS TAKEN: ', Font, OffCenter, YPos, ALIGN_RIGHT, ALIGN_TOP, NIL);
-	PrintText(Texts.HitsTaken, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
+	PrintText(PlaSta^.HitsTaken, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
 	YPos += YStep;
 
 	PrintText('TIMES DIED: ', Font, OffCenter, YPos, ALIGN_RIGHT, ALIGN_TOP, NIL);
-	PrintText(Texts.TimesDied, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
+	PrintText(PlaSta^.TimesDied, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
 	YPos += YStep;
 
 	PrintText('SHOTS FIRED: ', Font, OffCenter, YPos, ALIGN_RIGHT, ALIGN_TOP, NIL);
-	PrintText(Texts.ShotsFired, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
+	PrintText(PlaSta^.ShotsFired, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
 	YPos += YStep;
 
 	PrintText('SHOTS HIT: ', Font, OffCenter, YPos, ALIGN_RIGHT, ALIGN_TOP, NIL);
-	PrintText(Texts.ShotsHit, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
+	PrintText(PlaSta^.ShotsHit, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
 	YPos += YStep;
 
 	PrintText('ACCURACY: ', Font, OffCenter, YPos, ALIGN_RIGHT, ALIGN_TOP, NIL);
-	PrintText(Texts.Accuracy, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
+	PrintText(PlaSta^.Accuracy, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
 	YPos += YStep;
 	
 	PrintText('FOES SLAIN: ', Font, OffCenter, YPos, ALIGN_RIGHT, ALIGN_TOP, NIL);
-	PrintText(Texts.KillsMade, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
+	PrintText(PlaSta^.KillsMade, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
 	YPos += YStep;
 
-	FadeIn(SlideTime);
-	Rendering.FinishFrame()
+	FadeIn(SlideTime)
 End;
 
 Procedure ShowOutro();
 Var
-	Idx, Delta, SlideTime: uInt;
+	PlayerStats: TPlayerStats;
 
-	ShowTheStats: Boolean;
-	StatsTexts: TStatsTexts;
-	BestTimeCheck: TBestTimeCheck;
+	Funcs: Array[0..(SLIDES_OUT + 1)] of TSlideFunc;
+	Data: Array[0..(SLIDES_OUT + 1)] of Pointer;
+	Idx: uInt;
 Begin
 	// FIXME: Calling this here really, really stinks.
 	//        Should probably do this in main function,
 	//        or when exiting the game loop.
-	BestTimeCheck := Stats.CheckBestTime();
+	PlayerStats.BestTimeCheck := Stats.CheckBestTime();
+	RenderStatsTexts(@PlayerStats);
 
-	For Idx := Low(SlideOut) to High(SlideOut) do
-		If Not DisplaySlide(SlideOut[Idx]) then Exit();
+	For Idx := 0 to (SLIDES_OUT - 1) do begin
+		Funcs[Idx] := @RenderSlide;
+		Data[Idx] := SlideOut[Idx]
+	end;
 
-	ShowTheStats := False;
-	StatsTexts := RenderStatsTexts();
-	SlideTime := 0;
+	Funcs[SLIDES_OUT] := @RenderThanksScreen;
+	Data[SLIDES_OUT] := NIL;
 
-	Delta := 0;
-	While True do begin
-		If Not ShowTheStats then
-			RenderThanksScreen(SlideTime)
-		else
-			RenderStatsScreen(SlideTime, StatsTexts, BestTimeCheck);
+	Funcs[SLIDES_OUT + 1] := @RenderStatsScreen;
+	Data[SLIDES_OUT + 1] := @PlayerStats;
 
-		GetDeltaTime(Delta);
-		While (SDL_PollEvent(@Ev)>0) do begin
-			If (Ev.Type_ = SDL_QuitEv) then begin
-				Shutdown:=True; Exit()
-			end else
-			If (Ev.Type_ = SDL_KeyDown) then begin
-				If Not ShowTheStats then begin
-					ShowTheStats := True;
-					SlideTime := 0
-				end else Exit()
-			end else
-			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then begin
-				HandleWindowResizedEvent(@Ev)
-			end
-		end;
-		SlideTime += Delta
-	end
+	ShowSlides(Funcs, Data, SLIDES_OUT + 2)
 End;
 
 End.
