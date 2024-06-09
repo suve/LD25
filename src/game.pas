@@ -387,7 +387,7 @@ Begin
 			end;
 			
 			If (Overlap(PBul[B],Mob[M])) then begin
-				Stats.ShotsHit.Modify(+1);
+				Stats.ShotsHit.Increase(1);
 				DamageMob(M,PBul[B]^.Power);
 				Dispose(PBul[B],Destroy()); PBul[B]:=NIL;
 				M:=High(Mob)*2
@@ -472,7 +472,7 @@ Begin
 	CalculateEnemyBullets(Time);
 	CalculateGibs(Time);
 
-	Stats.TotalTime.Modify(+Time)
+	Stats.TotalTime.Increase(Time)
 End;
 
 Procedure DrawRoom();
@@ -793,7 +793,7 @@ Begin
 
 		PlaceGibs(Mob[mID], Mob[mID]^.Sprite^.GetFrame(AniFra, Mob[mID]^.Face));
 		PlaySfx(Mob[mID]^.SfxID);
-		Stats.KillsMade.Modify(+1);
+		Stats.KillsMade.Increase(1);
 
 		If (Length(Mob[mID]^.Children) > 0) then begin
 			For Idx := Low(Mob[mID]^.Children) to High(Mob[mID]^.Children) do begin
@@ -811,7 +811,7 @@ Begin
 	PlaySfx(SFX_HIT);
 	Hero^.InvTimer := Hero^.InvLength;
 
-	Stats.HitsTaken.Modify(+1);
+	Stats.HitsTaken.Increase(1);
 
 	{$IFDEF LD25_DEBUG}
 	If(CheatInvulnerability) then Exit;
@@ -823,7 +823,7 @@ Begin
 		PlaceGibs(Hero, HeroSprite.GetFrame(AniFra, Hero^.Face));
 		
 		PlaySfx(SFX_EXTRA+2);
-		Stats.TimesDied.Modify(+1)
+		Stats.TimesDied.Increase(1)
 	end
 End;
 

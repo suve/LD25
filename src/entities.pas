@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2022 suve (a.k.a. Artur Frenszek Iwicki)
+ * Copyright (C) 2012-2024 suve (a.k.a. Artur Frenszek Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -339,7 +339,7 @@ Begin
 			PlaySfx(SFX_SHOT+2);
 			Self.FireTimer += FireInterval;
 			PlaceBullet(@Self, FireDir * 2.0 * HERO_SPEED, 0, FirePower, @HeroBulletSprite);
-			Stats.ShotsFired.Modify(+1)
+			Stats.ShotsFired.Increase(1)
 		end
 	end;
 	If (InvTimer > 0) then InvTimer-=dt

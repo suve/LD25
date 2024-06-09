@@ -29,7 +29,9 @@ Type
 			Type ThingPtr = ^Thing;
 
 			Function Get(Ptr: ThingPtr):Boolean;
-			Procedure Modify(Delta: Thing);
+
+			Procedure Increase(Delta: Thing);
+			Procedure Decrease(Delta: Thing);
 
 			Function ToString():AnsiString;
 
@@ -82,7 +84,12 @@ Begin
 		WriteStr(Result, '???')
 End;
 
-Procedure TOptional.Modify(Delta: Thing);
+Procedure TOptional.Increase(Delta: Thing);
+Begin
+	If Self.IsSet then Self.Value += Delta
+End;
+
+Procedure TOptional.Decrease(Delta: Thing);
 Begin
 	If Self.IsSet then Self.Value += Delta
 End;
