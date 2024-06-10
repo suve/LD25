@@ -28,7 +28,7 @@ Implementation
 Uses
 	SysUtils,
 	SDL2,
-	Assets, Fonts, Images, Rendering, Shared, Stats
+	Assets, Colours, Fonts, Images, Rendering, Shared, Stats
 ;
 
 Procedure RenderSlide(SlideTime: uInt; Data: Pointer);
@@ -148,7 +148,7 @@ Begin
 
 	YPos := TitleGfx^.H;
 	Font^.Scale := 2;
-	PrintText('A GAME BY SUVE', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+	PrintText('A GAME BY SUVE', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
 
 	YPos += (Font^.SpacingY + Font^.CharH) * Font^.Scale * 5 div 2;
 	PrintText('A LUDUM DARE 25 GAME', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
@@ -276,7 +276,7 @@ Begin
 
 	YPos := TitleGfx^.H + (Font^.CharH * 3 div 2);
 	Font^.Scale := 2;
-	PrintText('YOUR STATS', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
+	PrintText('YOUR STATS', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
 	YPos += (Font^.SpacingY + Font^.CharH) * Font^.Scale * 2;
 
 	Font^.Scale := 1;
