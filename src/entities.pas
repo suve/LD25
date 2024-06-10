@@ -112,11 +112,8 @@ Type
 	TEnemy = Object(TEntity)
 		Public
 			Sprite: PSprite;
-			Children: Array of sInt; // List of spawn-IDs of children mobs.
 			SfxID : sInt;            // Death SFX ID. <0 means none.
 			SwitchNum : sInt;        // Switch to trigger on death
-
-			Procedure AddChild(ChildID: sInt);
 
 			Constructor Create;
 			Destructor Destroy; Virtual;
@@ -376,15 +373,6 @@ End;
 Destructor TPlayer.Destroy();
 Begin
 	Inherited Destroy();
-End;
-
-Procedure TEnemy.AddChild(ChildID: sInt);
-Var
-	Len: sInt;
-Begin
-	Len := Length(Self.Children);
-	SetLength(Self.Children, Len + 1);
-	Self.Children[Len] := ChildID
 End;
 
 Constructor TEnemy.Create();

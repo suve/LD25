@@ -809,7 +809,6 @@ End;
 
 Procedure DamageMob(Const mID:uInt; Const Power:Double);
 Var
-	Idx, ChildID: sInt;
 	Mob: PEnemy;
 Begin
 	Mob := Mobs[mID];
@@ -822,13 +821,6 @@ Begin
 
 		PlaceGibs(Mob, Mob^.Sprite^.GetFrame(AniFra, Mob^.Face));
 		PlaySfx(Mob^.SfxID);
-
-		If (Length(Mob^.Children) > 0) then begin
-			For Idx := Low(Mob^.Children) to High(Mob^.Children) do begin
-				ChildID := Mob^.Children[Idx];
-				If Mobs[ChildID] <> NIL then DamageMob(ChildID, 1000);
-			end;
-		end;
 
 		Dispose(Mob,Destroy());
 		Mobs[mID] := NIL
