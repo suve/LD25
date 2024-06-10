@@ -289,13 +289,13 @@ Begin
 	If (PlaSta^.BestTimeCheck = BTC_BETTER) or (PlaSta^.BestTimeCheck = BTC_FIRST) then begin
 		PrintText('! NEW RECORD !', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
 	end else begin
-		PrintText('BEST: ', Font, OffCenter, YPos, ALIGN_RIGHT, ALIGN_TOP, NIL);
+		PrintText('BEST: ', Font, OffCenter, YPos, ALIGN_RIGHT, ALIGN_TOP, @GreyColour);
 		PrintText(PlaSta^.BestTime, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
 	end;
 	YPos += (Font^.SpacingY + Font^.CharH) * 3;
 	YStep := (Font^.SpacingY + Font^.CharH) * 9 div 4;
 
-	PrintText('HITS TAKEN: ', Font, OffCenter, YPos, ALIGN_RIGHT, ALIGN_TOP, NIL);
+	PrintText('HITS TAKEN: ', Font, OffCenter, YPos, ALIGN_RIGHT, ALIGN_TOP, @WhiteColour);
 	PrintText(PlaSta^.HitsTaken, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
 	YPos += YStep;
 
