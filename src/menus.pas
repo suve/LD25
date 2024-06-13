@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2022-2023 suve (a.k.a. Artur Frenszek-Iwicki)
+ * Copyright (C) 2022-2024 suve (a.k.a. Artur Frenszek-Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -70,7 +70,9 @@ Type
 Implementation
 
 Uses
-	Assets, Fonts, Rendering, Shared;
+	Assets, Fonts, Rendering, Shared
+	{$IFDEF LD25_MOBILE}, TouchControls {$ENDIF}
+;
 
 Procedure TMenu.RecalculateOffsets();
 Var
@@ -222,6 +224,11 @@ Begin
 		Exit(Self.ProcessMouseEvent(ev))
 	end;
 
+	{$IFDEF LD25_MOBILE}
+	If (Ev^.Type_ = SDL_FingerUp) or (Ev^.Type_ = SDL_FingerDown) or (Ev^.Type_ = SDL_FingerMotion) then begin
+		TouchControls.HandleEvent(Ev)
+	end else
+	{$ENDIF}
 	If (Ev^.Type_ = SDL_WindowEvent) and (Ev^.Window.Event = SDL_WINDOWEVENT_RESIZED) then
 		Rendering.HandleWindowResizedEvent(Ev);
 

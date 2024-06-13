@@ -29,6 +29,7 @@ Uses
 	SysUtils,
 	SDL2,
 	Assets, Colours, Fonts, Images, Rendering, Shared, Stats
+	{$IFDEF LD25_MOBILE}, TouchControls {$ENDIF}
 ;
 
 Procedure RenderSlide(SlideTime: uInt; Data: Pointer);
@@ -60,6 +61,10 @@ Var
 	Idx, DeltaTime, SlideTime: uInt;
 	Action: TSlideAction;
 Begin
+	{$IFDEF LD25_MOBILE}
+		TouchControls.SetVisibility(TCV_NONE);
+	{$ENDIF}
+
 	Idx := 0;
 	SlideTime := 0;
 	While (Idx < Count) do begin
