@@ -993,6 +993,12 @@ Begin
 	else
 		SDL_Log('Render target texture created successfully.', []);
 
+	{$IF DEFINED(LD25_MOBILE)}
+		// Make sure the game does not try to render touch controls while assets
+		// are still being loaded (touch-controls.png is quite far down the list)
+		TouchControls.SetVisibility(TCV_NONE);
+	{$ENDIF}
+
 	SDL_Log('Loading assets...', []);
 	RegisterAllAssets();
 	Assload := LoadAssets(@LoadUpdate);
