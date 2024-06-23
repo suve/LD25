@@ -157,9 +157,7 @@ defined in the Makefile.
 
 Android is a bit of a tough cookie.
 You can find all the extra code (Java/JNI glue, manifests, etc.)
-and build scripts in the
-[pl.suve.colorful.android](https://github.com/suve/pl.suve.colorful.android)
-repository.
+and build scripts inside the `android/` directory.
 
 
 ## Licensing

@@ -21,9 +21,9 @@ jobs:
             SDL2-devel SDL2_image-devel SDL2_mixer-devel
       - checkout
       - run:
-          name: Checkout git submodules
+          name: Checkout SDL2-for-Pascal git submodule
           command: |
-            git submodule update --init
+            git submodule update --init -- SDL2
       - run:
           name: make executable
           command: |
@@ -32,27 +32,22 @@ jobs:
   android:
     executor: fpc-for-android
     steps:
-      - run:
-          name: Checkout the "pl.suve.colorful.android" repository
-          command: >
-            git clone --depth=1 "https://github.com/suve/pl.suve.colorful.android" ./
-      - checkout:
-          path: ./colorful
+      - checkout
       - run:
           name: Checkout git submodules
           command: |
-            pushd colorful && git submodule update --init -- SDL2 && popd
             git submodule update --init -- SDL2
-            git submodule update --init -- SDL2_image
-            git submodule update --init -- SDL2_mixer
+            git submodule update --init -- android/libs/SDL2
+            git submodule update --init -- android/libs/SDL2_image
+            git submodule update --init -- android/libs/SDL2_mixer
       - run:
           name: Build SDL2 libs
           command: |
-            ./build-SDL2.sh --debug
+            ./android/build-SDL2.sh --debug
       - run:
           name: Build the game
           command: |
-            ./build-colorful.sh --debug
+            ./android/build-colorful.sh --debug
 
 workflows:
   build:

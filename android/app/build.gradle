@@ -1,0 +1,64 @@
+plugins {
+	id 'com.android.application'
+}
+
+android {
+	compileSdkVersion 29
+	buildToolsVersion "30.0.3"
+
+	defaultConfig {
+		applicationId "pl.suve.colorful.android"
+		minSdkVersion 21
+		targetSdkVersion 29
+		versionCode 2000
+		versionName "2.0"
+	}
+
+	buildTypes {
+		release {
+			minifyEnabled false
+			proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+		}
+	}
+	compileOptions {
+		sourceCompatibility JavaVersion.VERSION_1_8
+		targetCompatibility JavaVersion.VERSION_1_8
+	}
+
+	sourceSets {
+		main {
+			java {
+				srcDir "src/main/java"
+				srcDir "../libs/SDL2/android-project/app/src/main/java"
+			}
+		}
+	}
+
+	/*
+	 * SDL's Java glue code contains support for stuff that requires
+	 * extra permissions, like audio recording and bluetooth controllers.
+	 * Thus, the linting phase fails because AndroidManifest.xml
+	 * does not request these permissions.
+	 *
+	 * One solution would be to add said permissions to the manifest,
+	 * but since the game does not actually use those features,
+	 * it's not really a good idea.
+	 *
+	 * The ideal solution would be to remove the relevant Java code.
+	 *
+	 * The lazy solution is to just ignore the lint errors,
+	 * so that's what I'm gonna do. #yolo
+	 */
+	lintOptions {
+        abortOnError false
+    }
+}
+
+dependencies {
+
+	implementation 'androidx.appcompat:appcompat:1.2.0'
+	implementation 'com.google.android.material:material:1.3.0'
+	testImplementation 'junit:junit:4.+'
+	androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+	androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+}
