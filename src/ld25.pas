@@ -107,22 +107,29 @@ Const
 		'MOVE UP','MOVE RIGHT','MOVE DOWN','MOVE LEFT','SHOOT LEFT','SHOOT RIGHT',
 		'PAUSE','VOLUME DOWN','VOLUME UP'
 	);
-	BlinkPeriod = 575;
+	BLINK_PERIOD = 575;
+	COLLISION_DURATION = 1200;
 Var
 	NewBind: Array[TPlayerKey] of TSDL_Keycode;
 	History: Array[TPlayerKey] of AnsiString;
 
 	K, Idx: TPlayerKey;
-	Colour: PSDL_Colour;
+	Colour: TSDL_Colour;
 	RowHeight, YPos: uInt;
+
+	CollisionIdx: TPlayerKey;
+	CollisionTicks: sInt;
+
 	Bound: Boolean;
-	dt, Ticks: uInt;
+	dt, BlinkTicks: uInt;
 Begin
 	For Idx := Low(TPlayerKey) to High(TPlayerKey) do
 		History[Idx] := UpCase(SDL_GetKeyName(KeyBind[Idx]));
 
-	Ticks := 0;
-	Bound:=False; K:=Low(TPlayerKey);
+	BlinkTicks := 0;
+	CollisionTicks := 0;
+	Bound:=False;
+	K:=Low(TPlayerKey);
 	While True do begin
 		Rendering.BeginFrame();
 		DrawTitle();
@@ -134,13 +141,21 @@ Begin
 		YPos := TitleGfx^.H + RowHeight;
 		YPos += (RESOL_H - YPos - (Length(KeyName) * RowHeight)) div 2;
 		For Idx := Low(TPlayerKey) to High(TPlayerKey) do begin
+			// Select base colour
 			If Idx <> K then
-				Colour := @GreyColour
+				Colour := GreyColour
 			else
-				Colour := @WhiteColour;
-			PrintText(KeyName[Idx] + ': ', Font, (RESOL_W div 2), YPos, ALIGN_RIGHT, ALIGN_TOP, Colour);
+				Colour := WhiteColour;
 
-			If (Idx <> K) or (((Ticks div BlinkPeriod) mod 2) = 0) then
+			// Change the colour to a red tint if we have a collision
+			If (CollisionTicks > 0) and ((Idx = CollisionIdx) or (Idx = K)) then begin
+				Colour.G := (Colour.G * (COLLISION_DURATION - CollisionTicks)) div COLLISION_DURATION;
+				Colour.B := (Colour.B * (COLLISION_DURATION - CollisionTicks)) div COLLISION_DURATION
+			end;
+
+			PrintText(KeyName[Idx] + ': ', Font, (RESOL_W div 2), YPos, ALIGN_RIGHT, ALIGN_TOP, @Colour);
+
+			If (Idx <> K) or (((BlinkTicks div BLINK_PERIOD) mod 2) = 0) then
 				PrintText(History[Idx], Font, (RESOL_W div 2), YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
 
 			YPos += RowHeight
@@ -148,7 +163,9 @@ Begin
 		
 		Rendering.FinishFrame();
 		GetDeltaTime(dt);
-		Ticks += dt;
+
+		BlinkTicks += dt;
+		If (CollisionTicks > 0) then CollisionTicks -= dt;
 
 		While (SDL_PollEvent(@Ev)>0) do begin
 			If (Ev.Type_ = SDL_QuitEv) then begin
@@ -165,15 +182,34 @@ Begin
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
 				HandleWindowResizedEvent(@Ev)
 		end;
-		If (Bound) then begin
-			If (K = High(TPlayerKey)) then Break;
 
-			History[K]:=UpCase(SDL_GetKeyName(NewBind[K]));
-			Ticks := 0;
-			Inc(K);
-			
-			Bound:=False
-		end
+		If Not Bound then Continue;
+		Bound := False;
+
+		// Always assign new name and reset blink timer,
+		// even if we reject the proposed keybinding due to a collision.
+		History[K]:=UpCase(SDL_GetKeyName(NewBind[K]));
+		BlinkTicks := 0;
+
+		// If we have a candidate keybind, check for collisions
+		CollisionTicks := 0;
+		Idx := Low(TPlayerKey);
+		While Idx < K do begin
+			If NewBind[Idx] = NewBind[K] then begin
+				CollisionIdx := Idx;
+				CollisionTicks := COLLISION_DURATION;
+				PlaySfx(SFX_EXTRA+3);
+				Break
+			end;
+			Inc(Idx)
+		end;
+		If CollisionTicks > 0 then Continue;
+
+		// Last keybind? Bail out
+		If (K = High(TPlayerKey)) then Break;
+
+		// Otherwise, move over to next keybind
+		Inc(K)
 	end;
 	For K:=Low(TPlayerKey) to High(TPlayerKey) do KeyBind[K]:=NewBind[K]
 End;
