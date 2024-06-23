@@ -107,22 +107,49 @@ Const
 		'MOVE UP','MOVE RIGHT','MOVE DOWN','MOVE LEFT','SHOOT LEFT','SHOOT RIGHT',
 		'PAUSE','VOLUME DOWN','VOLUME UP'
 	);
+	BlinkPeriod = 575;
 Var
-	K:TPlayerKey; NewBind:Array[TPlayerKey] of TSDL_Keycode;
-	dt:uInt; Finito,Bound:Boolean;
+	NewBind: Array[TPlayerKey] of TSDL_Keycode;
+	History: Array[TPlayerKey] of AnsiString;
+
+	K, Idx: TPlayerKey;
+	Colour: PSDL_Colour;
+	RowHeight, YPos: uInt;
+	Bound: Boolean;
+	dt, Ticks: uInt;
 Begin
-	Finito:=False; Bound:=False; K:=Low(TPlayerKey);
-	Repeat
+	For Idx := Low(TPlayerKey) to High(TPlayerKey) do
+		History[Idx] := UpCase(SDL_GetKeyName(KeyBind[Idx]));
+
+	Ticks := 0;
+	Bound:=False; K:=Low(TPlayerKey);
+	While True do begin
 		Rendering.BeginFrame();
 		DrawTitle();
-		
+
 		Font^.Scale := 2;
 		PrintText('SET KEY BINDINGS',Font,(RESOL_W div 2),TitleGfx^.H,ALIGN_CENTRE,ALIGN_TOP,NIL);
-		
-		PrintText(KeyName[K],Font,(RESOL_W div 2),(RESOL_H + TitleGfx^.H) div 2,ALIGN_CENTRE,ALIGN_MIDDLE,NIL);
+
+		RowHeight := (Font^.CharH + Font^.SpacingY) * Font^.Scale;
+		YPos := TitleGfx^.H + RowHeight;
+		YPos += (RESOL_H - YPos - (Length(KeyName) * RowHeight)) div 2;
+		For Idx := Low(TPlayerKey) to High(TPlayerKey) do begin
+			If Idx <> K then
+				Colour := @GreyColour
+			else
+				Colour := @WhiteColour;
+			PrintText(KeyName[Idx] + ': ', Font, (RESOL_W div 2), YPos, ALIGN_RIGHT, ALIGN_TOP, Colour);
+
+			If (Idx <> K) or (((Ticks div BlinkPeriod) mod 2) = 0) then
+				PrintText(History[Idx], Font, (RESOL_W div 2), YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
+
+			YPos += RowHeight
+		end;
 		
 		Rendering.FinishFrame();
 		GetDeltaTime(dt);
+		Ticks += dt;
+
 		While (SDL_PollEvent(@Ev)>0) do begin
 			If (Ev.Type_ = SDL_QuitEv) then begin
 				Shutdown:=True; Exit() 
@@ -131,21 +158,23 @@ Begin
 				If ((Ev.Key.Keysym.Sym = SDLK_Escape) or (Ev.Key.Keysym.Sym = SDLK_AC_BACK)) then
 					Exit()
 				else begin
-					NewBind[K]:=Ev.Key.Keysym.Sym; Bound:=True
+					NewBind[K]:=Ev.Key.Keysym.Sym;
+					Bound:=True
 				end
 			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
 				HandleWindowResizedEvent(@Ev)
 		end;
 		If (Bound) then begin
-			If (K<High(TPlayerKey)) then
-				Inc(K)
-			else
-				Finito:=True;
+			If (K = High(TPlayerKey)) then Break;
+
+			History[K]:=UpCase(SDL_GetKeyName(NewBind[K]));
+			Ticks := 0;
+			Inc(K);
 			
 			Bound:=False
-		end;
-	Until Finito;
+		end
+	end;
 	For K:=Low(TPlayerKey) to High(TPlayerKey) do KeyBind[K]:=NewBind[K]
 End;
 {$ELSE} // LD25_MOBILE is defined
