@@ -29,7 +29,7 @@
 
 # Gradle build system-related stuff
 /android/.gradle/
-/android/gradle/
+/android/gradlew.bat
 /android/local.properties
 
 # Android dirs we'll symlink / copy from other places
