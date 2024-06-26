@@ -19,10 +19,10 @@ X   XXX|    |XXXXXXX
 X  XXXX|    |XXXXXXX
 XXXXXXX|::::|XXXXXXX
 palette yellow
-spawn spitter 12 2
-spawn spitter 19 5
-spawn spammer 19 13
-spawn drone 4 4
+spawn drone 12 2
+spawn spammer 19 5
+spawn spitter 19 13
+spawn spitter 4 4
 spawn basher 15 15
 if 35
 	tile 10 17

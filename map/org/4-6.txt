@@ -5,7 +5,7 @@ X      |    +---+  X
 X      |           X
 -+  +--+           X
 :                  X
--------------+ +---X
+-------------+=+---X
 XXXXXXXX       |  XX
 XXXXX          | XXX
 XXX            |   X
@@ -15,7 +15,7 @@ X              |XXXX
 X             X|XXXX
 X            +-+---+
 XXX          v     |
-XXXXXX       D     |
+XXXXXX             |
 XXXXXXX      ^     |
 XXXXXXXXXXXXX+-----+
 palette yellow
@@ -32,7 +32,7 @@ spawn drone 15 13
 spawn drone 7 4
 colour yellow 19 18
 if 36
-	tile 14 18
+	tile 15 8
 else
-	tile 14 18 D
+	tile 15 8 =
 fi

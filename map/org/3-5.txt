@@ -15,13 +15,20 @@ XXXX   XX|  |X     :
 XXX     X|  |      :
 XX       +  +      X
 X                 XX
-XX               XXX
-XXXXXX         XXXXX
-XXXXXXXXX+::+XXXXXXX
+X+==+            XXX
+X|  |XX        XXXXX
+X|::|XXXXXXXXXXXXXXX
 palette yellow
-spawn basher 4 17
+spawn basher 10 18
 spawn drone 16 8
-spawn spitter 7 19
+spawn spitter 10 19
 if 35 not
 	spawn generator 5 10 35
+fi
+if 36 not
+	tile 3 18 =
+	tile 4 18 =
+else
+	tile 3 18
+	tile 4 18
 fi

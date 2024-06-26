@@ -15,14 +15,14 @@ X              +XXXX
 X              |XXXX
 X-----------+  +---X
 XX                 X
-X                  X
-X                  X
+X                 XX
+X                XXX
 X::XXXXXXXXXXXXXXXXX
 palette yellow
-spawn drone 17 17
-spawn drone 19 17
+spawn drone 13 18
+spawn drone 18 17
 spawn drone 17 18
-spawn drone 19 19
+spawn drone 16 19
 spawn spitter 3 15
 spawn drone 14 3
 spawn drone 15 4

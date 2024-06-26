@@ -1,11 +1,11 @@
-XXXXXXXXX|::+XXXXXXX
-XXXXXXXXX+     XXXXX
-XXXXX             XX
-XXXXX              X
-XXX              XXX
-XXX             +---
-XX              D  :
-X---+  +--+-----+---
+X|::|XXXXXXXXXXXXXXX
+X|  |XXXXX     XXXXX
+X|  |X            XX
+X+  +X             X
+XX               XXX
+XX              +---
+X                  :
+----+  +--+-----+---
 XXXX|  |  |     |XXX
 XX+-+  |  {     +--X
 XX|    |           X
@@ -20,16 +20,11 @@ XXXXXXX       XXXXXX
 XXXXXXXXXXXXXXXXXXXX
 palette yellow
 spawn spitter 17 04
-spawn basher 07 11
+spawn basher 07 18
 spawn drone  9 19
 spawn drone 11 19
 spawn drone 13 19
-spawn spitter 5 6
-if 35
-	tile 17 7
-else
-	tile 17 7 D
-fi
+spawn spitter 7 4
 if 36 not
 	spawn generator 11 11 36
 fi
