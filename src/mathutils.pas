@@ -1,6 +1,6 @@
 (*
  * colorful - simple 2D sideview shooter
- * Copyright (C) 2012-2023 suve (a.k.a. Artur Frenszek-Iwicki)
+ * Copyright (C) 2012-2024 suve (a.k.a. Artur Frenszek-Iwicki)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3,
@@ -36,6 +36,8 @@ Function Random(Min,Max:Int64):Int64; Overload; // The overload prevents shadowi
 // Check if objects overlap
 Function Overlap(AX,AY:Double;AW,AH:uInt;BX,BY:Double;BW,BH:uInt):Boolean;
 Function Overlap(A,B:PEntity):Boolean;
+
+Function CombineRects(Const First, Second: TSDL_Rect): TSDL_Rect;
 
 
 Implementation
@@ -91,6 +93,40 @@ End;
 Function Overlap(A,B:PEntity):Boolean;
 Begin
 	Result := Overlap(A^.X,A^.Y,A^.W,A^.H,B^.X,B^.Y,B^.W,B^.H)
+End;
+
+Function CombineRects(Const First, Second: TSDL_Rect): TSDL_Rect;
+Var
+	FirstRight, SecondRight: uInt;
+	FirstBottom, SecondBottom: uInt;
+Begin
+	If First.X < Second.X then
+		Result.X := First.X
+	else
+		Result.X := Second.X;
+	If First.Y < Second.Y then
+		Result.Y := First.Y
+	else
+		Result.Y := Second.Y;
+
+	(*
+	 * To get the actual "end X" / "end Y" of each rectangle, we should
+	 * subtract 1 from these values. However, then we'd need to re-add
+	 * it later. Omitting it makes calculations easier.
+	 *)
+	FirstRight := First.X + First.W;
+	SecondRight := Second.X + Second.W;
+	FirstBottom := First.Y + First.H;
+	SecondBottom := Second.Y + Second.H;
+
+	If FirstRight > SecondRight then
+		Result.W := FirstRight - Result.X
+	else
+		Result.W := SecondRight - Result.X;
+	If FirstBottom > SecondBottom then
+		Result.H := FirstBottom - Result.Y
+	else
+		Result.H := SecondBottom - Result.Y;
 End;
 
 End.

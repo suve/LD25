@@ -632,17 +632,23 @@ Const
 	LiberapayText = {$IFNDEF LD25_MOBILE} 'L - ' + {$ENDIF} 'LIBERAPAY';
 	Alignment = {$IFNDEF LD25_MOBILE} ALIGN_LEFT {$ELSE} ALIGN_CENTRE {$ENDIF};
 
-	GitHubLink: PChar = 'https://github.com/sponsors/suve';
-	LiberapayLink: PChar = 'https://liberapay.com/suve';
+	GitHubLink = 'GITHUB.COM/SPONSORS/SUVE';
+	GitHubURL: PChar = 'https://github.com/sponsors/suve';
+
+	LiberapayLink = 'LIBERAPAY.COM/SUVE';
+	LiberapayURL: PChar = 'https://liberapay.com/suve';
 Var
 	dt: uInt;
 	XPos, YPos: sInt;
+	{$IFNDEF LD25_MOBILE} Offset: uInt; {$ENDIF}
 	GitHubRect, LiberaPayRect: TSDL_Rect;
 	BackToMenu: Boolean;
 Begin
+	Font^.Scale := 2;
 	{$IFNDEF LD25_MOBILE}
 		XPos := (Length(GitHubText) * Font^.CharW) + ((Length(GitHubText) - 1) * Font^.SpacingX);
 		XPos := (RESOL_W - (XPos * Font^.Scale)) div 2;
+		Offset := 4 * (Font^.CharW + Font^.SpacingX) * Font^.Scale;
 	{$ELSE}
 		XPos := RESOL_W div 2;
 	{$ENDIF}
@@ -652,26 +658,41 @@ Begin
 		Rendering.BeginFrame();
 		DrawTitle();
 
-		Font^.Scale := 2; YPos:=TitleGfx^.H;
-		PrintText('DONATE',Font,(RESOL_W div 2),YPos,ALIGN_CENTRE,ALIGN_TOP,NIL);
-
-		YPos += Font^.CharH * Font^.Scale * 3;
+		Font^.Scale := 2;
+		YPos:=TitleGfx^.H;
 		PrintText('IF YOU LIKE THE GAME', Font,(RESOL_W div 2),YPos,ALIGN_CENTRE,ALIGN_TOP,NIL);
-		YPos += (Font^.CharH * Font^.Scale * 3) div 2;
+		YPos += Font^.CharH * 3;
 		PrintText('YOU CAN DONATE VIA:', Font,(RESOL_W div 2),YPos,ALIGN_CENTRE,ALIGN_TOP,NIL);
 
-		YPos += Font^.CharH * Font^.Scale * 3;
+		YPos += Font^.CharH * 6;
 		PrintMenuText(GitHubText, XPos, YPos, Alignment, @MenuActiveColour, GitHubRect);
 
-		YPos += Font^.CharH * Font^.Scale * 2;
+		YPos += Font^.CharH * 7;
 		PrintMenuText(LiberapayText, XPos, YPos, Alignment, @MenuActiveColour, LiberaPayRect);
 
-		YPos += Font^.CharH * Font^.Scale * 3;
+		YPos += Font^.CharH * 7;
 		PrintText('THANKS!', Font,(RESOL_W div 2),YPos,ALIGN_CENTRE,ALIGN_TOP, @WhiteColour);
+
+		Font^.Scale := 1;
+		YPos := GitHubRect.Y + GitHubRect.H + (Font^.CharH div 2);
+		{$IFNDEF LD25_MOBILE}
+			PrintText(GitHubLink, Font, GitHubRect.X + Offset, YPos, ALIGN_LEFT, ALIGN_TOP, @MenuActiveColour);
+		{$ELSE}
+			PrintText(GitHubLink, Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, @MenuActiveColour);
+		{$ENDIF}
+		YPos := LiberaPayRect.Y + LiberaPayRect.H + (Font^.CharH div 2);
+		{$IFNDEF LD25_MOBILE}
+			PrintText(LiberapayLink, Font, LiberaPayRect.X + Offset, YPos, ALIGN_LEFT, ALIGN_TOP, @MenuActiveColour);
+		{$ELSE}
+			PrintText(LiberapayLink, Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, @MenuActiveColour);
+		{$ENDIF}
 
 		Rendering.FinishFrame();
 		GetDeltaTime(dt);
 		UpdateMenuColours(dt);
+
+		GitHubRect.H += (Font^.CharH * 3) div 2;
+		LiberaPayRect.H += (Font^.CharH * 3) div 2;
 
 		While (SDL_PollEvent(@Ev)>0) do begin
 			If (Ev.Type_ = SDL_QuitEv) then begin
@@ -682,22 +703,22 @@ Begin
 					BackToMenu := True
 				else
 				If (Ev.Key.Keysym.Sym = SDLK_G) then begin
-					SDL_OpenUrl(GitHubLink);
+					SDL_OpenUrl(GitHubURL);
 					BackToMenu := True
 				end else
 				If (Ev.Key.Keysym.Sym = SDLK_L) then begin
-					SDL_OpenUrl(LiberapayLink);
+					SDL_OpenUrl(LiberapayURL);
 					BackToMenu := True
 				end
 			end else
 			If (Ev.Type_ = SDL_MouseButtonDown) then begin
 				{$IFDEF LD25_MOBILE} TranslateMouseEventCoords(@Ev); {$ENDIF}
 				If(MouseInRect(GitHubRect)) then begin
-					SDL_OpenUrl(GitHubLink);
+					SDL_OpenUrl(GitHubURL);
 					BackToMenu := True
 				end else
 				If(MouseInRect(LiberaPayRect)) then begin
-					SDL_OpenUrl(LiberaPayLink);
+					SDL_OpenUrl(LiberaPayURL);
 					BackToMenu := True
 				end
 			end else
