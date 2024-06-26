@@ -75,12 +75,163 @@ Var
 Var
 	GameArea: TSDL_Rect;
 
-Procedure PositionTouchControls();
 Const
 	BACK_SIZE = 40;
 	BUTTON_SIZE = 32;
 	DPAD_SIZE = 120;
 
+Procedure LandscapeMode(Out DPad, ShootBtns, BackBtn: TSDL_Rect);
+Var
+	TotalWidth: sInt;
+	HorizontalOffset: sInt;
+Begin
+	TotalWidth := RESOL_W + DPAD_SIZE + BUTTON_SIZE;
+	TotalWidth := (TotalWidth * Wnd_H) div RESOL_H;
+	HorizontalOffset := (Wnd_W - TotalWidth) div 4;
+
+	DPad.W := (DPAD_SIZE * Wnd_H) div RESOL_H;
+	DPad.H := DPad.W;
+	DPad.Y := (((RESOL_H - DPAD_SIZE) div 2) * Wnd_H) div RESOL_H;
+
+	ShootBtns.W := (BUTTON_SIZE * Wnd_H) div RESOL_H;
+	ShootBtns.H := (ShootBtns.W * 7) div 2;
+	ShootBtns.Y := DPad.Y + ((DPad.H - ShootBtns.H) div 2);
+
+	GameArea.W := Wnd_H;
+	GameArea.H := Wnd_H;
+	GameArea.Y := 0;
+
+	BackBtn.W := (BACK_SIZE * Wnd_H) div RESOL_H;
+	BackBtn.H := BackBtn.W;
+	BackBtn.Y := 0;
+
+	If(Not SwapTouchControls) then begin
+		DPad.X := HorizontalOffset;
+		GameArea.X := DPad.X + DPad.W + HorizontalOffset;
+		ShootBtns.X := Wnd_W - ShootBtns.W - HorizontalOffset;
+		BackBtn.X := 0;
+	end else begin
+		ShootBtns.X := HorizontalOffset;
+		GameArea.X := ShootBtns.X + ShootBtns.W + HorizontalOffset;
+		DPad.X := Wnd_W - DPad.W - HorizontalOffset;
+		BackBtn.X := Wnd_W - BackBtn.W
+	end
+End;
+
+Procedure PortraitMode(Out DPad, ShootBtns, BackBtn: TSDL_Rect);
+Var
+	TotalHeight: sInt;
+	HorizontalOffset, VerticalOffset: sInt;
+Begin
+	TotalHeight := RESOL_H + DPAD_SIZE;
+	TotalHeight := (TotalHeight * Wnd_W) div RESOL_W;
+	VerticalOffset := (Wnd_H - TotalHeight) div 3;
+	HorizontalOffset := (((RESOL_W - DPAD_SIZE - BUTTON_SIZE) div 4) * Wnd_W) div RESOL_W;
+
+	GameArea.X := 0;
+	GameArea.Y := VerticalOffset;
+	GameArea.W := Wnd_W;
+	GameArea.H := Wnd_W;
+
+	DPad.W := (DPAD_SIZE * Wnd_W) div RESOL_W;
+	DPad.H := DPad.W;
+	DPad.Y := GameArea.Y + GameArea.H + VerticalOffset;
+
+	ShootBtns.W := (BUTTON_SIZE * Wnd_W) div RESOL_W;
+	ShootBtns.H := (ShootBtns.W * 7) div 2;
+	ShootBtns.Y := DPad.Y + ((DPad.H - ShootBtns.H) div 2);
+
+	BackBtn.W := (BACK_SIZE * Wnd_W) div RESOL_W;
+	BackBtn.H := BackBtn.W;
+	BackBtn.Y := Wnd_H - BackBtn.H;
+
+	If(Not SwapTouchControls) then begin
+		DPad.X := HorizontalOffset;
+		ShootBtns.X := Wnd_W - ShootBtns.W - HorizontalOffset;
+		BackBtn.X := 0
+	end else begin
+		ShootBtns.X := HorizontalOffset;
+		DPad.X := Wnd_W - DPad.W - HorizontalOffset;
+		BackBtn.X := Wnd_W - BackBtn.W
+	end
+End;
+
+Procedure SquareMode(Out DPad, ShootBtns, BackBtn: TSDL_Rect);
+Const
+	SQRT_TWO = Sqrt(2);
+Var
+	SquareSize: uInt;
+	VerticalOffset, HorizontalOffset: sInt;
+	Overlap: uInt;
+Begin
+	If(Wnd_W >= Wnd_H) then begin
+		SquareSize := Wnd_H;
+		HorizontalOffset := (Wnd_W - Wnd_H) div 3;
+		VerticalOffset := 0;
+	end else begin
+		SquareSize := Wnd_W;
+		VerticalOffset := (Wnd_H - Wnd_W) div 3;
+		HorizontalOffset := 0
+	end;
+
+	GameArea.Y := VerticalOffset;
+	GameArea.W := (RESOL_W * SquareSize) div (RESOL_W + DPAD_SIZE);
+	GameArea.H := (RESOL_H * SquareSize) div (RESOL_H + DPAD_SIZE);
+
+	DPad.W := (DPAD_SIZE * SquareSize) div (RESOL_W + DPAD_SIZE);
+	DPad.H := (DPAD_SIZE * SquareSize) div (RESOL_H + DPAD_SIZE);
+	DPad.Y := Wnd_H - DPad.H - VerticalOffset;
+
+	ShootBtns.H := (BUTTON_SIZE * SquareSize) div (RESOL_H + DPAD_SIZE);
+	ShootBtns.W := (ShootBtns.H * 7) div 2;
+	ShootBtns.Y := DPad.Y + ((DPad.H - ShootBtns.H) div 2);
+
+	BackBtn.W := (BACK_SIZE * SquareSize) div (RESOL_W + DPAD_SIZE);
+	BackBtn.H := (BACK_SIZE * SquareSize) div (RESOL_H + DPAD_SIZE);
+	BackBtn.Y := 0;
+
+	(*
+	 * The game area can be made slightly bigger by accounting for the fact
+	 * that the DPad is an octagon, and making the game area stretch
+	 * all the way to touch the sloped side of the DPad, i.e.:
+	 *
+	 *  __v  Touch the middle of this side
+	 * /  \< instead of the corner of the bounding box.
+	 * |  |
+	 * \__/
+	 *
+	 * If we assume a regular octagon, then the triangle formed between
+	 * the sloped side of the polygon and the bounding box is isosceles,
+	 * with angles of 90, 45 and 45 degrees. If the side shared with the
+	 * octagon has a length of a, then the other two sides of the triangle
+	 * have a length of a / sqrt(2).
+	 *
+	 * This means the length of a side of the bounding box is:
+	 *   b = a + 2 * (a / sqrt(2)) = a + a * sqrt(2) = a * (1 + sqrt(2))
+	 * To make the game area touch the middle of the octagon's sloped
+	 * side, we need to calculate "a / sqrt(2) / 2":
+	 *   a = b / (1 + sqrt(2))
+	 *   a / (2 * sqrt(2)) = b / (2 * (sqrt(2) + 2))
+	 * This is the value we put in the Overlap variable.
+	 *)
+	Overlap := Trunc( ((DPad.W + DPad.H) / 2.0) / (2.0 * (SQRT_TWO + 2.0)) );
+	If(Not SwapTouchControls) then begin
+		DPad.X := HorizontalOffset;
+		GameArea.X := DPad.X + DPad.W + HorizontalOffset - Overlap;
+		ShootBtns.X := Wnd_W - ShootBtns.W - (Wnd_H - ShootBtns.Y - ShootBtns.H);
+		BackBtn.X := 0
+	end else begin
+		GameArea.X := HorizontalOffset;
+		DPad.X := GameArea.X + GameArea.W + HorizontalOffset;
+		ShootBtns.X := (Wnd_H - ShootBtns.Y - ShootBtns.H);
+		BackBtn.X := Wnd_W - BackBtn.W
+	end;
+	GameArea.W += Overlap;
+	GameArea.H += Overlap;
+End;
+
+Procedure PositionTouchControls();
+Const
 	ASPECT_RATIO_MUL = 1000;
 
 	LANDSCAPE_WIDTH = RESOL_W + DPAD_SIZE + BUTTON_SIZE;
@@ -88,156 +239,30 @@ Const
 
 	PORTRAIT_HEIGHT = RESOL_H + DPAD_SIZE;
 	PORTRAIT_RATIO = (RESOL_W * ASPECT_RATIO_MUL) div PORTRAIT_HEIGHT;
-
-	SQRT_TWO = Sqrt(2);
 Var
 	AspectRatio: uInt;
-	SquareSize: uInt;
-	TotalHeight, TotalWidth: uInt;
-	VerticalOffset, HorizontalOffset: sInt;
-	Overlap: uInt;
 	DPad, ShootBtns, BackBtn: TSDL_Rect;
+	{$IFDEF LD25_DEBUG} Mode: AnsiString; {$ENDIF}
 Begin
 	AspectRatio := (Wnd_W * ASPECT_RATIO_MUL) div Wnd_H;
-
-	If (AspectRatio >= LANDSCAPE_RATIO) then begin // "Landscape" mode
-		TotalWidth := RESOL_W + DPAD_SIZE + BUTTON_SIZE;
-		TotalWidth := (TotalWidth * Wnd_H) div RESOL_H;
-		HorizontalOffset := (Wnd_W - TotalWidth) div 4;
-
-		DPad.W := (DPAD_SIZE * Wnd_H) div RESOL_H;
-		DPad.H := DPad.W;
-		DPad.Y := (((RESOL_H - DPAD_SIZE) div 2) * Wnd_H) div RESOL_H;
-
-		ShootBtns.W := (BUTTON_SIZE * Wnd_H) div RESOL_H;
-		ShootBtns.H := (ShootBtns.W * 7) div 2;
-		ShootBtns.Y := DPad.Y + ((DPad.H - ShootBtns.H) div 2);
-
-		GameArea.W := Wnd_H;
-		GameArea.H := Wnd_H;
-		GameArea.Y := 0;
-
-		BackBtn.W := (BACK_SIZE * Wnd_H) div RESOL_H;
-		BackBtn.H := BackBtn.W;
-		BackBtn.Y := 0;
-
-		If(Not SwapTouchControls) then begin
-			DPad.X := HorizontalOffset;
-			GameArea.X := DPad.X + DPad.W + HorizontalOffset;
-			ShootBtns.X := Wnd_W - ShootBtns.W - HorizontalOffset;
-			BackBtn.X := 0;
-		end else begin
-			ShootBtns.X := HorizontalOffset;
-			GameArea.X := ShootBtns.X + ShootBtns.W + HorizontalOffset;
-			DPad.X := Wnd_W - DPad.W - HorizontalOffset;
-			BackBtn.X := Wnd_W - BackBtn.W
-		end
+	If (AspectRatio >= LANDSCAPE_RATIO) then begin
+		{$IFDEF LD25_DEBUG} Mode := 'landscape'; {$ENDIF}
+		LandscapeMode(DPad, ShootBtns, BackBtn)
 	end else
-	If (AspectRatio <= PORTRAIT_RATIO) then begin // "Portrait" mode
-		TotalHeight := RESOL_H + DPAD_SIZE;
-		TotalHeight := (TotalHeight * Wnd_W) div RESOL_W;
-		VerticalOffset := (Wnd_H - TotalHeight) div 3;
-		HorizontalOffset := (((RESOL_W - DPAD_SIZE - BUTTON_SIZE) div 4) * Wnd_W) div RESOL_W;
-
-		GameArea.X := 0;
-		GameArea.Y := VerticalOffset;
-		GameArea.W := Wnd_W;
-		GameArea.H := Wnd_W;
-
-		DPad.W := (DPAD_SIZE * Wnd_W) div RESOL_W;
-		DPad.H := DPad.W;
-		DPad.Y := GameArea.Y + GameArea.H + VerticalOffset;
-
-		ShootBtns.W := (BUTTON_SIZE * Wnd_W) div RESOL_W;
-		ShootBtns.H := (ShootBtns.W * 7) div 2;
-		ShootBtns.Y := DPad.Y + ((DPad.H - ShootBtns.H) div 2);
-
-		BackBtn.W := (BACK_SIZE * Wnd_W) div RESOL_W;
-		BackBtn.H := BackBtn.W;
-		BackBtn.Y := Wnd_H - BackBtn.H;
-
-		If(Not SwapTouchControls) then begin
-			DPad.X := HorizontalOffset;
-			ShootBtns.X := Wnd_W - ShootBtns.W - HorizontalOffset;
-			BackBtn.X := 0
-		end else begin
-			ShootBtns.X := HorizontalOffset;
-			DPad.X := Wnd_W - DPad.W - HorizontalOffset;
-			BackBtn.X := Wnd_W - BackBtn.W
-		end
-	end else
-	begin // "Square-ish" mode
-		If(Wnd_W >= Wnd_H) then begin
-			SquareSize := Wnd_H;
-			HorizontalOffset := (Wnd_W - Wnd_H) div 3;
-			VerticalOffset := 0;
-		end else begin
-			SquareSize := Wnd_W;
-			VerticalOffset := (Wnd_H - Wnd_W) div 3;
-			HorizontalOffset := 0
-		end;
-
-		GameArea.Y := VerticalOffset;
-		GameArea.W := (RESOL_W * SquareSize) div (RESOL_W + DPAD_SIZE);
-		GameArea.H := (RESOL_H * SquareSize) div (RESOL_H + DPAD_SIZE);
-
-		DPad.W := (DPAD_SIZE * SquareSize) div (RESOL_W + DPAD_SIZE);
-		DPad.H := (DPAD_SIZE * SquareSize) div (RESOL_H + DPAD_SIZE);
-		DPad.Y := Wnd_H - DPad.H - VerticalOffset;
-
-		ShootBtns.H := (BUTTON_SIZE * SquareSize) div (RESOL_H + DPAD_SIZE);
-		ShootBtns.W := (ShootBtns.H * 7) div 2;
-		ShootBtns.Y := DPad.Y + ((DPad.H - ShootBtns.H) div 2);
-
-		BackBtn.W := (BACK_SIZE * SquareSize) div (RESOL_W + DPAD_SIZE);
-		BackBtn.H := (BACK_SIZE * SquareSize) div (RESOL_H + DPAD_SIZE);
-		BackBtn.Y := 0;
-
-		(*
-		 * The game area can be made slightly bigger by accounting for the fact
-		 * that the DPad is an octagon, and making the game area stretch
-		 * all the way to touch the sloped side of the DPad, i.e.:
-		 *
-		 *  __v  Touch the middle of this side
-		 * /  \< instead of the corner of the bounding box.
-		 * |  |
-		 * \__/
-		 *
-		 * If we assume a regular octagon, then the triangle formed between
-		 * the sloped side of the polygon and the bounding box is isosceles,
-		 * with angles of 90, 45 and 45 degrees. If the side shared with the
-		 * octagon has a length of a, then the other two sides of the triangle
-		 * have a length of a / sqrt(2).
-		 *
-		 * This means the length of a side of the bounding box is:
-		 *   b = a + 2 * (a / sqrt(2)) = a + a * sqrt(2) = a * (1 + sqrt(2))
-		 * To make the game area touch the middle of the octagon's sloped
-		 * side, we need to calculate "a / sqrt(2) / 2":
-		 *   a = b / (1 + sqrt(2))
-		 *   a / (2 * sqrt(2)) = b / (2 * (sqrt(2) + 2))
-		 * This is the value we put in the Overlap variable.
-		 *)
-		Overlap := Trunc( ((DPad.W + DPad.H) / 2.0) / (2.0 * (SQRT_TWO + 2.0)) );
-		If(Not SwapTouchControls) then begin
-			DPad.X := HorizontalOffset;
-			GameArea.X := DPad.X + DPad.W + HorizontalOffset - Overlap;
-			ShootBtns.X := Wnd_W - ShootBtns.W - (Wnd_H - ShootBtns.Y - ShootBtns.H);
-			BackBtn.X := 0
-		end else begin
-			GameArea.X := HorizontalOffset;
-			DPad.X := GameArea.X + GameArea.W + HorizontalOffset;
-			ShootBtns.X := (Wnd_H - ShootBtns.Y - ShootBtns.H);
-			BackBtn.X := Wnd_W - BackBtn.W
-		end;
-		GameArea.W += Overlap;
-		GameArea.H += Overlap;
+	If (AspectRatio <= PORTRAIT_RATIO) then begin
+		{$IFDEF LD25_DEBUG} Mode := 'portrait'; {$ENDIF}
+		PortraitMode(DPad, ShootBtns, BackBtn)
+	end else begin
+		{$IFDEF LD25_DEBUG} Mode := 'square'; {$ENDIF}
+		SquareMode(DPad, ShootBtns, BackBtn)
 	end;
 
 	{$IFDEF LD25_DEBUG}
 	SDL_LogDebug(
 		SDL_LOG_CATEGORY_APPLICATION,
-		'Positioning: %dx%d -> game: %dx%d @ %dx%d; DPad: %dx%d @ %dx%d; shbt: %dx%d @ %dx%d; back: %dx%d @ %dx%d',
+		'Positioning(%s): %dx%d -> game: %dx%d @ %dx%d; DPad: %dx%d @ %dx%d; shbt: %dx%d @ %dx%d; back: %dx%d @ %dx%d',
 		[
+			PChar(Mode),
 			cint(Wnd_W), cint(Wnd_H),
 			cint(GameArea.X), cint(GameArea.Y), cint(GameArea.W), cint(GameArea.H),
 			cint(DPad.X), cint(DPad.Y), cint(DPad.W), cint(DPad.H),
