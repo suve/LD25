@@ -35,7 +35,6 @@
 		android:hardwareAccelerated="true" >
 
 		<activity android:name="pl.suve.colorful.android.MainActivity"
-			android:label="@string/app_name"
 			android:alwaysRetainTaskState="true"
 			android:autoRemoveFromRecents="true"
 			android:launchMode="singleInstance"
