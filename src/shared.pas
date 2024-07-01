@@ -29,7 +29,7 @@ Uses
 // A shitload of constants - but hey, this is the 'shared' unit, isn't it?
 const 
 	GAMENAME = 'Colorful'; GAMEAUTH = 'suve';
-	MAJORNUM = '2'; MINORNUM = '0'; GAMEVERS = MAJORNUM+'.'+MINORNUM;
+	MAJORNUM = '2'; MINORNUM = '1'; GAMEVERS = MAJORNUM+'.'+MINORNUM;
 
 	FPS_LIMIT = 120; TICKS_MINIMUM = 1000 div FPS_LIMIT;
 

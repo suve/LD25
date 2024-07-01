@@ -76,6 +76,44 @@
 	<url type="vcs-browser">https://github.com/suve/LD25/</url>
 
 	<releases>
+		<release version="2.1" date="2024-07-01">
+			<description>
+				<p>Version 2.1 brings a slew of new features and quality-of-live improvements to the game.</p>
+				<ul>
+					<li>
+						The game will now track various statistics, like total completion time (yay, speedrunning!)
+						and display them on the finish screen. Note that this feature will be disabled for existing save games;
+						you will need to start a new game.
+						(Collected data is only stored locally and is not transmitted anywhere.)
+					</li>
+					<li>
+						The yellow zone has been reworked slightly. Previously, it was possible to complete it while
+						completely skipping one of the rooms. With this update, visiting all rooms is mandatory.
+					</li>
+					<li>
+						The &quot;set key bindings&quot; screen will now display active key bindings,
+						and prevent attempts to bind the same key multiple times.
+					</li>
+					<li>
+						Menu items are now tinted green (or red, if they're inactive) to help distinguish
+						between stuff you can interact with, and informative text.
+					</li>
+				</ul>
+				<p>The following Android-specific changes have also been made:</p>
+				<ul>
+					<li>
+						Added a &quot;go back&quot; touch control. This should help players who have their phone
+						set to gesture navigation mode and thus do not have a system-provided &quot;back&quot; button.
+					</li>
+					<li>
+						Added a new options menu, allowing to swap the position of touch controls.
+					</li>
+					<li>
+						Added initial support for square-ish aspect ratio. This is still rather wonky, though.
+					</li>
+				</ul>
+			</description>
+		</release>
 		<release version="2.0" date="2022-12-16">
 			<description>
 				<p>

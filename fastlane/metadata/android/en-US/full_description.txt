@@ -1,2 +1,1 @@
-Colorful is a simple side-view shooter game, where the protagonist
-travels a maze of caves and corridors in order to collect color artifacts.
+Colorful is a simple side-view shooter game, where the protagonist travels a maze of caves and corridors in order to collect color artifacts.

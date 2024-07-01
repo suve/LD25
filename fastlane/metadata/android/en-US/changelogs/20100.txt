@@ -1,0 +1,11 @@
+- The game will now track various statistics, like total completion time (yay, speedrunning!) and display them on the finish screen. Note that this feature will be disabled for existing save games; you will need to start a new game. (Collected data is only stored locally and is not transmitted anywhere.)
+
+- The yellow zone has been reworked slightly. Previously, it was possible to complete it while completely skipping one of the rooms. With this update, visiting all rooms is mandatory.
+
+- Menu items are now tinted green (or red, if they're inactive) to help distinguish between stuff you can touch and interact with, and informative text.
+
+- Added a "go back" touch control. This should help players who have their phone set to gesture navigation mode and thus do not have a system-provided "back" button.
+
+- Added a new options menu, allowing to swap the position of touch controls.
+
+- Added initial support for square-ish aspect ratio. This is still rather wonky, though.

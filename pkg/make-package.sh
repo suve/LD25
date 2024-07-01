@@ -10,12 +10,16 @@
 # creating a fairly universal package.
 #
 
+VERSION="2.1"
+
+# -- Set up error handling and paths
+
 set -eu -o pipefail
 
 cd "$(dirname "$0")"
 cd ..
 
-BUILD_DIR="$(pwd)/build/colorful-2.0"
+BUILD_DIR="$(pwd)/build/colorful-${VERSION}"
 
 # -- Clean before starting anything
 
@@ -61,5 +65,5 @@ cp -t "${BUILD_DIR}" -a \
 # -- Zip it all up
 
 pushd build
-zip -9 "colorful-2.0.zip" -r "colorful-2.0/"
+zip -9 "colorful-${VERSION}.zip" -r "colorful-${VERSION}/"
 popd
