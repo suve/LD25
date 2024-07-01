@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 errmsg() {
 	ZENITY="$(command -v zenity)"
@@ -21,12 +21,12 @@ errmsg() {
 cd "$(dirname "$0")"
 
 ARCH="$(uname -m)"
-if [ "$ARCH" == "x86_64" ] || [ "$ARCH" == "x86-64" ] || [ "$ARCH" == "x64" ] || [ "$ARCH" == "amd64" ] || [ "$ARCH" == "AMD64" ]; then
+if [ "${ARCH}" = "x86_64" ] || [ "${ARCH}" = "x86-64" ] || [ "${ARCH}" = "x64" ] || [ "${ARCH}" = "amd64" ] || [ "${ARCH}" = "AMD64" ]; then
 	LD_LIBRARY_PATH=./bin/linux64/  ./bin/linux64/colorful.elf  "$@"
 	exit
 fi
 
-if [ "$ARCH" == "i386" ] || [ "$ARCH" == "i486" ] || [ "$ARCH" == "i586" ] || [ "$ARCH" == "i686" ]; then
+if [ "${ARCH}" = "i386" ] || [ "${ARCH}" = "i486" ] || [ "${ARCH}" = "i586" ] || [ "${ARCH}" = "i686" ]; then
 	LD_LIBRARY_PATH=./bin/linux32/  ./bin/linux32/colorful.elf  "$@"
 	exit
 fi
