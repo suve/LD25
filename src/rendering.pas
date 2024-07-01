@@ -49,9 +49,6 @@ Procedure HandleWindowResizedEvent(Ev: PSDL_Event);
 {$IFDEF LD25_MOBILE}
 Procedure TranslateMouseEventCoords(Ev: PSDL_Event);
 Procedure WindowCoordsToGameCoords(Const WindowX, WindowY: sInt; Out GameX, GameY: sInt);
-{$ELSE}
-// Unused at the moment. Revise whether this is actually needed.
-Procedure ResizeWindow(W,H:uInt;Full:Boolean=FALSE);
 {$ENDIF}
 
 Function GetWindowInfo(): AnsiString;
@@ -307,28 +304,6 @@ Procedure WindowCoordsToGameCoords(Const WindowX, WindowY: sInt; Out GameX, Game
 Begin
 	GameX := ((WindowX - GameArea.X) * RESOL_W) div GameArea.W;
 	GameY := ((WindowY - GameArea.Y) * RESOL_H) div GameArea.H
-End;
-{$ELSE}
-Procedure ResizeWindow(W,H:uInt;Full:Boolean=FALSE);
-Begin
-	If (Full) then begin
-		SDL_SetWindowSize(Window, RESOL_W, RESOL_H);
-		SDL_SetWindowFullscreen(Window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-		Wnd_F := True
-	end else begin
-		SDL_SetWindowFullscreen(Window, 0);
-		SDL_SetWindowSize(Window, W, H);
-
-		(*
-		 * Centre window on the screen, but _ONLY_ when coming back from fullscreen mode.
-		 * Without this check, when resizing the window, the game would keep jumping
-		 * back-and-forth as the WM would fight the game over setting the window position.
-         *)
-		If(Wnd_F) then SDL_SetWindowPosition(Window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
-
-		Wnd_W := W; Wnd_H := H;
-		Wnd_F := False
-	end
 End;
 {$ENDIF}
 
