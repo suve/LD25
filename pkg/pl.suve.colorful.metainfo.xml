@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Copyright 2017-2022 suve <veg@svgames.pl> -->
+<!-- Copyright 2017-2024 suve <veg@svgames.pl> -->
 <component type="desktop">
 <id>pl.suve.colorful</id>
 	<name>Colorful</name>
@@ -41,13 +41,28 @@
 
 	<screenshots>
 		<screenshot type="default">
-			<image>https://svgames.pl/fedora/appdata/colorful0.png</image>
+			<image>https://svgames.pl/fedora/appdata/colorful-2.1-purple.png</image>
 		</screenshot>
 		<screenshot>
-			<image>https://svgames.pl/fedora/appdata/colorful1.png</image>
+			<image>https://svgames.pl/fedora/appdata/colorful-2.1-teal.png</image>
 		</screenshot>
 		<screenshot>
-			<image>https://svgames.pl/fedora/appdata/colorful2.png</image>
+			<image>https://svgames.pl/fedora/appdata/colorful-2.1-white.png</image>
+		</screenshot>
+		<screenshot>
+			<image>https://svgames.pl/fedora/appdata/colorful-2.1-green.png</image>
+		</screenshot>
+		<screenshot>
+			<image>https://svgames.pl/fedora/appdata/colorful-2.1-black.png</image>
+		</screenshot>
+		<screenshot>
+			<image>https://svgames.pl/fedora/appdata/colorful-2.1-yellow.png</image>
+		</screenshot>
+		<screenshot>
+			<image>https://svgames.pl/fedora/appdata/colorful-2.1-blue.png</image>
+		</screenshot>
+		<screenshot>
+			<image>https://svgames.pl/fedora/appdata/colorful-2.1-red.png</image>
 		</screenshot>
 	</screenshots>
 
