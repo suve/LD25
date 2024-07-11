@@ -137,6 +137,24 @@ Begin
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_ShootLeft] ) then Key[KEY_ShootLeft] :=False else
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_ShootRight]) then Key[KEY_ShootRight]:=False else
 		end else
+		If (Ev.Type_ = SDL_ControllerAxisMotion) then begin
+			If (Ev.cAxis.Axis = SDL_CONTROLLER_AXIS_LEFTX) then begin
+				Key[KEY_LEFT ] := Ev.cAxis.Value < (SDL_JOYSTICK_AXIS_MIN div 4);
+				Key[KEY_RIGHT] := Ev.cAxis.Value > (SDL_JOYSTICK_AXIS_MAX div 4);
+			end else
+			If (Ev.cAxis.Axis = SDL_CONTROLLER_AXIS_LEFTY) then begin
+				Key[KEY_UP  ] := Ev.cAxis.Value < (SDL_JOYSTICK_AXIS_MIN div 4);
+				Key[KEY_DOWN] := Ev.cAxis.Value > (SDL_JOYSTICK_AXIS_MAX div 4);
+			end
+		end else
+		If (Ev.Type_ = SDL_ControllerButtonDown) then begin
+			If (Ev.cButton.Button = SDL_CONTROLLER_BUTTON_A) then Key[KEY_SHOOTLEFT ] := True else
+			If (Ev.cButton.Button = SDL_CONTROLLER_BUTTON_B) then Key[KEY_SHOOTRIGHT] := True else
+		end else
+		If (Ev.Type_ = SDL_ControllerButtonUp) then begin
+			If (Ev.cButton.Button = SDL_CONTROLLER_BUTTON_A) then Key[KEY_SHOOTLEFT ] := False else
+			If (Ev.cButton.Button = SDL_CONTROLLER_BUTTON_B) then Key[KEY_SHOOTRIGHT] := False else
+		end else
 		{$IFDEF LD25_MOBILE}
 		If (Ev.Type_ = SDL_FingerUp) or (Ev.Type_ = SDL_FingerDown) or (Ev.Type_ = SDL_FingerMotion) then begin
 			TouchControls.HandleEvent(@Ev)

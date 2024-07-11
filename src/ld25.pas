@@ -984,8 +984,45 @@ Begin
 	SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, '0');
 	SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, '1');
 
-	Result := SDL_Init(SDL_Init_Video or SDL_Init_Timer) = 0
+	Result := SDL_Init(SDL_INIT_VIDEO or SDL_INIT_EVENTS or SDL_INIT_TIMER) = 0
 End;
+
+Procedure InitControllers();
+Var
+	Idx, Count: sInt;
+	Con: PSDL_GameController;
+Begin
+	SDL_Log('Initializing SDL game controller subsystem...', []);
+	If(SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER) <> 0) then begin
+		SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 'Failed to initialize SDL2 game controller subsystem! Error details: %s', [SDL_GetError()]);
+		Exit()
+	end;
+
+	Count := SDL_NumJoysticks();
+	If(Count < 0) then begin
+		SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 'Failed to get joystick count: %s', [SDL_GetError()]);
+		Exit()
+	end;
+
+	// FIXME: This will leak memory for each opened controller
+	For Idx := 0 to (Count - 1) do begin
+		If(SDL_IsGameController(Idx) = SDL_TRUE) then begin
+			Con := SDL_GameControllerOpen(Idx);
+			If(Con <> NIL) then
+				SDL_Log('Initialized game controller #%d (%s): %s', [
+					cint(Idx),
+					SDL_GameControllerName(Con),
+					SDL_GameControllerMapping(Con)
+				])
+			else
+				SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 'Failed to open game controller #%d (%s): %s', [
+					cint(Idx),
+					SDL_GameControllerNameForIndex(Idx),
+					SDL_GetError()
+				])
+		end
+	end
+end;
 
 Procedure Startup();
 Var
@@ -1051,6 +1088,8 @@ Begin
 		end
 	end else
 		SDL_Log('Failed to initialize SDL2 audio - skipping SDL2_mixer init.', []);
+
+	InitControllers();
 
 	SDL_Log('Opening window...', []);
 	If (Not OpenWindow()) then begin
