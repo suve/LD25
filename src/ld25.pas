@@ -990,8 +990,9 @@ End;
 Procedure InitControllers();
 Var
 	Idx, Count: sInt;
-	Con: PSDL_GameController;
 Begin
+	Controller := NIL;
+
 	SDL_Log('Initializing SDL game controller subsystem...', []);
 	If(SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER) <> 0) then begin
 		SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 'Failed to initialize SDL2 game controller subsystem! Error details: %s', [SDL_GetError()]);
@@ -1007,14 +1008,15 @@ Begin
 	// FIXME: This will leak memory for each opened controller
 	For Idx := 0 to (Count - 1) do begin
 		If(SDL_IsGameController(Idx) = SDL_TRUE) then begin
-			Con := SDL_GameControllerOpen(Idx);
-			If(Con <> NIL) then
-				SDL_Log('Initialized game controller #%d (%s): %s', [
+			Controller := SDL_GameControllerOpen(Idx);
+			If(Controller <> NIL) then begin
+				SDL_Log('Initialized game controller #%d "%s" (rumble: %d)', [
 					cint(Idx),
-					SDL_GameControllerName(Con),
-					SDL_GameControllerMapping(Con)
-				])
-			else
+					SDL_GameControllerName(Controller),
+					SDL_GameControllerHasRumble(Controller)
+				]);
+				Exit() // Bail out with first controller we find
+			end else
 				SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 'Failed to open game controller #%d (%s): %s', [
 					cint(Idx),
 					SDL_GameControllerNameForIndex(Idx),

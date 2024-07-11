@@ -846,11 +846,23 @@ Begin
 End;
 
 Procedure DamagePlayer(Const Power:Double);
+Var
+	HealthLeft: Double;
+	Intensity: Word;
 Begin
 	PlaySfx(SFX_HIT);
 	Hero^.InvTimer := Hero^.InvLength;
 
 	Stats.HitsTaken.Increase(1);
+
+	If(Controller <> NIL) then begin
+		HealthLeft := Hero^.HP - Power;
+		If(HealthLeft > 0) then
+			Intensity := $FFFF - Trunc($F000 * HealthLeft / Hero^.MaxHP)
+		else
+			Intensity := $FFFF;
+		SDL_GameControllerRumble(Controller, 0, Intensity, Hero^.InvLength)
+	end;
 
 	{$IFDEF LD25_DEBUG}
 	If(CheatInvulnerability) then Exit;

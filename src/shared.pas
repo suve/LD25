@@ -113,6 +113,9 @@ Var
 	SaveExists : Array[TGameMode] of Boolean;
 	Shutdown, NoSound : Boolean;
 
+	// Currently active controller (gamepad). To be refactored later.
+	Controller: PSDL_GameController;
+
 // The name is obvious, duh
 Procedure GetDeltaTime(Out Time:uInt);
 Procedure GetDeltaTime(Out Time,Ticks:uInt);
