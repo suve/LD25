@@ -34,15 +34,42 @@ Implementation
 Uses
 	ctypes;
 
-Procedure InitControllers();
+Var
+	// TODO: Replace this with some kind of sparse array that can handle
+	//       elements being added and removed.
+	List: Array[0..255] of PSDL_GameController;
+
+Procedure AddController(Con: PSDL_GameController);
 Const
 	POWER_TEXT: Array[SDL_JOYSTICK_POWER_UNKNOWN..SDL_JOYSTICK_POWER_WIRED] of AnsiString = (
 		'unknown', 'empty', 'low', 'medium', 'full', 'wired'
 	);
 Var
-	Idx, Count: sInt;
 	Joy: PSDL_Joystick;
+	ID: TSDL_JoystickID;
 Begin
+	Joy := SDL_GameControllerGetJoystick(Con);
+	ID := SDL_JoystickInstanceID(Joy);
+
+	List[ID] := Con;
+	SDL_Log('Opened game controller #%ld "%s" (%d axes, %d buttons, %d rumble; power: %s)', [
+		clong(ID),
+		SDL_GameControllerName(Con),
+		SDL_JoystickNumAxes(Joy),
+		SDL_JoystickNumButtons(Joy),
+		SDL_GameControllerHasRumble(Con),
+		PChar(POWER_TEXT[SDL_JoystickCurrentPowerLevel(Joy)])
+	])
+End;
+
+Procedure InitControllers();
+Var
+	Idx, Count: sInt;
+	Con: PSDL_GameController;
+Begin
+	// Clear out list of connected controllers
+	For Idx := Low(List) to High(List) do List[Idx] := NIL;
+	// Clear out active controller pointer
 	Controller := NIL;
 
 	SDL_Log('Initializing SDL game controller subsystem...', []);
@@ -61,8 +88,8 @@ Begin
 	For Idx := 0 to (Count - 1) do begin
 		If(SDL_IsGameController(Idx) <> SDL_TRUE) then Continue;
 
-		Controller := SDL_GameControllerOpen(Idx);
-		If(Controller = NIL) then begin
+		Con := SDL_GameControllerOpen(Idx);
+		If(Con = NIL) then begin
 			SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 'Failed to open game controller #%d (%s): %s', [
 				cint(Idx),
 				SDL_GameControllerNameForIndex(Idx),
@@ -70,19 +97,11 @@ Begin
 			]);
 			Continue
 		end;
-
-		Joy := SDL_GameControllerGetJoystick(Controller);
-		SDL_Log('Opened game controller #%d "%s" (%d axes, %d buttons, %d rumble; power: %s)', [
-			cint(Idx),
-			SDL_GameControllerName(Controller),
-			SDL_JoystickNumAxes(Joy),
-			SDL_JoystickNumButtons(Joy),
-			SDL_GameControllerHasRumble(Controller),
-			PChar(POWER_TEXT[SDL_JoystickCurrentPowerLevel(Joy)])
-		]);
 	
-		// Bail out with first controller we find
-		Exit
+		AddController(Con);
+
+		// Set first opened controller as active
+		If(Controller = NIL) then Controller := Con
 	end
 end;
 
