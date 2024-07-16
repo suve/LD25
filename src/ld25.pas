@@ -26,7 +26,8 @@ uses
 	SysUtils, Math, ctypes,
 	SDL2, SDL2_image, SDL2_mixer,
 	Assets, Colours, ConfigFiles, Controllers, FloatingText, Fonts, Game,
-	Images, Objects, MathUtils, Menus, Rendering, Rooms, Shared, Slides, Stats
+	Images, Objects, MathUtils, Menus, Rendering, Rooms, Shared, Slides, Stats,
+	Toast
 	{$IFDEF LD25_MOBILE}, TouchControls {$ENDIF}
 ;
 
@@ -871,6 +872,7 @@ Begin
 		Rendering.FinishFrame();
 
 		GetDeltaTime(dt);
+		Toast.Update(dt);
 		UpdateMenuColours(dt);
 
 		While (SDL_PollEvent(@Ev)>0) do begin
@@ -1095,6 +1097,7 @@ Begin
 		// are still being loaded (touch-controls.png is quite far down the list)
 		TouchControls.SetVisibility(TCV_NONE);
 	{$ENDIF}
+	Toast.SetVisibility(False);
 
 	SDL_Log('Loading assets...', []);
 	RegisterAllAssets();
@@ -1114,6 +1117,7 @@ Begin
 	Mobs.Create(8);
 	Hero:=NIL;
 
+	Toast.SetVisibility(True);
 	SDL_Log('All done! Initialization finished in %ld ms.', [clong(TimeStampDiffMillis(StartTime, GetTimeStamp()))])
 End;
 

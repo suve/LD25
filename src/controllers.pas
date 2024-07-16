@@ -33,7 +33,8 @@ Procedure HandleDeviceEvent(Ev: PSDL_Event);
 Implementation
 
 Uses
-	ctypes;
+	ctypes,
+	Toast;
 
 Var
 	// TODO: Replace this with some kind of sparse array that can handle
@@ -48,14 +49,17 @@ Const
 Var
 	Joy: PSDL_Joystick;
 	ID: TSDL_JoystickID;
+	Name: PChar;
 Begin
 	Joy := SDL_GameControllerGetJoystick(Con);
 	ID := SDL_JoystickInstanceID(Joy);
 
 	List[ID] := Con;
+
+	Name := SDL_GameControllerName(Con);
 	SDL_Log('Opened game controller #%ld "%s" (%d axes, %d buttons, %d rumble; power: %s)', [
 		clong(ID),
-		SDL_GameControllerName(Con),
+		Name,
 		SDL_JoystickNumAxes(Joy),
 		SDL_JoystickNumButtons(Joy),
 		SDL_GameControllerHasRumble(Con),
@@ -63,7 +67,10 @@ Begin
 	]);
 
 	// If there is no active controller, use this one
-	If(Controller = NIL) then Controller := Con
+	If(Controller = NIL) then begin
+		Toast.Show('CONTROLLER FOUND', Name);
+		Controller := Con
+	end
 End;
 
 Procedure SwitchActiveController();
@@ -92,16 +99,22 @@ End;
 Procedure RemoveController(Con: PSDL_GameController);
 Var
 	JoyID: TSDL_JoystickID;
+	Name: AnsiString;
 Begin
 	JoyID := SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(Con));
-	SDL_Log('Closed game controller #%ld "%s"', [
-		clong(JoyID),
-		SDL_GameControllerName(Con)
-	]);
+	Name := SDL_GameControllerName(Con);
+
+	SDL_Log('Closed game controller #%ld "%s"', [clong(JoyID), PChar(Name)]);
 	SDL_GameControllerClose(Con);
 
 	List[JoyID] := NIL;
-	If(Con = Controller) then SwitchActiveController()
+	If(Con = Controller) then begin
+		SwitchActiveController();
+		If(Controller <> NIL) then
+			Toast.Show('CONTROLLER SWITCHED', SDL_GameControllerName(Controller))
+		else
+			Toast.Show('CONTROLLER LOST', Name)
+	end
 End;
 
 Procedure HandleDeviceEvent(Ev: PSDL_Event);
