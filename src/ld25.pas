@@ -25,8 +25,8 @@
 uses
 	SysUtils, Math, ctypes,
 	SDL2, SDL2_image, SDL2_mixer,
-	Assets, Colours, ConfigFiles, FloatingText, Fonts, Game, Images, Objects,
-	MathUtils, Menus, Rendering, Rooms, Shared, Slides, Stats
+	Assets, Colours, ConfigFiles, Controllers, FloatingText, Fonts, Game,
+	Images, Objects, MathUtils, Menus, Rendering, Rooms, Shared, Slides, Stats
 	{$IFDEF LD25_MOBILE}, TouchControls {$ENDIF}
 ;
 
@@ -986,45 +986,6 @@ Begin
 
 	Result := SDL_Init(SDL_INIT_VIDEO or SDL_INIT_EVENTS or SDL_INIT_TIMER) = 0
 End;
-
-Procedure InitControllers();
-Var
-	Idx, Count: sInt;
-Begin
-	Controller := NIL;
-
-	SDL_Log('Initializing SDL game controller subsystem...', []);
-	If(SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER) <> 0) then begin
-		SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 'Failed to initialize SDL2 game controller subsystem! Error details: %s', [SDL_GetError()]);
-		Exit()
-	end;
-
-	Count := SDL_NumJoysticks();
-	If(Count < 0) then begin
-		SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 'Failed to get joystick count: %s', [SDL_GetError()]);
-		Exit()
-	end;
-
-	// FIXME: This will leak memory for each opened controller
-	For Idx := 0 to (Count - 1) do begin
-		If(SDL_IsGameController(Idx) = SDL_TRUE) then begin
-			Controller := SDL_GameControllerOpen(Idx);
-			If(Controller <> NIL) then begin
-				SDL_Log('Initialized game controller #%d "%s" (rumble: %d)', [
-					cint(Idx),
-					SDL_GameControllerName(Controller),
-					SDL_GameControllerHasRumble(Controller)
-				]);
-				Exit() // Bail out with first controller we find
-			end else
-				SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 'Failed to open game controller #%d (%s): %s', [
-					cint(Idx),
-					SDL_GameControllerNameForIndex(Idx),
-					SDL_GetError()
-				])
-		end
-	end
-end;
 
 Procedure Startup();
 Var

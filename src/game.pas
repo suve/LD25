@@ -29,8 +29,8 @@ Implementation
 Uses
 	SDL2,
 	{$IFDEF LD25_MOBILE} ctypes, TouchControls, {$ENDIF}
-	Assets, Colours, ConfigFiles, Entities, FloatingText, Fonts, Images,
-	MathUtils, Rendering, Rooms, Shared, Sprites, Stats;
+	Assets, Colours, ConfigFiles, Controllers, Entities, FloatingText, Fonts,
+	Images, MathUtils, Rendering, Rooms, Shared, Sprites, Stats;
 
 Type
 	TRoomChange = (
