@@ -27,6 +27,7 @@ Var
 	Controller: PSDL_GameController;
 
 Procedure InitControllers();
+Procedure HandleDeviceEvent(Ev: PSDL_Event);
 
 
 Implementation
@@ -59,7 +60,62 @@ Begin
 		SDL_JoystickNumButtons(Joy),
 		SDL_GameControllerHasRumble(Con),
 		PChar(POWER_TEXT[SDL_JoystickCurrentPowerLevel(Joy)])
-	])
+	]);
+
+	// If there is no active controller, use this one
+	If(Controller = NIL) then Controller := Con
+End;
+
+Procedure SwitchActiveController();
+Var
+	Idx: uInt;
+	JoyID: TSDL_JoystickID;
+Begin
+	Controller := NIL;
+
+	For Idx := Low(List) to High(List) do begin
+		If(List[Idx] <> NIL) then begin
+			Controller := List[Idx];
+			JoyID := SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(Controller));
+
+			SDL_Log('Switched active controller to #%ld "%s"', [
+				clong(JoyID),
+				SDL_GameControllerName(Controller)
+			]);
+			Exit
+		end
+	end;
+
+	SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 'No active controllers found!', [])
+End;
+
+Procedure RemoveController(Con: PSDL_GameController);
+Var
+	JoyID: TSDL_JoystickID;
+Begin
+	JoyID := SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(Con));
+	SDL_Log('Closed game controller #%ld "%s"', [
+		clong(JoyID),
+		SDL_GameControllerName(Con)
+	]);
+	SDL_GameControllerClose(Con);
+
+	List[JoyID] := NIL;
+	If(Con = Controller) then SwitchActiveController()
+End;
+
+Procedure HandleDeviceEvent(Ev: PSDL_Event);
+Var
+	Con: PSDL_GameController;
+Begin
+	If(Ev^.Type_ = SDL_ControllerDeviceAdded) then begin
+		Con := SDL_GameControllerOpen(Ev^.cDevice.Which);
+		If(Con <> NIL) then AddController(Con)
+	end else
+	If(Ev^.Type_ = SDL_ControllerDeviceRemoved) then begin
+		Con := List[Ev^.cDevice.Which];
+		If(Con <> NIL) then RemoveController(Con)
+	end else
 End;
 
 Procedure InitControllers();
@@ -98,10 +154,7 @@ Begin
 			Continue
 		end;
 	
-		AddController(Con);
-
-		// Set first opened controller as active
-		If(Controller = NIL) then Controller := Con
+		AddController(Con)
 	end
 end;
 

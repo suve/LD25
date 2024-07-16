@@ -179,6 +179,9 @@ Begin
 					Bound:=True
 				end
 			end else
+			If (Ev.Type_ = SDL_ControllerDeviceAdded) or (Ev.Type_ = SDL_ControllerDeviceRemoved) then begin
+				Controllers.HandleDeviceEvent(@Ev)
+			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
 				HandleWindowResizedEvent(@Ev)
 		end;
@@ -438,6 +441,9 @@ Begin
 			end else
 			If (Ev.Type_ = SDL_FingerUp) or (Ev.Type_ = SDL_FingerDown) or (Ev.Type_ = SDL_FingerMotion) then begin
 				TouchControls.HandleEvent(@Ev)
+			end else
+			If (Ev.Type_ = SDL_ControllerDeviceAdded) or (Ev.Type_ = SDL_ControllerDeviceRemoved) then begin
+				Controllers.HandleDeviceEvent(@Ev)
 			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
 				HandleWindowResizedEvent(@Ev)
@@ -727,6 +733,9 @@ Begin
 				TouchControls.HandleEvent(@Ev)
 			end else
 			{$ENDIF}
+			If (Ev.Type_ = SDL_ControllerDeviceAdded) or (Ev.Type_ = SDL_ControllerDeviceRemoved) then begin
+				Controllers.HandleDeviceEvent(@Ev)
+			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
 				HandleWindowResizedEvent(@Ev)
 		end;

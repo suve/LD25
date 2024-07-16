@@ -70,7 +70,7 @@ Type
 Implementation
 
 Uses
-	Assets, Fonts, Rendering, Shared
+	Assets, Controllers, Fonts, Rendering, Shared
 	{$IFDEF LD25_MOBILE}, TouchControls {$ENDIF}
 ;
 
@@ -229,6 +229,9 @@ Begin
 		TouchControls.HandleEvent(Ev)
 	end else
 	{$ENDIF}
+	If (Ev^.Type_ = SDL_ControllerDeviceAdded) or (Ev^.Type_ = SDL_ControllerDeviceRemoved) then begin
+		Controllers.HandleDeviceEvent(Ev)
+	end else
 	If (Ev^.Type_ = SDL_WindowEvent) and (Ev^.Window.Event = SDL_WINDOWEVENT_RESIZED) then
 		Rendering.HandleWindowResizedEvent(Ev);
 

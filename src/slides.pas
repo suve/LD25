@@ -28,7 +28,7 @@ Implementation
 Uses
 	SysUtils,
 	SDL2,
-	Assets, Colours, Fonts, Images, Rendering, Shared, Stats
+	Assets, Colours, Controllers, Fonts, Images, Rendering, Shared, Stats
 	{$IFDEF LD25_MOBILE}, TouchControls {$ENDIF}
 ;
 
@@ -88,6 +88,9 @@ Begin
 					Action := ACT_NEXT;
 				SDLK_LEFT:
 					Action := ACT_PREV;
+			end else
+			If (Ev.Type_ = SDL_ControllerDeviceAdded) or (Ev.Type_ = SDL_ControllerDeviceRemoved) then begin
+				Controllers.HandleDeviceEvent(@Ev)
 			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
 				HandleWindowResizedEvent(@Ev)
