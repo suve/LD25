@@ -31,7 +31,7 @@ Implementation
 Uses
 	SysUtils,
 	SDL2, ctypes,
-	Assets, Colours, Fonts, Rendering, Shared;
+	Assets, Colours, Fonts, Rendering, Timekeeping;
 
 Var
 	Visible: Boolean;
@@ -69,7 +69,7 @@ Begin
 	TextTop := Header;
 	TextBottom := Message;
 
-	TicksNow := Shared.GetTicks();
+	TicksNow := Timekeeping.GetTicks();
 	If(TicksNow >= EndsAt) then begin
 		// Old toast no longer visible. Show for full duration.
 		EndsAt := TicksNow + TICKS_TOTAL
@@ -108,7 +108,7 @@ Var
 Begin
 	If(Not Visible) then Exit;
 
-	Ticks := Shared.GetTicks();
+	Ticks := Timekeeping.GetTicks();
 	If(Ticks >= EndsAt) then Exit();
 	Ticks := EndsAt - Ticks;
 

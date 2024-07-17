@@ -74,7 +74,7 @@ Procedure UpdateMenuColours();
 Implementation
 Uses
 	StrUtils,
-	Shared;
+	Timekeeping;
 
 Operator = (A, B: TSDL_Colour):Boolean;
 Begin
@@ -141,7 +141,7 @@ Var
 	MenuTicks: uInt;
 	Progress, Active, Inactive: uInt;
 Begin
-	MenuTicks := Shared.GetTicks() mod ((DWELL_TICKS + TRANSITION_TICKS) * 2);
+	MenuTicks := Timekeeping.GetTicks() mod ((DWELL_TICKS + TRANSITION_TICKS) * 2);
 
 	If MenuTicks < DWELL_TICKS then begin
 		// Pre-transition dwell

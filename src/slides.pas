@@ -28,7 +28,8 @@ Implementation
 Uses
 	SysUtils,
 	SDL2,
-	Assets, Colours, Controllers, Fonts, Images, Rendering, Shared, Stats
+	Assets, Colours, Controllers, Fonts, Images, Rendering, Shared, Stats,
+	Timekeeping
 	{$IFDEF LD25_MOBILE}, TouchControls {$ENDIF}
 ;
 
@@ -73,7 +74,7 @@ Begin
 		Rendering.FinishFrame();
 
 		Action := ACT_NONE;
-		GetDeltaTime(DeltaTime);
+		DeltaTime := AdvanceTime();
 		While (SDL_PollEvent(@Ev)>0) do begin
 			If (Ev.Type_ = SDL_QuitEv) then begin
 				Shutdown:=True; Exit()

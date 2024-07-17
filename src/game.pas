@@ -30,7 +30,7 @@ Uses
 	SDL2,
 	{$IFDEF LD25_MOBILE} ctypes, TouchControls, {$ENDIF}
 	Assets, Colours, ConfigFiles, Controllers, Entities, FloatingText, Fonts,
-	Images, MathUtils, Rendering, Rooms, Shared, Sprites, Stats;
+	Images, MathUtils, Rendering, Rooms, Shared, Sprites, Stats, Timekeeping;
 
 Type
 	TRoomChange = (
@@ -183,12 +183,12 @@ Begin
 	end
 End;
 
-Procedure Animate(Const Ticks:uInt);
+Procedure Animate(); Inline;
 Begin
 	{$IFDEF LD25_DEBUG}
 		If(CheatFreeze = FREEZE_ALL) then AniFra:=0 else
 	{$ENDIF}
-	AniFra:=(Ticks div AnimTime) mod 2
+	AniFra:=(Timekeeping.GetTicks() div AnimTime) mod 2
 End;
 
 Procedure CalculateHero(Const Time:uInt);
@@ -897,10 +897,9 @@ Function PlayGame():Boolean;
 Const
 	DELTA_MAXIMUM = 100; // Limit timestep to 100ms (10 updates/s)
 Var
-	DeltaTime, Ticks, Timestep: uInt;
+	DeltaTime, Timestep: uInt;
 	pk: TPlayerKey;
 Begin
-	GetDeltaTime(DeltaTime);
 	SetAllowScreensaver(False);
 	SDL_ShowCursor(0);
 	
@@ -915,11 +914,18 @@ Begin
 	Font^.Scale := 1;
 
 	{$IFDEF LD25_DEBUG} ResetDebugCheats(); {$ENDIF}
+
+	// Advance the timer before entering the game loop.
+	// In the case that transitioning from menu back to the game took some
+	// time, this will ensure that the player will not get surprised
+	// by the game suddenly jumping forward.
+	AdvanceTime();
 	Repeat
 		If (RoomChange <> RCHANGE_NONE) then PerformRoomChange();
 		
-		GetDeltaTime(DeltaTime, Ticks);
-		Animate(Ticks);
+		DeltaTime := AdvanceTime();
+
+		Animate();
 		GatherInput();
 
 		If (Not Paused) then begin

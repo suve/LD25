@@ -27,7 +27,7 @@ uses
 	SDL2, SDL2_image, SDL2_mixer,
 	Assets, Colours, ConfigFiles, Controllers, FloatingText, Fonts, Game,
 	Images, Objects, MathUtils, Menus, Rendering, Rooms, Shared, Slides, Stats,
-	Toast
+	Timekeeping, Toast
 	{$IFDEF LD25_MOBILE}, TouchControls {$ENDIF}
 ;
 
@@ -163,7 +163,8 @@ Begin
 		end;
 		
 		Rendering.FinishFrame();
-		GetDeltaTime(dt);
+
+		dt := AdvanceTime();
 
 		BlinkTicks += dt;
 		If (CollisionTicks > 0) then CollisionTicks -= dt;
@@ -248,7 +249,7 @@ Var
 	MovementWheel: Array[0..8] of TSDL_Point;
 	SwapButton: TSDL_Rect;
 
-	dt, Idx: uInt;
+	Idx: uInt;
 	FreeSpace, YPos: sInt;
 
 { Subproc }
@@ -400,7 +401,8 @@ Begin
 		PrintText('SWAP', Font, SwapButton.X, SwapButton.Y, ALIGN_LEFT, ALIGN_TOP, @MenuActiveColour);
 
 		Rendering.FinishFrame();
-		GetDeltaTime(dt);
+
+		AdvanceTime();
 		UpdateMenuColours();
 
 		VolumeChanged := False;
@@ -513,7 +515,7 @@ Var
 	Changed: Boolean;
 	Finished: Boolean;
 
-	dt, pc: uInt;
+	pc: uInt;
 	YPos: sInt;
 Begin
 	idxName := UpperCase(ColourName[idx]);
@@ -545,7 +547,8 @@ Begin
 		Menu.Draw();
 		
 		Rendering.FinishFrame();
-		GetDeltaTime(dt);
+
+		AdvanceTime();
 		UpdateMenuColours();
 
 		Changed := False;
@@ -590,7 +593,7 @@ End;
 
 Procedure SetColours();
 Var
-	Idx, dt: uInt;
+	Idx: uInt;
 
 	Menu: TMenu;
 	Choice: Char;
@@ -613,7 +616,7 @@ Begin
 		Menu.Draw();
 		Rendering.FinishFrame();
 
-		GetDeltaTime(dt);
+		AdvanceTime();
 		UpdateMenuColours();
 
 		Selection := -1;
@@ -645,7 +648,6 @@ Const
 	LiberapayLink = 'LIBERAPAY.COM/SUVE';
 	LiberapayURL: PChar = 'https://liberapay.com/suve';
 Var
-	dt: uInt;
 	XPos, YPos: sInt;
 	{$IFNDEF LD25_MOBILE} Offset: uInt; {$ENDIF}
 	GitHubRect, LiberaPayRect: TSDL_Rect;
@@ -695,7 +697,8 @@ Begin
 		{$ENDIF}
 
 		Rendering.FinishFrame();
-		GetDeltaTime(dt);
+
+		AdvanceTime();
 		UpdateMenuColours();
 
 		GitHubRect.H += (Font^.CharH * 3) div 2;
@@ -759,7 +762,6 @@ Var
 	Col: PSDL_Colour;
 	Choice: Char;
 	YPos: uInt;
-	dt:uInt;
 Begin
 	If Load then begin
 		Msg:='LOAD GAME';
@@ -795,7 +797,8 @@ Begin
 		Menu.Draw();
 
 		Rendering.FinishFrame();
-		GetDeltaTime(dt);
+
+		AdvanceTime();
 		UpdateMenuColours();
 
 		While (SDL_PollEvent(@Ev)>0) do begin
@@ -818,8 +821,6 @@ End;
 
 Function MainMenu():Char;
 Var
-	dt: uInt;
-
 	GM: TGameMode;
 	IHasSaves: Boolean;
 	ContinueColour: PSDL_Colour;
@@ -871,7 +872,7 @@ Begin
 		Menu.Draw();
 		Rendering.FinishFrame();
 
-		GetDeltaTime(dt);
+		AdvanceTime();
 		UpdateMenuColours();
 
 		While (SDL_PollEvent(@Ev)>0) do begin

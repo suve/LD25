@@ -31,8 +31,6 @@ const
 	GAMENAME = 'Colorful'; GAMEAUTH = 'suve';
 	MAJORNUM = '2'; MINORNUM = '1'; GAMEVERS = MAJORNUM+'.'+MINORNUM;
 
-	FPS_LIMIT = 120; TICKS_MINIMUM = 1000 div FPS_LIMIT;
-
 	TILE_W = 16; TILE_H = 16; TILE_S = ((TILE_W + TILE_H) div 2);
 	ROOM_W = 20; ROOM_H = 20;
 	SWITCHES = 100;
@@ -113,15 +111,6 @@ Var
 	SaveExists : Array[TGameMode] of Boolean;
 	Shutdown, NoSound : Boolean;
 
-// The name is obvious, duh
-Procedure GetDeltaTime(Out Time:uInt);
-Procedure GetDeltaTime(Out Time,Ticks:uInt);
-Function GetTicks(): uInt;
-
-// Mainly used in initialization, as we later switch to SDL ticks
-Function GetTimeStamp(): TTimeStamp;
-Function TimestampDiffMillis(Const First, Second: TTimeStamp): sInt;
-
 // Draw primitives using SDL
 Procedure DrawRectFilled(Const Rect: PSDL_Rect; Const Colour: PSDL_Colour);
 Procedure DrawRectFilled(Const Rect: PSDL_Rect; Const RGB: LongWord);
@@ -165,52 +154,8 @@ Uses
 	Assets, Colours, ConfigFiles, FloatingText, Rendering, Rooms;
 
 Var
-	Tikku : uInt;
 	VolLevel : TVolLevel;
 	Volume : uInt;
-
-Procedure GetDeltaTime(Out Time:uInt);
-Begin
-	While ((SDL_GetTicks() - Tikku) < TICKS_MINIMUM) do SDL_Delay(1);
-	
-	Time:=(SDL_GetTicks() - Tikku);
-	Tikku+=Time
-End;
-
-Procedure GetDeltaTime(Out Time,Ticks:uInt);
-Begin
-	While ((SDL_GetTicks() - Tikku) < TICKS_MINIMUM) do SDL_Delay(1);
-	
-	Time:=(SDL_GetTicks - Tikku);
-	Tikku += Time;
-	Ticks := Tikku
-End;
-
-Function GetTicks(): uInt;
-Begin
-	Result := Tikku
-End;
-
-Function GetTimeStamp(): TTimeStamp;
-Begin
-	Result := DateTimeToTimeStamp(Now())
-End;
-
-Function TimestampDiffMillis(Const First, Second: TTimeStamp): sInt;
-Var
-	Diff: Comp;
-Begin
-	Diff := TimeStampToMSecs(Second) - TimeStampToMSecs(First);
-	{$IFDEF CPUI386}
-		(*
-		 * On i386, the Comp type cannot be cast to an sInt, resulting in a compilation error.
-		 * As a (rather dirty) workaround, force a cast to a floating-point value and then cast back to integer.
-		 *)
-		Result := Trunc(Extended(Diff))
-	{$ELSE}
-		Result := sInt(Diff)
-	{$ENDIF}
-End;
 
 Procedure DrawRectFilled(Const Rect: PSDL_Rect; Const Colour: PSDL_Colour);
 Begin
@@ -462,9 +407,4 @@ Begin
 		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, 'Failed to save the game!', [])
 End;
 
-
-Initialization
-	Tikku := 0;
-
 End.
-
