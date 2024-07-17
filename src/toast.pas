@@ -23,7 +23,6 @@ Interface
 Procedure Show(Header, Message: AnsiString);
 Procedure SetVisibility(NewValue: Boolean);
 
-Procedure Update(dt: uInt);
 Procedure Render();
 
 
@@ -32,17 +31,18 @@ Implementation
 Uses
 	SysUtils,
 	SDL2, ctypes,
-	Assets, Colours, Fonts, Rendering;
+	Assets, Colours, Fonts, Rendering, Shared;
 
 Var
 	Visible: Boolean;
-	Ticks: sInt;
+
+	EndsAt: uInt;
 	TextTop, TextBottom: AnsiString;
 
 Procedure SetVisibility(NewValue: Boolean);
 Begin
 	If NewValue <> Visible then begin
-		Ticks := 0;
+		EndsAt := 0;
 		Visible := NewValue
 	end
 End;
@@ -57,7 +57,7 @@ Const
 
 Procedure Show(Header, Message: AnsiString);
 Var
-	TopWidth, BottomWidth: uInt;
+	TicksNow, TicksLeft: uInt;
 Begin
 	If(Not Visible) then Exit;
 
@@ -69,20 +69,25 @@ Begin
 	TextTop := Header;
 	TextBottom := Message;
 
-	If(Ticks <= 0) then begin
-		Ticks := TICKS_TOTAL
-	end else
-	If(Ticks <= TICKS_HIDE) then begin
-		Ticks := TICKS_TOTAL - ((Ticks * TICKS_SHOW) div TICKS_HIDE)
-	end else
-	If(Ticks <= TICKS_HIDE + TICKS_LINGER) then begin
-		Ticks := TICKS_HIDE + TICKS_LINGER
+	TicksNow := Shared.GetTicks();
+	If(TicksNow >= EndsAt) then begin
+		// Old toast no longer visible. Show for full duration.
+		EndsAt := TicksNow + TICKS_TOTAL
+	end else begin
+		TicksLeft := EndsAt - TicksNow;
+		If(TicksLeft <= TICKS_HIDE) then
+			// Old toast is currently in its "slide out" animation.
+			// Calculate number of ticks needed to make the animation bounce back nicely.
+			EndsAt := TicksNow + TICKS_TOTAL - ((TicksLeft * TICKS_SHOW) div TICKS_HIDE)
+		else
+		If(TicksLeft <= TICKS_HIDE + TICKS_LINGER) then
+			// Old toast is currently lingering.
+			// Update the timer so new toast gets the full linger time.
+			EndsAt := TicksNow + TICKS_HIDE + TICKS_LINGER
+		else
+			// Old toast is currently in its "slide in" animation.
+			// Do nothing, just reuse the timer.
 	end
-End;
-
-Procedure Update(dt: uInt);
-Begin
-	If(Ticks > 0) then Ticks -= dt
 End;
 
 Procedure Render();
@@ -99,8 +104,13 @@ Const
 
 Var
 	Rect: TSDL_Rect;
+	Ticks: uInt;
 Begin
-	If((Not Visible) or (Ticks <= 0)) then Exit;
+	If(Not Visible) then Exit;
+
+	Ticks := Shared.GetTicks();
+	If(Ticks >= EndsAt) then Exit();
+	Ticks := EndsAt - Ticks;
 
 	Rect.X := (RESOL_W - WIDTH) div 2;
 	Rect.W := WIDTH;

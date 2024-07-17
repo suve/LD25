@@ -68,19 +68,13 @@ Function StrToColour(Str: AnsiString):TSDL_Colour;
 
 Procedure ResetMapColoursToDefault();
 
-(*
- * TODO: Instead of retrieving the time-delta and doing its own bookkeeping,
- *       this function could just calculate its result based on SDL's tick
- *       count. Most of the game relies on Shared.GetDeltaTime(), which calls
- *       SDL_GetTicks() internally, so this could probably be done in a way
- *       that avoids calling GetTicks() twice.
- *)
-Procedure UpdateMenuColours(TimeDelta: uInt);
+Procedure UpdateMenuColours();
 
 
 Implementation
 Uses
-	StrUtils;
+	StrUtils,
+	Shared;
 
 Operator = (A, B: TSDL_Colour):Boolean;
 Begin
@@ -136,10 +130,7 @@ Const
 	INACTIVE_COLOUR_MIN = 127 - 15;
 	INACTIVE_COLOUR_SECONDARY = INACTIVE_COLOUR_MIN - 24;
 
-Var
-	MenuTicks: uInt;
-
-Procedure UpdateMenuColours(TimeDelta: uInt);
+Procedure UpdateMenuColours();
 Const
 	DWELL_TICKS = 1280;
 	TRANSITION_TICKS = 1280;
@@ -147,9 +138,10 @@ Const
 	ACTIVE_TRANSITION_AMOUNT = (ACTIVE_COLOUR_MAX - ACTIVE_COLOUR_MIN);
 	INACTIVE_TRANSITION_AMOUNT = (INACTIVE_COLOUR_MAX - INACTIVE_COLOUR_MIN);
 Var
+	MenuTicks: uInt;
 	Progress, Active, Inactive: uInt;
 Begin
-	MenuTicks := (MenuTicks + TimeDelta) mod ((DWELL_TICKS + TRANSITION_TICKS) * 2);
+	MenuTicks := Shared.GetTicks() mod ((DWELL_TICKS + TRANSITION_TICKS) * 2);
 
 	If MenuTicks < DWELL_TICKS then begin
 		// Pre-transition dwell
@@ -190,6 +182,5 @@ Initialization
 		B := INACTIVE_COLOUR_SECONDARY;
 		A := 255
 	end;
-	MenuTicks := 0
 
 End.

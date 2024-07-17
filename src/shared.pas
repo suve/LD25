@@ -116,6 +116,7 @@ Var
 // The name is obvious, duh
 Procedure GetDeltaTime(Out Time:uInt);
 Procedure GetDeltaTime(Out Time,Ticks:uInt);
+Function GetTicks(): uInt;
 
 // Mainly used in initialization, as we later switch to SDL ticks
 Function GetTimeStamp(): TTimeStamp;
@@ -183,6 +184,11 @@ Begin
 	Time:=(SDL_GetTicks - Tikku);
 	Tikku += Time;
 	Ticks := Tikku
+End;
+
+Function GetTicks(): uInt;
+Begin
+	Result := Tikku
 End;
 
 Function GetTimeStamp(): TTimeStamp;

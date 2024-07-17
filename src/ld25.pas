@@ -401,7 +401,7 @@ Begin
 
 		Rendering.FinishFrame();
 		GetDeltaTime(dt);
-		UpdateMenuColours(dt);
+		UpdateMenuColours();
 
 		VolumeChanged := False;
 		TouchControlsSwapChanged := False;
@@ -546,7 +546,7 @@ Begin
 		
 		Rendering.FinishFrame();
 		GetDeltaTime(dt);
-		UpdateMenuColours(dt);
+		UpdateMenuColours();
 
 		Changed := False;
 		While (SDL_PollEvent(@Ev)>0) do begin
@@ -614,7 +614,7 @@ Begin
 		Rendering.FinishFrame();
 
 		GetDeltaTime(dt);
-		UpdateMenuColours(dt);
+		UpdateMenuColours();
 
 		Selection := -1;
 		While (SDL_PollEvent(@Ev)>0) do begin
@@ -696,7 +696,7 @@ Begin
 
 		Rendering.FinishFrame();
 		GetDeltaTime(dt);
-		UpdateMenuColours(dt);
+		UpdateMenuColours();
 
 		GitHubRect.H += (Font^.CharH * 3) div 2;
 		LiberaPayRect.H += (Font^.CharH * 3) div 2;
@@ -796,7 +796,7 @@ Begin
 
 		Rendering.FinishFrame();
 		GetDeltaTime(dt);
-		UpdateMenuColours(dt);
+		UpdateMenuColours();
 
 		While (SDL_PollEvent(@Ev)>0) do begin
 			Choice := Menu.ProcessEvent(@Ev);
@@ -872,8 +872,7 @@ Begin
 		Rendering.FinishFrame();
 
 		GetDeltaTime(dt);
-		Toast.Update(dt);
-		UpdateMenuColours(dt);
+		UpdateMenuColours();
 
 		While (SDL_PollEvent(@Ev)>0) do begin
 			Choice := Menu.ProcessEvent(@Ev);
