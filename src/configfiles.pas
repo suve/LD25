@@ -236,6 +236,11 @@ Begin
 	For K:=Low(K) to High(K) do Writeln(F,K,'=',KeyBind[K]);
 	Writeln(F);
 
+	Writeln(F, '[Gamepad]');
+	Writeln(F, 'ShootLeft=', PadShootLeft);
+	Writeln(F, 'ShootRight=', PadShootRight);
+	Writeln(F);
+
 	{$IFDEF LD25_MOBILE}
 		Writeln(F, '[TouchControls]');
 		Writeln(F, 'Swapped=', BoolToStr(SwapTouchControls, 'True', 'False'));
@@ -281,6 +286,10 @@ Begin
 			If(Version = 1) then KeyBind[K]:=TranslateSDL1KeyToSDL2Keycode(KeyBind[K])
 		{$ENDIF}
 	end;
+
+	Ini.ReadSectionValues('Gamepad', Str);
+	PadShootLeft := StrToIntDef(Str.Values['ShootLeft'], SDL_CONTROLLER_BUTTON_INVALID);
+	PadShootRight := StrToIntDef(Str.Values['ShootRight'], SDL_CONTROLLER_BUTTON_INVALID);
 	
 	If(Version = 2) then begin
 		{$IFDEF LD25_MOBILE}
@@ -348,6 +357,10 @@ Begin
 	KeyBind[KEY_SHOOTLEFT]:=SDLK_Z;   KeyBind[KEY_SHOOTRIGHT]:=SDLK_X;
 	KeyBind[KEY_VOLDOWN]:=SDLK_MINUS; KeyBind[KEY_VOLUP]:=SDLK_EQUALS;
 	KeyBind[KEY_PAUSE]:=SDLK_P;
+
+	// Gamepad bindings
+	PadShootLeft := SDL_CONTROLLER_BUTTON_A;
+	PadShootRight := SDL_CONTROLLER_BUTTON_B;
 
 	// Window size
 	Wnd_W:=WINDOW_W; Wnd_H:=WINDOW_H; Wnd_F:=False;

@@ -148,12 +148,12 @@ Begin
 			end
 		end else
 		If (Ev.Type_ = SDL_ControllerButtonDown) then begin
-			If (Ev.cButton.Button = SDL_CONTROLLER_BUTTON_A) then Key[KEY_SHOOTLEFT ] := True else
-			If (Ev.cButton.Button = SDL_CONTROLLER_BUTTON_B) then Key[KEY_SHOOTRIGHT] := True else
+			If (Ev.cButton.Button = PadShootLeft) then Key[KEY_SHOOTLEFT ] := True else
+			If (Ev.cButton.Button = PadShootRight) then Key[KEY_SHOOTRIGHT] := True else
 		end else
 		If (Ev.Type_ = SDL_ControllerButtonUp) then begin
-			If (Ev.cButton.Button = SDL_CONTROLLER_BUTTON_A) then Key[KEY_SHOOTLEFT ] := False else
-			If (Ev.cButton.Button = SDL_CONTROLLER_BUTTON_B) then Key[KEY_SHOOTRIGHT] := False else
+			If (Ev.cButton.Button = PadShootLeft) then Key[KEY_SHOOTLEFT ] := False else
+			If (Ev.cButton.Button = PadShootRight) then Key[KEY_SHOOTRIGHT] := False else
 		end else
 		If (Ev.Type_ = SDL_ControllerDeviceAdded) or (Ev.Type_ = SDL_ControllerDeviceRemoved) then begin
 			Controllers.HandleDeviceEvent(@Ev)

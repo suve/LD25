@@ -95,8 +95,16 @@ Var
 	Mobs: TEnemyBuffer;
 	Gibs: TGibBuffer;
 
-	Key     : Array[TPlayerKey] of Boolean;
-	KeyBind :Array[TPlayerKey] of TSDL_Keycode; //Playa controls
+	// Main variables holding info on whether virtual keys are pressed or not.
+	// All control methods (keyboard, gamepad, touch) work by virtue of
+	// toggling these virtual keys on or off.
+	Key: Array[TPlayerKey] of Boolean;
+
+	// Keyboard key binds
+	KeyBind: Array[TPlayerKey] of TSDL_Keycode;
+
+	// Game controller binds.
+	PadShootLeft, PadShootRight: TSDL_GameControllerButton;
 
 	GameOn : Boolean; // Is a game in progress?
 	GameMode : TGameMode; // Current game mode
