@@ -27,7 +27,7 @@ Function PlayGame():Boolean;
 
 Implementation
 Uses
-	SDL2,
+	SDL2, ctypes,
 	{$IFDEF LD25_MOBILE} ctypes, TouchControls, {$ENDIF}
 	Assets, Colours, ConfigFiles, Entities, FloatingText, Fonts, Images,
 	MathUtils, Rendering, Rooms, Shared, Sprites, Stats;
@@ -54,6 +54,13 @@ Var
 	Paused, WantToQuit: Boolean;
 	RoomChange: TRoomChange;
 
+Const
+	SHAKE_DURATION = 1000;
+Var
+	ShakeTicks: sInt;
+	ShakeMagX, ShakeMagY: sInt;
+	ShakeFreqX, ShakeFreqY: sInt;
+
 {$IFDEF LD25_DEBUG}
 	Type
 		TFreezeMode = (
@@ -73,6 +80,19 @@ Begin
 	else
 		SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, '0')
 end;
+
+Procedure TriggerScreenShake();
+Begin
+	ShakeMagX := Random(4, 8) * (1 - (2 * Random(0, 1)));
+	ShakeMagY := Random(4, 8) * (1 - (2 * Random(0, 1)));
+	ShakeFreqX := Random(4, 10);
+	ShakeFreqY := Random(4, 10);
+	SDL_Log('Started screen shake with magnitude %+dx%+d and frequency %dx%d', [
+		cint(ShakeMagX), cint(ShakeMagY),
+		cint(ShakeFreqX), cint(ShakeFreqY)
+	]);
+	ShakeTicks := SHAKE_DURATION
+End;
 
 {$IFDEF LD25_DEBUG}
 Procedure TriggerInvulnerabilityCheat(); Inline;
@@ -125,7 +145,8 @@ Begin
 				If (Ev.Key.Keysym.Sym = SDLK_F1) then TriggerInvulnerabilityCheat() else
 				If (Ev.Key.Keysym.Sym = SDLK_F2) then TriggerFreezeCheat() else
 				If (Ev.Key.Keysym.Sym = SDLK_F3) then CheatNoClip:=(Not CheatNoClip) else
-				If (Ev.Key.Keysym.Sym = SDLK_F11) then CheatHitboxes:=(Not CheatHitboxes) else
+				If (Ev.Key.Keysym.Sym = SDLK_F5) then TriggerScreenShake() else
+				If (Ev.Key.Keysym.Sym = SDLK_F10) then CheatHitboxes:=(Not CheatHitboxes) else
 				If (Ev.Key.Keysym.Sym = SDLK_F12) then CheatHideUI:=(Not CheatHideUI) else
 			{$ENDIF}
 		end else
@@ -480,6 +501,8 @@ Begin
 	CalculateEnemyBullets(Time);
 	CalculateGibs(Time);
 
+	If(ShakeTicks > 0) then ShakeTicks -= Time;
+
 	Stats.TotalTime.Increase(Time)
 End;
 
@@ -750,8 +773,24 @@ Begin
 End;
 
 Procedure DrawFrame();
+Var
+	Viewport: TSDL_Rect;
+	ShakeProgress, ShakeX, ShakeY: Double;
 Begin
 	Rendering.BeginFrame();
+	
+	If(ShakeTicks > 0) then begin
+		ShakeProgress := (Double(SHAKE_DURATION - ShakeTicks) / SHAKE_DURATION) * PI;
+		ShakeX := Sin(ShakeProgress * ShakeFreqX) * ShakeMagX;
+		ShakeY := Sin(ShakeProgress * ShakeFreqY) * ShakeMagY;
+		
+		Viewport.X := Round(ShakeX);
+		Viewport.Y := Round(ShakeY);
+		Viewport.W := RESOL_W;
+		Viewport.H := RESOL_H;
+		SDL_RenderSetViewport(Renderer, @Viewport)
+	end;
+
 	DrawRoom();
 
 	If (Gibs.GetCount() > 0) then DrawGibs();
@@ -764,6 +803,7 @@ Begin
 	
 	If (Length(FloatTxt)>0) then DrawFloatingTexts();
 
+	SDL_RenderSetViewport(Renderer, NIL);
 	{$IFDEF LD25_DEBUG} If Not (CheatHideUI) then {$ENDIF} DrawUI();
 
 	Rendering.FinishFrame()
@@ -815,16 +855,19 @@ Begin
 	If (Mob = NIL) then Exit;
 
 	Mob^.HP-=Power;
-	If (Mob^.HP <= 0) then begin
-		If (Mob^.SwitchNum >= 0) then Switch[Mob^.SwitchNum]:=True;
-		Stats.KillsMade.Increase(1);
+	If (Mob^.HP > 0.0) then Exit;
 
-		PlaceGibs(Mob, Mob^.Sprite^.GetFrame(AniFra, Mob^.Face));
-		PlaySfx(Mob^.SfxID);
+	If (Mob^.SwitchNum >= 0) then begin
+		TriggerScreenShake();
+		Switch[Mob^.SwitchNum]:=True
+	end;
+	Stats.KillsMade.Increase(1);
 
-		Dispose(Mob,Destroy());
-		Mobs[mID] := NIL
-	end
+	PlaceGibs(Mob, Mob^.Sprite^.GetFrame(AniFra, Mob^.Face));
+	PlaySfx(Mob^.SfxID);
+
+	Dispose(Mob,Destroy());
+	Mobs[mID] := NIL
 End;
 
 Procedure DamagePlayer(Const Power:Double);
