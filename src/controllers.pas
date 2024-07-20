@@ -21,7 +21,7 @@ Unit controllers;
 Interface
 
 Uses
-	SDL2;
+	ctypes, SDL2;
 
 Const
 	CONTROLLER_DEAD_ZONE = (SDL_JOYSTICK_AXIS_MAX) div 4;
@@ -29,9 +29,13 @@ Const
 Type
 	TControllerBinding = object
 		Axis: TSDL_GameControllerAxis;
+		Negative: Boolean;
+
 		Button: TSDL_GameControllerButton;
 
-		Procedure SetAxis(Value: TSDL_GameControllerAxis);
+		Function AxisTriggered(Value: cint16): Boolean;
+
+		Procedure SetAxis(Value: TSDL_GameControllerAxis; Direction: cint32);
 		Procedure SetButton(Value: TSDL_GameControllerButton);
 
 		Function Serialize(): AnsiString;
@@ -48,7 +52,7 @@ Procedure HandleDeviceEvent(Ev: PSDL_Event);
 Implementation
 
 Uses
-	ctypes, SysUtils,
+	SysUtils,
 	Toast;
 
 Var
@@ -186,15 +190,27 @@ Begin
 	end
 end;
 
-Procedure TControllerBinding.SetAxis(Value: TSDL_GameControllerAxis);
+Function TControllerBinding.AxisTriggered(Value: cint16): Boolean;
+Begin
+	If(Not Self.Negative) then
+		Result := Value > (+CONTROLLER_DEAD_ZONE)
+	else
+		Result := Value < (-CONTROLLER_DEAD_ZONE)
+End;
+
+Procedure TControllerBinding.SetAxis(Value: TSDL_GameControllerAxis; Direction: cint32);
 Begin
 	Self.Axis := Value;
+	Self.Negative := (Direction < 0);
+
 	Self.Button := SDL_CONTROLLER_BUTTON_INVALID
 End;
 
 Procedure TControllerBinding.SetButton(Value: TSDL_GameControllerButton);
 Begin
 	Self.Axis := SDL_CONTROLLER_AXIS_INVALID;
+	Self.Negative := False;
+
 	Self.Button := Value
 End;
 
@@ -207,9 +223,12 @@ Begin
 	
 	If(Not (AxisValid xor ButtonValid)) then Exit('X');
 	
-	If(AxisValid) then
-		WriteStr(Result, 'ax', Self.Axis)
-	else
+	If(AxisValid) then begin
+		If(Not Self.Negative) then
+			WriteStr(Result, 'ap', Self.Axis)
+		else
+			WriteStr(Result, 'an', Self.Axis)
+	end else
 		WriteStr(Result, 'bt', Self.Button)
 End;
 
@@ -226,7 +245,8 @@ Begin
 	Delete(From, 1, 2);
 
 	Case Prefix of
-		'ax': Self.SetAxis(StrToIntDef(From, SDL_CONTROLLER_AXIS_INVALID));
+		'ap': Self.SetAxis(StrToIntDef(From, SDL_CONTROLLER_AXIS_INVALID), +1);
+		'an': Self.SetAxis(StrToIntDef(From, SDL_CONTROLLER_AXIS_INVALID), -1);
 		'bt': Self.SetButton(StrToIntDef(From, SDL_CONTROLLER_BUTTON_INVALID));
 		otherwise begin
 			Self.Axis := SDL_CONTROLLER_AXIS_INVALID;

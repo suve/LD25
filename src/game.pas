@@ -145,12 +145,14 @@ Begin
 			If (Ev.cAxis.Axis = SDL_CONTROLLER_AXIS_LEFTY) then begin
 				Key[KEY_UP  ] := Ev.cAxis.Value < (-CONTROLLER_DEAD_ZONE);
 				Key[KEY_DOWN] := Ev.cAxis.Value > (+CONTROLLER_DEAD_ZONE);
-			end else
-			If (Ev.cAxis.Axis = PadShootLeft.Axis) then
-				Key[KEY_SHOOTLEFT] := Ev.cAxis.Value > CONTROLLER_DEAD_ZONE
-			else
-			If (Ev.cAxis.Axis = PadShootRight.Axis) then
-				Key[KEY_SHOOTRIGHT] := Ev.cAxis.Value > CONTROLLER_DEAD_ZONE
+			end else begin
+				// These are not else-chained as that would prevent us from using
+				// an axis as a two-way trigger (i.e. on positive and negative value).
+				If (Ev.cAxis.Axis = PadShootLeft.Axis) then
+					Key[KEY_SHOOTLEFT] := PadShootLeft.AxisTriggered(Ev.cAxis.Value);
+				If (Ev.cAxis.Axis = PadShootRight.Axis) then
+					Key[KEY_SHOOTRIGHT] := PadShootRight.AxisTriggered(Ev.cAxis.Value);
+			end
 		end else
 		If (Ev.Type_ = SDL_ControllerButtonDown) then begin
 			If (Ev.cButton.Button = PadShootLeft.Button) then Key[KEY_SHOOTLEFT ] := True else
