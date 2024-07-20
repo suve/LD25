@@ -139,21 +139,26 @@ Begin
 		end else
 		If (Ev.Type_ = SDL_ControllerAxisMotion) then begin
 			If (Ev.cAxis.Axis = SDL_CONTROLLER_AXIS_LEFTX) then begin
-				Key[KEY_LEFT ] := Ev.cAxis.Value < (SDL_JOYSTICK_AXIS_MIN div 4);
-				Key[KEY_RIGHT] := Ev.cAxis.Value > (SDL_JOYSTICK_AXIS_MAX div 4);
+				Key[KEY_LEFT ] := Ev.cAxis.Value < (-CONTROLLER_DEAD_ZONE);
+				Key[KEY_RIGHT] := Ev.cAxis.Value > (+CONTROLLER_DEAD_ZONE);
 			end else
 			If (Ev.cAxis.Axis = SDL_CONTROLLER_AXIS_LEFTY) then begin
-				Key[KEY_UP  ] := Ev.cAxis.Value < (SDL_JOYSTICK_AXIS_MIN div 4);
-				Key[KEY_DOWN] := Ev.cAxis.Value > (SDL_JOYSTICK_AXIS_MAX div 4);
-			end
+				Key[KEY_UP  ] := Ev.cAxis.Value < (-CONTROLLER_DEAD_ZONE);
+				Key[KEY_DOWN] := Ev.cAxis.Value > (+CONTROLLER_DEAD_ZONE);
+			end else
+			If (Ev.cAxis.Axis = PadShootLeft.Axis) then
+				Key[KEY_SHOOTLEFT] := Ev.cAxis.Value > CONTROLLER_DEAD_ZONE
+			else
+			If (Ev.cAxis.Axis = PadShootRight.Axis) then
+				Key[KEY_SHOOTRIGHT] := Ev.cAxis.Value > CONTROLLER_DEAD_ZONE
 		end else
 		If (Ev.Type_ = SDL_ControllerButtonDown) then begin
-			If (Ev.cButton.Button = PadShootLeft) then Key[KEY_SHOOTLEFT ] := True else
-			If (Ev.cButton.Button = PadShootRight) then Key[KEY_SHOOTRIGHT] := True else
+			If (Ev.cButton.Button = PadShootLeft.Button) then Key[KEY_SHOOTLEFT ] := True else
+			If (Ev.cButton.Button = PadShootRight.Button) then Key[KEY_SHOOTRIGHT] := True else
 		end else
 		If (Ev.Type_ = SDL_ControllerButtonUp) then begin
-			If (Ev.cButton.Button = PadShootLeft) then Key[KEY_SHOOTLEFT ] := False else
-			If (Ev.cButton.Button = PadShootRight) then Key[KEY_SHOOTRIGHT] := False else
+			If (Ev.cButton.Button = PadShootLeft.Button) then Key[KEY_SHOOTLEFT ] := False else
+			If (Ev.cButton.Button = PadShootRight.Button) then Key[KEY_SHOOTRIGHT] := False else
 		end else
 		If (Ev.Type_ = SDL_ControllerDeviceAdded) or (Ev.Type_ = SDL_ControllerDeviceRemoved) then begin
 			Controllers.HandleDeviceEvent(@Ev)

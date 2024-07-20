@@ -237,8 +237,8 @@ Begin
 	Writeln(F);
 
 	Writeln(F, '[Gamepad]');
-	Writeln(F, 'ShootLeft=', PadShootLeft);
-	Writeln(F, 'ShootRight=', PadShootRight);
+	Writeln(F, 'ShootLeft=', PadShootLeft.Serialize());
+	Writeln(F, 'ShootRight=', PadShootRight.Serialize());
 	Writeln(F);
 
 	{$IFDEF LD25_MOBILE}
@@ -288,8 +288,8 @@ Begin
 	end;
 
 	Ini.ReadSectionValues('Gamepad', Str);
-	PadShootLeft := StrToIntDef(Str.Values['ShootLeft'], SDL_CONTROLLER_BUTTON_INVALID);
-	PadShootRight := StrToIntDef(Str.Values['ShootRight'], SDL_CONTROLLER_BUTTON_INVALID);
+	PadShootLeft.Deserialize(Str.Values['ShootLeft']);
+	PadShootRight.Deserialize(Str.Values['ShootRight']);
 	
 	If(Version = 2) then begin
 		{$IFDEF LD25_MOBILE}
@@ -359,8 +359,8 @@ Begin
 	KeyBind[KEY_PAUSE]:=SDLK_P;
 
 	// Gamepad bindings
-	PadShootLeft := SDL_CONTROLLER_BUTTON_A;
-	PadShootRight := SDL_CONTROLLER_BUTTON_B;
+	PadShootLeft.SetButton(SDL_CONTROLLER_BUTTON_A);
+	PadShootRight.SetButton(SDL_CONTROLLER_BUTTON_B);
 
 	// Window size
 	Wnd_W:=WINDOW_W; Wnd_H:=WINDOW_H; Wnd_F:=False;

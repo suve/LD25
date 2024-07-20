@@ -23,6 +23,21 @@ Interface
 Uses
 	SDL2;
 
+Const
+	CONTROLLER_DEAD_ZONE = (SDL_JOYSTICK_AXIS_MAX) div 4;
+
+Type
+	TControllerBinding = object
+		Axis: TSDL_GameControllerAxis;
+		Button: TSDL_GameControllerButton;
+
+		Procedure SetAxis(Value: TSDL_GameControllerAxis);
+		Procedure SetButton(Value: TSDL_GameControllerButton);
+
+		Function Serialize(): AnsiString;
+		Procedure Deserialize(From: AnsiString);
+	end;
+
 Var
 	Controller: PSDL_GameController;
 
@@ -33,7 +48,7 @@ Procedure HandleDeviceEvent(Ev: PSDL_Event);
 Implementation
 
 Uses
-	ctypes,
+	ctypes, SysUtils,
 	Toast;
 
 Var
@@ -170,5 +185,54 @@ Begin
 		AddController(Con)
 	end
 end;
+
+Procedure TControllerBinding.SetAxis(Value: TSDL_GameControllerAxis);
+Begin
+	Self.Axis := Value;
+	Self.Button := SDL_CONTROLLER_BUTTON_INVALID
+End;
+
+Procedure TControllerBinding.SetButton(Value: TSDL_GameControllerButton);
+Begin
+	Self.Axis := SDL_CONTROLLER_AXIS_INVALID;
+	Self.Button := Value
+End;
+
+Function TControllerBinding.Serialize(): AnsiString;
+Var
+	AxisValid, ButtonValid: Boolean;
+Begin
+	AxisValid := (Self.Axis > SDL_CONTROLLER_AXIS_INVALID) and (Self.Axis < SDL_CONTROLLER_AXIS_MAX);
+	ButtonValid := (Self.Button > SDL_CONTROLLER_BUTTON_INVALID) and (Self.Button < SDL_CONTROLLER_BUTTON_MAX);
+	
+	If(Not (AxisValid xor ButtonValid)) then Exit('X');
+	
+	If(AxisValid) then
+		WriteStr(Result, 'ax', Self.Axis)
+	else
+		WriteStr(Result, 'bt', Self.Button)
+End;
+
+Procedure TControllerBinding.Deserialize(From: AnsiString);
+Var
+	Prefix: AnsiString;
+Begin
+	// This serves as a very stupid workaround for an issue
+	// where the .ini parser makes it quite a pain in the bottom
+	// to dinstinguish between a missing value and an empty value.
+	If(From = '') then Exit();
+
+	Prefix := Copy(From, 1, 2);
+	Delete(From, 1, 2);
+
+	Case Prefix of
+		'ax': Self.SetAxis(StrToIntDef(From, SDL_CONTROLLER_AXIS_INVALID));
+		'bt': Self.SetButton(StrToIntDef(From, SDL_CONTROLLER_BUTTON_INVALID));
+		otherwise begin
+			Self.Axis := SDL_CONTROLLER_AXIS_INVALID;
+			Self.Button := SDL_CONTROLLER_BUTTON_INVALID
+		end
+	end;
+End;
 
 End.

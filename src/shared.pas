@@ -23,7 +23,7 @@ Interface
 Uses
 	SysUtils,
 	SDL2, SDL2_mixer,
-	Buffers, Entities, Sprites;
+	Buffers, Controllers, Entities, Sprites;
 
 
 // A shitload of constants - but hey, this is the 'shared' unit, isn't it?
@@ -104,7 +104,7 @@ Var
 	KeyBind: Array[TPlayerKey] of TSDL_Keycode;
 
 	// Game controller binds.
-	PadShootLeft, PadShootRight: TSDL_GameControllerButton;
+	PadShootLeft, PadShootRight: TControllerBinding;
 
 	GameOn : Boolean; // Is a game in progress?
 	GameMode : TGameMode; // Current game mode
