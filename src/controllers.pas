@@ -23,9 +23,6 @@ Interface
 Uses
 	ctypes, SDL2;
 
-Const
-	CONTROLLER_DEAD_ZONE = (SDL_JOYSTICK_AXIS_MAX) div 4;
-
 Type
 	TControllerBinding = object
 		Axis: TSDL_GameControllerAxis;
@@ -44,6 +41,7 @@ Type
 
 Var
 	Controller: PSDL_GameController;
+	DeadZone: cint16;
 
 Procedure InitControllers();
 Procedure HandleDeviceEvent(Ev: PSDL_Event);
@@ -193,9 +191,9 @@ end;
 Function TControllerBinding.AxisTriggered(Value: cint16): Boolean;
 Begin
 	If(Not Self.Negative) then
-		Result := Value > (+CONTROLLER_DEAD_ZONE)
+		Result := Value > (+DeadZone)
 	else
-		Result := Value < (-CONTROLLER_DEAD_ZONE)
+		Result := Value < (-DeadZone)
 End;
 
 Procedure TControllerBinding.SetAxis(Value: TSDL_GameControllerAxis; Direction: cint32);

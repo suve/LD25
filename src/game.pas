@@ -139,12 +139,12 @@ Begin
 		end else
 		If (Ev.Type_ = SDL_ControllerAxisMotion) then begin
 			If (Ev.cAxis.Axis = SDL_CONTROLLER_AXIS_LEFTX) then begin
-				Key[KEY_LEFT ] := Ev.cAxis.Value < (-CONTROLLER_DEAD_ZONE);
-				Key[KEY_RIGHT] := Ev.cAxis.Value > (+CONTROLLER_DEAD_ZONE);
+				Key[KEY_LEFT ] := Ev.cAxis.Value < (-Controllers.DeadZone);
+				Key[KEY_RIGHT] := Ev.cAxis.Value > (+Controllers.DeadZone);
 			end else
 			If (Ev.cAxis.Axis = SDL_CONTROLLER_AXIS_LEFTY) then begin
-				Key[KEY_UP  ] := Ev.cAxis.Value < (-CONTROLLER_DEAD_ZONE);
-				Key[KEY_DOWN] := Ev.cAxis.Value > (+CONTROLLER_DEAD_ZONE);
+				Key[KEY_UP  ] := Ev.cAxis.Value < (-Controllers.DeadZone);
+				Key[KEY_DOWN] := Ev.cAxis.Value > (+Controllers.DeadZone);
 			end else begin
 				// These are not else-chained as that would prevent us from using
 				// an axis as a two-way trigger (i.e. on positive and negative value).
