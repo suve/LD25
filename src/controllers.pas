@@ -41,7 +41,9 @@ Type
 
 Var
 	Controller: PSDL_GameController;
+
 	DeadZone: cint16;
+	RumbleEnabled: Boolean;
 
 Procedure InitControllers();
 Procedure HandleDeviceEvent(Ev: PSDL_Event);

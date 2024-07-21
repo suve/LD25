@@ -240,6 +240,7 @@ Begin
 
 	Writeln(F, '[Gamepad]');
 	Writeln(F, 'DeadZone=', Controllers.DeadZone);
+	Writeln(F, 'Rumble=', BoolToStr(Controllers.RumbleEnabled, 'True', 'False'));
 	Writeln(F, 'ShootLeft=', PadShootLeft.Serialize());
 	Writeln(F, 'ShootRight=', PadShootRight.Serialize());
 	Writeln(F);
@@ -302,6 +303,7 @@ Begin
 		 *)
 		Ini.ReadSectionValues('Gamepad', Str);
 		Controllers.DeadZone:=StrToIntDef(Str.Values['DeadZone'], DEFAULT_DEADZONE);
+		Controllers.RumbleEnabled:=StrToBoolDef(Str.Values['Rumble'],True);
 		PadShootLeft.Deserialize(Str.Values['ShootLeft']);
 		PadShootRight.Deserialize(Str.Values['ShootRight']);
 
@@ -373,6 +375,7 @@ Begin
 
 	// Gamepad bindings
 	Controllers.DeadZone := DEFAULT_DEADZONE;
+	Controllers.RumbleEnabled := True;
 	PadShootLeft.SetButton(SDL_CONTROLLER_BUTTON_A);
 	PadShootRight.SetButton(SDL_CONTROLLER_BUTTON_B);
 

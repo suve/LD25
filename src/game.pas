@@ -865,7 +865,7 @@ Begin
 
 	Stats.HitsTaken.Increase(1);
 
-	If(Controller <> NIL) then begin
+	If(Controller <> NIL) and (Controllers.RumbleEnabled) then begin
 		HealthLeft := Hero^.HP - Power;
 		If(HealthLeft > 0) then
 			Intensity := $FFFF - Trunc($F000 * HealthLeft / Hero^.MaxHP)
