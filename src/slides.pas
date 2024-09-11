@@ -60,13 +60,21 @@ Type
 Var
 	Idx, DeltaTime, SlideTime: uInt;
 	Action: TSlideAction;
-Begin
-	{$IFDEF LD25_MOBILE}
-		TouchControls.SetVisibility(TCV_NONE);
-	{$ENDIF}
 
+	Procedure OnSlideChanged();
+	Begin
+		SlideTime := 0;
+		{$IFDEF LD25_MOBILE}
+			If(Idx > 0) then
+				TouchControls.SetVisibility(TCV_SLIDE_BOTH)
+			else
+				TouchControls.SetVisibility(TCV_SLIDE_RIGHT)
+		{$ENDIF}
+	End;
+
+Begin
 	Idx := 0;
-	SlideTime := 0;
+	OnSlideChanged();
 	While (Idx < Count) do begin
 		Rendering.BeginFrame();
 		Funcs[Idx](SlideTime, Data[Idx]);
@@ -79,7 +87,9 @@ Begin
 				Shutdown:=True; Exit()
 			end else
 			{$IFDEF LD25_MOBILE}
-			If (Ev.Type_ = SDL_FingerDown) then Action := ACT_NEXT else
+			If (Ev.Type_ = SDL_FingerUp) or (Ev.Type_ = SDL_FingerDown) or (Ev.Type_ = SDL_FingerMotion) then begin
+				TouchControls.HandleEvent(@Ev)
+			end else
 			{$ENDIF}
 			If (Ev.Type_ = SDL_KeyDown) then Case(Ev.Key.Keysym.Sym) of
 				SDLK_ESCAPE, SDLK_AC_BACK:
@@ -94,14 +104,13 @@ Begin
 		end;
 
 		Case Action of
-			ACT_PREV:
-				If(Idx > 0) then begin
-					SlideTime := 0;
-					Idx -= 1
-				end;
+			ACT_PREV: If(Idx > 0) then begin
+				Idx -= 1;
+				OnSlideChanged()
+			end;
 			ACT_NEXT: begin
-				SlideTime := 0;
-				Idx += 1
+				Idx += 1;
+				OnSlideChanged()
 			end;
 			ACT_QUIT: Idx := Count;
 			ACT_NONE: SlideTime += DeltaTime
