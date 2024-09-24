@@ -40,7 +40,11 @@ Type
 Procedure Draw();
 Procedure HandleEvent(ev: PSDL_Event);
 
-Procedure SetPosition(NewDPadPos, NewShootBtnsPos, NewGoBackPos: PSDL_Rect);
+Procedure SetMovementWheelPosition(NewPos: TSDL_Rect);
+Procedure SetShootButtonsPosition(NewPos: TSDL_Rect);
+Procedure SetGoBackButtonPosition(NewPos: TSDL_Rect);
+Procedure SetSlideButtonsPosition(LeftPos, RightPos: TSDL_Rect);
+
 Procedure SetVisibility(NewValue: TouchControlVisibility);
 
 
@@ -552,7 +556,7 @@ Begin
 	Result.H := Source.H + (2 * EnlargeY)
 End;
 
-Procedure SetPosition(NewDPadPos, NewShootBtnsPos, NewGoBackPos: PSDL_Rect);
+Procedure SetMovementWheelPosition(NewPos: TSDL_Rect);
 Const
 	(*
 	 * The movement wheel has a dual nature: it is rendered as an octagon,
@@ -569,130 +573,142 @@ Const
 	HEXAGON_TO_CIRCLE_RATIO = 1.0 / Sin(Pi * 3 / 8);
 Var
 	Idx: uInt;
-	BtnW, BtnH: uInt;
 	WheelRenderSize: uInt;
-	BtnExtraSize: uInt;
 
 	{$IFDEF LD25_DEBUG}
 	pt: uInt;
 	Angle: Double;
 	{$ENDIF}
 Begin
-	If (NewDPadPos <> NIL) then begin
-		If (NewDPadPos^.W <= NewDPadPos^.H) then
-			WheelRenderSize := NewDPadPos^.W div 2
-		else
-			WheelRenderSize := NewDPadPos^.H div 2;
+	If (NewPos.W <= NewPos.H) then
+		WheelRenderSize := NewPos.W div 2
+	else
+		WheelRenderSize := NewPos.H div 2;
 
-		MovementWheel.TouchSize := Trunc(WheelRenderSize * HEXAGON_TO_CIRCLE_RATIO);
-		MovementWheel.TouchExtraSize := (MovementWheel.TouchSize * 5) div 4; // +25%
-		MovementWheel.DeadZoneSize := MovementWheel.TouchSize div 5; // 20%
+	MovementWheel.TouchSize := Trunc(WheelRenderSize * HEXAGON_TO_CIRCLE_RATIO);
+	MovementWheel.TouchExtraSize := (MovementWheel.TouchSize * 5) div 4; // +25%
+	MovementWheel.DeadZoneSize := MovementWheel.TouchSize div 5; // 20%
 
-		MovementWheel.X := NewDPadPos^.X + (NewDPadPos^.W) div 2;
-		MovementWheel.Y := NewDPadPos^.Y + (NewDPadPos^.H) div 2;
+	MovementWheel.X := NewPos.X + (NewPos.W) div 2;
+	MovementWheel.Y := NewPos.Y + (NewPos.H) div 2;
 
-		For Idx := 0 to 7 do begin
-			With MovementButton[Idx] do begin
-				Position.X := MovementWheel.X;
-				If (Idx = 0) or (Idx = 4) then
-					Position.X -= (WheelRenderSize div 2)
-				else If (Idx > 4) then
-					Position.X -= WheelRenderSize;
+	For Idx := 0 to 7 do begin
+		With MovementButton[Idx] do begin
+			Position.X := MovementWheel.X;
+			If (Idx = 0) or (Idx = 4) then
+				Position.X -= (WheelRenderSize div 2)
+			else If (Idx > 4) then
+				Position.X -= WheelRenderSize;
 
-				Position.Y := MovementWheel.Y;
-				If (Idx = 2) or (Idx = 6) then
-					Position.Y -= (WheelRenderSize div 2)
-				else If (Idx < 2) or (Idx = 7) then
-					Position.Y -= WheelRenderSize;
+			Position.Y := MovementWheel.Y;
+			If (Idx = 2) or (Idx = 6) then
+				Position.Y -= (WheelRenderSize div 2)
+			else If (Idx < 2) or (Idx = 7) then
+				Position.Y -= WheelRenderSize;
 
-				Position.W := WheelRenderSize;
-				Position.H := WheelRenderSize;
-				MovementButton[Idx].Touched := False
-			end;
-
-			{$IFDEF LD25_DEBUG}
-			For pt := 0 to (OUTLINE_STEPS-1) do begin
-				Angle := 0 - (Pi / 2) - (Pi / 8) + (Pi * Idx / 4) + (Pi / 4 * pt / (OUTLINE_STEPS-1));
-				MovBtnOutline[Idx][1+pt] := ProjectPoint(MovementWheel.X, MovementWheel.Y, MovementWheel.TouchSize, Angle);
-				MovBtnExtraOutline[Idx][1+pt] := ProjectPoint(MovementWheel.X, MovementWheel.Y, MovementWheel.TouchExtraSize, Angle);
-
-				MovBtnOutline[Idx][OUTLINE_POINTS-1-pt] := ProjectPoint(MovementWheel.X, MovementWheel.Y, MovementWheel.DeadZoneSize, Angle);
-				MovBtnExtraOutline[Idx][OUTLINE_POINTS-1-pt] := MovBtnOutline[Idx][OUTLINE_POINTS-1-pt];
-			end;
-			MovBtnOutline[Idx][0] := MovBtnOutline[Idx][OUTLINE_POINTS-1];
-			MovBtnExtraOutline[Idx][0] := MovBtnExtraOutline[Idx][OUTLINE_POINTS-1];
-			{$ENDIF}
+			Position.W := WheelRenderSize;
+			Position.H := WheelRenderSize;
+			MovementButton[Idx].Touched := False
 		end;
 
-		// Mark virtual movement keys as not being pressed
-		Key[KEY_UP] := False;
-		Key[KEY_RIGHT] := False;
-		Key[KEY_DOWN] := False;
-		Key[KEY_LEFT] := False;
+		{$IFDEF LD25_DEBUG}
+		For pt := 0 to (OUTLINE_STEPS-1) do begin
+			Angle := 0 - (Pi / 2) - (Pi / 8) + (Pi * Idx / 4) + (Pi / 4 * pt / (OUTLINE_STEPS-1));
+			MovBtnOutline[Idx][1+pt] := ProjectPoint(MovementWheel.X, MovementWheel.Y, MovementWheel.TouchSize, Angle);
+			MovBtnExtraOutline[Idx][1+pt] := ProjectPoint(MovementWheel.X, MovementWheel.Y, MovementWheel.TouchExtraSize, Angle);
+
+			MovBtnOutline[Idx][OUTLINE_POINTS-1-pt] := ProjectPoint(MovementWheel.X, MovementWheel.Y, MovementWheel.DeadZoneSize, Angle);
+			MovBtnExtraOutline[Idx][OUTLINE_POINTS-1-pt] := MovBtnOutline[Idx][OUTLINE_POINTS-1-pt];
+		end;
+		MovBtnOutline[Idx][0] := MovBtnOutline[Idx][OUTLINE_POINTS-1];
+		MovBtnExtraOutline[Idx][0] := MovBtnExtraOutline[Idx][OUTLINE_POINTS-1];
+		{$ENDIF}
 	end;
-	If (NewShootBtnsPos <> NIL) then begin
-		If(NewShootBtnsPos^.H > NewShootBtnsPos^.W) then begin
-			BtnW := NewShootBtnsPos^.W;
-			BtnH := BtnW;
-			BtnExtraSize := (NewShootBtnsPos^.H - (BtnH * 2)) div 2;
+
+	// Mark virtual movement keys as not being pressed
+	Key[KEY_UP] := False;
+	Key[KEY_RIGHT] := False;
+	Key[KEY_DOWN] := False;
+	Key[KEY_LEFT] := False;
+End;
+
+Procedure SetShootButtonsPosition(NewPos: TSDL_Rect);
+Var
+	BtnW, BtnH: uInt;
+	BtnExtraSize: uInt;
+Begin
+	If(NewPos.H > NewPos.W) then begin
+		BtnW := NewPos.W;
+		BtnH := BtnW;
+		BtnExtraSize := (NewPos.H - (BtnH * 2)) div 2;
+	end else begin
+		BtnH := NewPos.H;
+		BtnW := BtnH;
+		BtnExtraSize := (NewPos.W - (BtnW * 2)) div 2;
+	end;
+
+	With ShootLeftButton do begin
+		Position.X := NewPos.X;
+		Position.Y := NewPos.Y;
+		Position.W := BtnW;
+		Position.H := BtnH;
+		Touched := False
+	end;
+
+	With ShootRightButton do begin
+		If(NewPos.H > NewPos.W) then begin
+			Position.X := NewPos.X;
+			Position.Y := NewPos.Y + NewPos.H - BtnH
 		end else begin
-			BtnH := NewShootBtnsPos^.H;
-			BtnW := BtnH;
-			BtnExtraSize := (NewShootBtnsPos^.W - (BtnW * 2)) div 2;
+			Position.X := NewPos.X + NewPos.W - BtnW;
+			Position.Y := NewPos.Y
 		end;
-
-		With ShootLeftButton do begin
-			Position.X := NewShootBtnsPos^.X;
-			Position.Y := NewShootBtnsPos^.Y;
-			Position.W := BtnW;
-			Position.H := BtnH;
-			Touched := False
-		end;
-
-		With ShootRightButton do begin
-			If(NewShootBtnsPos^.H > NewShootBtnsPos^.W) then begin
-				Position.X := NewShootBtnsPos^.X;
-				Position.Y := NewShootBtnsPos^.Y + NewShootBtnsPos^.H - BtnH
-			end else begin
-				Position.X := NewShootBtnsPos^.X + NewShootBtnsPos^.W - BtnW;
-				Position.Y := NewShootBtnsPos^.Y
-			end;
-			Position.W := BtnW;
-			Position.H := BtnH;
-			Touched := False
-		end;
-
-		ShootLeftTouchArea := EnlargeRect(ShootLeftButton.Position, (BtnW div 4), (BtnH div 4));
-		ShootRightTouchArea := EnlargeRect(ShootRightButton.Position, (BtnW div 4), (BtnH div 4));
-
-		ShootLeftExtraTouchArea := EnlargeRect(ShootLeftButton.Position, BtnExtraSize, BtnExtraSize);
-		ShootRightExtraTouchArea := EnlargeRect(ShootRightButton.Position, BtnExtraSize, BtnExtraSize);
-
-		// Mark virtual "shoot" keys as not being pressed
-		Key[KEY_SHOOTLEFT] := False;
-		Key[KEY_SHOOTRIGHT] := False;
+		Position.W := BtnW;
+		Position.H := BtnH;
+		Touched := False
 	end;
-	If (NewGoBackPos <> NIL) then begin
-		GoBackTriangle.X := NewGoBackPos^.X;
-		GoBackTriangle.Y := NewGoBackPos^.Y;
-		If (NewGoBackPos^.W > NewGoBackPos^.H) then
-			GoBackTriangle.Size := NewGoBackPos^.W
-		else
-			GoBackTriangle.Size := NewGoBackPos^.H;
 
-		GoBackTriangle.Flip := 0;
-		If (GoBackTriangle.X > 0) then begin
-			GoBackTriangle.X += NewGoBackPos^.W - 1;
-			GoBackTriangle.Flip := GoBackTriangle.Flip or SDL_FLIP_HORIZONTAL
-		end;
-		If (GoBackTriangle.Y > 0) then begin
-			GoBackTriangle.Y += NewGoBackPos^.H - 1;
-			GoBackTriangle.Flip := GoBackTriangle.Flip or SDL_FLIP_VERTICAL
-		end;
+	ShootLeftTouchArea := EnlargeRect(ShootLeftButton.Position, (BtnW div 4), (BtnH div 4));
+	ShootRightTouchArea := EnlargeRect(ShootRightButton.Position, (BtnW div 4), (BtnH div 4));
 
-		GoBackButton.Position := NewGoBackPos^;
-		GoBackButton.Touched := False
-	end
+	ShootLeftExtraTouchArea := EnlargeRect(ShootLeftButton.Position, BtnExtraSize, BtnExtraSize);
+	ShootRightExtraTouchArea := EnlargeRect(ShootRightButton.Position, BtnExtraSize, BtnExtraSize);
+
+	// Mark virtual "shoot" keys as not being pressed
+	Key[KEY_SHOOTLEFT] := False;
+	Key[KEY_SHOOTRIGHT] := False;
+End;
+
+Procedure SetGoBackButtonPosition(NewPos: TSDL_Rect);
+Begin
+	GoBackTriangle.X := NewPos.X;
+	GoBackTriangle.Y := NewPos.Y;
+	If (NewPos.W > NewPos.H) then
+		GoBackTriangle.Size := NewPos.W
+	else
+		GoBackTriangle.Size := NewPos.H;
+
+	GoBackTriangle.Flip := 0;
+	If (GoBackTriangle.X > 0) then begin
+		GoBackTriangle.X += NewPos.W - 1;
+		GoBackTriangle.Flip := GoBackTriangle.Flip or SDL_FLIP_HORIZONTAL
+	end;
+	If (GoBackTriangle.Y > 0) then begin
+		GoBackTriangle.Y += NewPos.H - 1;
+		GoBackTriangle.Flip := GoBackTriangle.Flip or SDL_FLIP_VERTICAL
+	end;
+
+	GoBackButton.Position := NewPos;
+	GoBackButton.Touched := False
+End;
+
+Procedure SetSlideButtonsPosition(LeftPos, RightPos: TSDL_Rect);
+Begin
+	SlideLeftButton.Position := LeftPos;
+	SlideLeftButton.Touched := False;
+
+	SlideRightButton.Position := RightPos;
+	SlideRightButton.Touched := False
 End;
 
 Procedure SetVisibility(NewValue: TouchControlVisibility);
