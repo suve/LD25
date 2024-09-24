@@ -394,7 +394,7 @@ Begin
 	Result := (DiffX + DiffY) <= GoBackTriangle.Size
 End;
 
-Procedure TriggerBackButton();
+Procedure FakeKeypress(TrigScan: TSDL_Scancode; TrigKey: TSDL_KeyCode);
 Const
 	PROTOTYPE: TSDL_Event = (
 		Key: (
@@ -406,8 +406,8 @@ Const
 			padding2: 0;
 			padding3: 0;
 			Keysym: (
-				Scancode: SDL_SCANCODE_AC_BACK;
-				Sym: SDLK_AC_BACK;
+				Scancode: SDL_SCANCODE_UNKNOWN;
+				Sym: SDLK_UNKNOWN;
 				Mod_: KMOD_NONE;
 				Unicode: 0;
 			)
@@ -417,6 +417,10 @@ Var
 	Event: TSDL_Event;
 Begin
 	Event := PROTOTYPE;
+
+	Event.Key.Keysym.Scancode := TrigScan;
+	Event.Key.Keysym.Sym := TrigKey;
+
 	Event.Key.Timestamp := SDL_GetTicks();
 	Event.Key.WindowID := SDL_GetWindowID(Window);
 
@@ -505,10 +509,16 @@ Begin
 	If (Visibility = TCV_NONE) then Exit();
 
 	If (Ev^.Type_ = SDL_FingerUp) then begin
-		// Contrary to other touch controls, the "go back" button is not
-		// a "hold" button, but rather a "release" button.
+		(*
+		 * Contrary to in-game controls, the "go back" and slide buttons
+		 * are activated when released, not when pressed.
+		 *)
 		UFResult := UnfingerButtons(Ev^.TFinger.FingerID);
-		If UFResult = UF_BACK then TriggerBackButton();
+		Case UFResult of
+			UF_BACK: FakeKeypress(SDL_SCANCODE_AC_BACK, SDLK_AC_BACK);
+			UF_SLIDE_LEFT: FakeKeypress(SDL_SCANCODE_LEFT, SDLK_LEFT);
+			UF_SLIDE_RIGHT: FakeKeypress(SDL_SCANCODE_RIGHT, SDLK_RIGHT);
+		end;
 
 		Exit()
 	end;
