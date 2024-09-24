@@ -705,9 +705,12 @@ End;
 Procedure SetSlideButtonsPosition(LeftPos, RightPos: TSDL_Rect);
 Begin
 	SlideLeftButton.Position := LeftPos;
-	SlideLeftButton.Touched := False;
-
 	SlideRightButton.Position := RightPos;
+
+	SlideLeftTouchArea := SlideLeftButton.Position;
+	SlideRightTouchArea := SlideRightButton.Position;
+
+	SlideLeftButton.Touched := False;
 	SlideRightButton.Touched := False
 End;
 
