@@ -64,7 +64,8 @@ Type
 		UF_BACK
 	);
 
-	ButtonProps = record
+	PButtonProps = ^TButtonProps;
+	TButtonProps = record
 		Position: TSDL_Rect;
 		Touched: Boolean;
 		Finger: TSDL_FingerID
@@ -84,10 +85,10 @@ Var
 	Visibility: TouchControlVisibility;
 
 	// Note: the "position" field in these records is used purely for rendering.
-	MovementButton: Array[0..7] of ButtonProps;
-	ShootLeftButton, ShootRightButton: ButtonProps;
-	SlideLeftButton, SlideRightButton: ButtonProps;
-	GoBackButton: ButtonProps;
+	MovementButton: Array[0..7] of TButtonProps;
+	ShootLeftButton, ShootRightButton: TButtonProps;
+	SlideLeftButton, SlideRightButton: TButtonProps;
+	GoBackButton: TButtonProps;
 
 	MovementWheel: MovementWheelProps;
 	ShootLeftTouchArea, ShootLeftExtraTouchArea: TSDL_Rect;
@@ -227,6 +228,7 @@ Const
 	GFX_BACK_BUTTON_SIZE = 40;
 	GFX_MOVEMENT_BUTTON_SIZE = 60;
 	GFX_SHOOT_BUTTON_SIZE = 32;
+	GFX_SLIDE_BUTTON_SIZE = 40;
 	GFX_TOUCHED_OFFSET = 60;
 
 Procedure DrawGameButtons(); Inline;
@@ -266,10 +268,27 @@ Begin
 	SDL_RenderCopyEx(Renderer, Assets.TouchControlsGfx^.Tex, @Src, @GoBackButton.Position, 0, NIL, GoBackTriangle.Flip)
 End;
 
+Procedure DrawSlideButton(Which: PButtonProps; Flip: Integer); Inline;
+Var
+	Src: TSDL_Rect;
+Begin
+	Src.X := BoolToInt(Which^.Touched) * GFX_TOUCHED_OFFSET;
+	Src.Y := (GFX_MOVEMENT_BUTTON_SIZE * 2) + GFX_SHOOT_BUTTON_SIZE + GFX_BACK_BUTTON_SIZE;
+	Src.W := GFX_SLIDE_BUTTON_SIZE;
+	Src.H := GFX_SLIDE_BUTTON_SIZE;
+	SDL_RenderCopyEx(Renderer, Assets.TouchControlsGfx^.Tex, @Src, @Which^.Position, 0, NIL, Flip)
+End;
+
 Procedure Draw();
 Begin
 	If Visibility >= TCV_ONLY_BACK then begin
-		If Visibility = TCV_GAME then DrawGameButtons();
+		If Visibility = TCV_GAME then
+			DrawGameButtons()
+		else
+		If Visibility >= TCV_SLIDE_RIGHT then begin
+			If(Visibility = TCV_SLIDE_BOTH) then DrawSlideButton(@SlideLeftButton, 0);
+			DrawSlideButton(@SlideRightButton, SDL_FLIP_HORIZONTAL)
+		end;
 		DrawBackButton()
 	end;
 
