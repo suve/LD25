@@ -238,17 +238,21 @@ Begin
 		Carried+=1
 	end else If (Carried>0) then begin
 		PlaySfx(SFX_EXTRA+1);
-		Given+=Carried; Carried:=0;
-		Hero^.Level := Given;
-		
+
 		For C:=0 to 7 do begin
 			If (ColState[C]=STATE_PICKED) then begin
 				CentralPalette[C]:=PaletteColour[C];
 				PaletteColour[C]:=GreyColour;
-				ColState[C]:=STATE_GIVEN
+				ColState[C]:=STATE_GIVEN;
+
+				ColOrder[Given] := C;
+				Given += 1
 			end
 		end;
-		
+
+		Carried:=0;
+		Hero^.Level := Given;
+				
 		// If this is the last crystal, switch the quit-flag so we exit to outro after this game cycle.
 		If (Given >= 8) then
 			WantToQuit:=True 

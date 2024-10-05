@@ -103,8 +103,11 @@ Var
 	GameOn : Boolean; // Is a game in progress?
 	GameMode : TGameMode; // Current game mode
 	Switch : Array[0..SWITCHES-1] of Boolean;
-	ColState : Array[0..7] of TColState;
-	Crystal : TCrystal;
+
+	ColState: Array[0..7] of TColState;
+	ColOrder: Array[0..7] of sInt;
+	Crystal: TCrystal;
+
 	PaletteColour : Array[0..7] of TSDL_Colour;
 	CentralPalette : Array[0..7] of TSDL_Colour;
 	RoomPalette, DeadTime, Carried, Given : sInt;
@@ -436,6 +439,7 @@ Begin
 	end;
 
 	For C:=Low(ColState) to High(ColState) do ColState[C]:=STATE_NONE;
+	For C:=Low(ColOrder) to High(ColOrder) do ColOrder[C]:=-1;
 	For C:=Low(Switch) to High(Switch) do Switch[C]:=False;
 
 	Carried:=0; Given:=0;

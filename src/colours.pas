@@ -66,6 +66,9 @@ Function ColourToStr(Const Colour:TSDL_Colour):AnsiString;
 Function RGBToColour(RGB: LongWord):TSDL_Colour;
 Function StrToColour(Str: AnsiString):TSDL_Colour;
 
+Function ColourIndexToName(Index: sInt): AnsiString;
+Function ColourNameToIndex(Name: AnsiString): sInt;
+
 Procedure ResetMapColoursToDefault();
 
 (*
@@ -118,6 +121,24 @@ Begin
 	Result.G := Hex2Dec(gstr);
 	Result.B := Hex2Dec(bstr);
 	Result.A := $FF
+End;
+
+Function ColourIndexToName(Index: sInt): AnsiString;
+Begin
+	If(Index >= Low(ColourName)) and (Index <= High(ColourName)) then
+		Result := ColourName[Index]
+	else
+		Result := 'none'
+End;
+
+Function ColourNameToIndex(Name: AnsiString): sInt;
+Var
+	C: sInt;
+Begin
+	For C:=Low(ColourName) to High(ColourName) do
+		If(Name = ColourName[C]) then Exit(C);
+
+	Result := -1
 End;
 
 Procedure ResetMapColoursToDefault();
