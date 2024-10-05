@@ -398,8 +398,9 @@ End;
 Procedure TRoom.RunScript_Colour(Const rsi: TRoomScriptInstruction);
 Begin
 	// Do not set crystal on the map if we're currently carrying it
-	// or have already given it to the woman
-	If (ColState[rsi.Colour.Colour] <> STATE_NONE) then Exit();
+	// or have already given it to the woman. The girl herself,
+	// crystal-pure as she may be, should always appear.
+	If (rsi.Colour.Colour < 8) and (ColState[rsi.Colour.Colour] <> STATE_NONE) then Exit();
 	
 	Crystal.mX := rsi.Colour.X; Crystal.mY := rsi.Colour.Y;
 	Crystal.Col := rsi.Colour.Colour;
