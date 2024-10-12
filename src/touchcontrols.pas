@@ -609,10 +609,7 @@ Var
 	Angle: Double;
 	{$ENDIF}
 Begin
-	If (NewPos.W <= NewPos.H) then
-		WheelRenderSize := NewPos.W div 2
-	else
-		WheelRenderSize := NewPos.H div 2;
+	WheelRenderSize := MinOfTwo(NewPos.W div 2, NewPos.H div 2);
 
 	MovementWheel.TouchSize := Trunc(WheelRenderSize * HEXAGON_TO_CIRCLE_RATIO);
 	MovementWheel.TouchExtraSize := (MovementWheel.TouchSize * 5) div 4; // +25%
@@ -712,10 +709,7 @@ Procedure SetGoBackButtonPosition(NewPos: TSDL_Rect);
 Begin
 	GoBackTriangle.X := NewPos.X;
 	GoBackTriangle.Y := NewPos.Y;
-	If (NewPos.W > NewPos.H) then
-		GoBackTriangle.Size := NewPos.W
-	else
-		GoBackTriangle.Size := NewPos.H;
+	GoBackTriangle.Size := MaxOfTwo(NewPos.W, NewPos.H);
 
 	GoBackTriangle.Flip := 0;
 	If (GoBackTriangle.X > 0) then begin
@@ -732,12 +726,16 @@ Begin
 End;
 
 Procedure SetSlideButtonsPosition(LeftPos, RightPos: TSDL_Rect);
+Var
+	ExtraWidth, ExtraHeight: uInt;
 Begin
 	SlideLeftButton.Position := LeftPos;
 	SlideRightButton.Position := RightPos;
 
-	SlideLeftTouchArea := SlideLeftButton.Position;
-	SlideRightTouchArea := SlideRightButton.Position;
+	ExtraWidth := MaxOfTwo(LeftPos.W, RightPos.W) div 4;
+	ExtraHeight := MaxOfTwo(LeftPos.H, RightPos.H) div 4;
+	SlideLeftTouchArea := EnlargeRect(SlideLeftButton.Position, ExtraWidth, ExtraHeight);
+	SlideRightTouchArea := EnlargeRect(SlideRightButton.Position, ExtraWidth, ExtraHeight);
 
 	SlideLeftButton.Touched := False;
 	SlideRightButton.Touched := False

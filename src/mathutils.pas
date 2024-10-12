@@ -33,6 +33,9 @@ Function ProjectPoint(OriginX, OriginY: sInt; Distance: uInt; Angle: Double): TS
 Function InRange(Num,Min,Max:Int64):Boolean;
 Function Random(Min,Max:Int64):Int64; Overload; // The overload prevents shadowing "System.Random()"
 
+Function MinOfTwo(First, Second: uInt): uInt; Inline;
+Function MaxOfTwo(First, Second: uInt): uInt; Inline;
+
 // Check if objects overlap
 Function Overlap(AX,AY:Double;AW,AH:uInt;BX,BY:Double;BW,BH:uInt):Boolean;
 Function Overlap(A,B:PEntity):Boolean;
@@ -81,6 +84,22 @@ Begin
 	Result := Min + System.Random(Max - Min + 1)
 End;
 
+Function MinOfTwo(First, Second: uInt): uInt; Inline;
+Begin
+	If(First < Second) then
+		Result := First
+	else
+		Result := Second
+End;
+
+Function MaxOfTwo(First, Second: uInt): uInt; Inline;
+Begin
+	If(First > Second) then
+		Result := First
+	else
+		Result := Second
+End;
+
 Function Overlap(AX,AY:Double;AW,AH:uInt;BX,BY:Double;BW,BH:uInt):Boolean;
 Begin
 	If ((AX + AW - 1) < BX) then Exit(False);
@@ -119,14 +138,8 @@ Begin
 	FirstBottom := First.Y + First.H;
 	SecondBottom := Second.Y + Second.H;
 
-	If FirstRight > SecondRight then
-		Result.W := FirstRight - Result.X
-	else
-		Result.W := SecondRight - Result.X;
-	If FirstBottom > SecondBottom then
-		Result.H := FirstBottom - Result.Y
-	else
-		Result.H := SecondBottom - Result.Y;
+	Result.W := MaxOfTwo(FirstRight, SecondRight) - Result.X;
+	Result.H := MaxOfTwo(FirstBottom, SecondBottom) - Result.Y
 End;
 
 End.
