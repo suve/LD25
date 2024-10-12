@@ -25,15 +25,26 @@ Uses
 
 Type
 	TouchControlVisibility = (
+		// Completely hidden
 		TCV_NONE,
+	 	// Show only the "back" button
 		TCV_ONLY_BACK,
-		TCV_ALL
+		// Back, next slide
+		TCV_SLIDE_RIGHT,
+		// Back, next slide, previous slide
+		TCV_SLIDE_BOTH, 
+		// Back + in-game controls (movement wheel, shoot left/right)
+		TCV_GAME
 	);
 
 Procedure Draw();
 Procedure HandleEvent(ev: PSDL_Event);
 
-Procedure SetPosition(NewDPadPos, NewShootBtnsPos, NewGoBackPos: PSDL_Rect);
+Procedure SetMovementWheelPosition(NewPos: TSDL_Rect);
+Procedure SetShootButtonsPosition(NewPos: TSDL_Rect);
+Procedure SetGoBackButtonPosition(NewPos: TSDL_Rect);
+Procedure SetSlideButtonsPosition(LeftPos, RightPos: TSDL_Rect);
+
 Procedure SetVisibility(NewValue: TouchControlVisibility);
 
 
@@ -48,10 +59,13 @@ Type
 		UF_NONE,
 		UF_MOVEMENT,
 		UF_SHOOT,
+		UF_SLIDE_LEFT,
+		UF_SLIDE_RIGHT,
 		UF_BACK
 	);
 
-	ButtonProps = record
+	PButtonProps = ^TButtonProps;
+	TButtonProps = record
 		Position: TSDL_Rect;
 		Touched: Boolean;
 		Finger: TSDL_FingerID
@@ -71,13 +85,15 @@ Var
 	Visibility: TouchControlVisibility;
 
 	// Note: the "position" field in these records is used purely for rendering.
-	MovementButton: Array[0..7] of ButtonProps;
-	ShootLeftButton, ShootRightButton: ButtonProps;
-	GoBackButton: ButtonProps;
+	MovementButton: Array[0..7] of TButtonProps;
+	ShootLeftButton, ShootRightButton: TButtonProps;
+	SlideLeftButton, SlideRightButton: TButtonProps;
+	GoBackButton: TButtonProps;
 
 	MovementWheel: MovementWheelProps;
 	ShootLeftTouchArea, ShootLeftExtraTouchArea: TSDL_Rect;
 	ShootRightTouchArea, ShootRightExtraTouchArea: TSDL_Rect;
+	SlideLeftTouchArea, SlideRightTouchArea: TSDL_Rect;
 	GoBackTriangle: BackButtonProps;
 
 {$IFDEF LD25_DEBUG}
@@ -101,13 +117,56 @@ Begin
 		Result := 0
 End;
 
-{$IFDEF LD25_DEBUG}
-Procedure SetOutlineColour(Touched: Boolean); Inline;
+Function BackButtonIsVisible(): Boolean; Inline;
 Begin
-	If Touched then
-		SDL_SetRenderDrawColor(Renderer, 0, 255, 0, 255)
-	else
-		SDL_SetRenderDrawColor(Renderer, 255, 0, 0, 255)
+	Result := Visibility > TCV_NONE
+End;
+
+Function SlideLeftButtonIsVisible(): Boolean; Inline;
+Begin
+	Result := Visibility = TCV_SLIDE_BOTH
+end;
+
+Function SlideRightButtonIsVisible(): Boolean; Inline;
+Begin
+	Result := (Visibility = TCV_SLIDE_RIGHT) or (Visibility = TCV_SLIDE_BOTH)
+end;
+
+Function GameButtonsAreVisible(): Boolean; Inline;
+Begin
+	Result := Visibility = TCV_GAME
+End;
+
+{$IFDEF LD25_DEBUG}
+Procedure UseYellowOutline(); Inline;
+Begin
+	SDL_SetRenderDrawColor(Renderer, 127, 127, 63, 255)
+End;
+
+Procedure UseRedOutline(); Inline;
+Begin
+	SDL_SetRenderDrawColor(Renderer, 255, 0, 0, 255)
+End;
+
+Procedure UseGreenOutline(); Inline;
+Begin
+	SDL_SetRenderDrawColor(Renderer, 0, 255, 0, 255)
+End;
+
+(*
+ * I'm rather unhappy with the fact that this function accepts two boolean
+ * parameters (4 possible inputs) when it produces 3 possible outputs.
+ * Seeing how it's debug code, I'm willing to let it slide.
+ *)
+Procedure SetOutlineColour(Visible, Touched: Boolean); Inline;
+Begin
+	If Visible then begin
+		If Touched then
+			UseGreenOutline()
+		else
+			UseRedOutline()
+	end else
+		UseYellowOutline()
 end;
 
 Procedure DebugGameButtonsVisible();
@@ -124,15 +183,14 @@ Begin
 		end
 	end;
 
-	// Draw un-touched movement buttons in red.
-	SDL_SetRenderDrawColor(Renderer, 255, 0, 0, 255);
+	// Draw un-touched movement buttons in red, and touched buttons in green.
+	// This is done in two separate steps so the green pixels overwrite red ones.
+	UseRedOutline();
 	For Idx := 0 to 7 do
 		If Not MovementButton[Idx].Touched then
 			SDL_RenderDrawLines(Renderer, WheelOutline[Idx], OUTLINE_POINTS);
 
-	// Draw currently touched buttons in green.
-	// This is done in two separate steps so the green pixels overwrite red ones.
-	SDL_SetRenderDrawColor(Renderer, 0, 255, 0, 255);
+	UseGreenOutline();
 	For Idx := 0 to 7 do
 		If MovementButton[Idx].Touched then
 			SDL_RenderDrawLines(Renderer, WheelOutline[Idx], OUTLINE_POINTS);
@@ -145,10 +203,10 @@ Begin
 		RightRect := @ShootRightTouchArea
 	end;
 
-	SetOutlineColour(ShootLeftButton.Touched);
+	SetOutlineColour(True, ShootLeftButton.Touched);
 	SDL_RenderDrawRect(Renderer, LeftRect);
 
-	SetOutlineColour(ShootRightButton.Touched);
+	SetOutlineColour(True, ShootRightButton.Touched);
 	SDL_RenderDrawRect(Renderer, RightRect)
 End;
 
@@ -158,7 +216,7 @@ Var
 	WheelOutline: MovementButtonOutlinePtr;
 	LeftRect, RightRect: PSDL_Rect;
 Begin
-	SDL_SetRenderDrawColor(Renderer, 127, 127, 63, 255);
+	UseYellowOutline();
 	For Idx := 0 to 7 do
 		SDL_RenderDrawLines(Renderer, MovBtnOutline[Idx], OUTLINE_POINTS);
 
@@ -166,15 +224,21 @@ Begin
 	SDL_RenderDrawRect(Renderer, @ShootRightTouchArea)
 End;
 
+Procedure DebugSlideButtons();
+Begin
+	SetOutlineColour(SlideRightButtonIsVisible(), SlideRightButton.Touched);
+	SDL_RenderDrawRect(Renderer, @SlideRightTouchArea);
+
+	SetOutlineColour(SlideLeftButtonIsVisible(), SlideLeftButton.Touched);
+	SDL_RenderDrawRect(Renderer, @SlideLeftTouchArea);
+End;
+
 Procedure DebugGoBackTriangle();
 Var
 	Idx: uInt;
 	TriVerts: Array[0..3] of TSDL_Point;
 Begin
-	If (Visibility = TCV_NONE) then
-		SDL_SetRenderDrawColor(Renderer, 127, 127, 63, 255)
-	else
-		SetOutlineColour(GoBackButton.Touched);
+	SetOutlineColour(BackButtonIsVisible(), GoBackButton.Touched);
 
 	For Idx := 0 to 3 do begin
 		TriVerts[Idx].X := GoBackTriangle.X;
@@ -196,6 +260,7 @@ Const
 	GFX_BACK_BUTTON_SIZE = 40;
 	GFX_MOVEMENT_BUTTON_SIZE = 60;
 	GFX_SHOOT_BUTTON_SIZE = 32;
+	GFX_SLIDE_BUTTON_SIZE = 40;
 	GFX_TOUCHED_OFFSET = 60;
 
 Procedure DrawGameButtons(); Inline;
@@ -235,18 +300,38 @@ Begin
 	SDL_RenderCopyEx(Renderer, Assets.TouchControlsGfx^.Tex, @Src, @GoBackButton.Position, 0, NIL, GoBackTriangle.Flip)
 End;
 
+Procedure DrawSlideButton(Which: PButtonProps; Flip: Integer); Inline;
+Var
+	Src: TSDL_Rect;
+Begin
+	Src.X := BoolToInt(Which^.Touched) * GFX_TOUCHED_OFFSET;
+	Src.Y := (GFX_MOVEMENT_BUTTON_SIZE * 2) + GFX_SHOOT_BUTTON_SIZE + GFX_BACK_BUTTON_SIZE;
+	Src.W := GFX_SLIDE_BUTTON_SIZE;
+	Src.H := GFX_SLIDE_BUTTON_SIZE;
+	SDL_RenderCopyEx(Renderer, Assets.TouchControlsGfx^.Tex, @Src, @Which^.Position, 0, NIL, Flip)
+End;
+
 Procedure Draw();
 Begin
+	// This could be replaced with XxxIsVisible() functions,
+	// but I am keeping it like this as a micro-optimisation.
 	If Visibility >= TCV_ONLY_BACK then begin
-		If Visibility >= TCV_ALL then DrawGameButtons();
+		If Visibility = TCV_GAME then
+			DrawGameButtons()
+		else
+		If Visibility >= TCV_SLIDE_RIGHT then begin
+			If(Visibility = TCV_SLIDE_BOTH) then DrawSlideButton(@SlideLeftButton, 0);
+			DrawSlideButton(@SlideRightButton, SDL_FLIP_HORIZONTAL)
+		end;
 		DrawBackButton()
 	end;
 
 	{$IFDEF LD25_DEBUG}
-		If Visibility >= TCV_ALL then
+		If GameButtonsAreVisible() then
 			DebugGameButtonsVisible()
 		else
 			DebugGameButtonsHidden();
+		DebugSlideButtons();
 		DebugGoBackTriangle()
 	{$ENDIF}
 End;
@@ -273,6 +358,7 @@ Begin
 		Key[KEY_SHOOTRIGHT] := False;
 		Exit(UF_SHOOT)
 	end;
+
 	For Idx := 0 to 7 do begin
 		If (MovementButton[Idx].Touched) and (MovementButton[Idx].Finger = Finger) then begin
 			MovementButton[Idx].Touched := False;
@@ -280,10 +366,21 @@ Begin
 			Exit(UF_MOVEMENT)
 		end
 	end;
+
+	If (SlideLeftButton.Touched) and (SlideLeftButton.Finger = Finger) then begin
+		SlideLeftButton.Touched := False;
+		Exit(UF_SLIDE_LEFT)
+	end;
+	If (SlideRightButton.Touched) and (SlideRightButton.Finger = Finger) then begin
+		SlideRightButton.Touched := False;
+		Exit(UF_SLIDE_RIGHT)
+	end;
+
 	If (GoBackButton.Touched) and (GoBackButton.Finger = Finger) then begin
 		GoBackButton.Touched := False;
 		Exit(UF_BACK)
 	end;
+
 	Result := UF_NONE
 End;
 
@@ -331,7 +428,7 @@ Begin
 	Result := (DiffX + DiffY) <= GoBackTriangle.Size
 End;
 
-Procedure TriggerBackButton();
+Procedure FakeKeypress(TrigScan: TSDL_Scancode; TrigKey: TSDL_KeyCode);
 Const
 	PROTOTYPE: TSDL_Event = (
 		Key: (
@@ -343,8 +440,8 @@ Const
 			padding2: 0;
 			padding3: 0;
 			Keysym: (
-				Scancode: SDL_SCANCODE_AC_BACK;
-				Sym: SDLK_AC_BACK;
+				Scancode: SDL_SCANCODE_UNKNOWN;
+				Sym: SDLK_UNKNOWN;
 				Mod_: KMOD_NONE;
 				Unicode: 0;
 			)
@@ -354,15 +451,87 @@ Var
 	Event: TSDL_Event;
 Begin
 	Event := PROTOTYPE;
+
+	Event.Key.Keysym.Scancode := TrigScan;
+	Event.Key.Keysym.Sym := TrigKey;
+
 	Event.Key.Timestamp := SDL_GetTicks();
 	Event.Key.WindowID := SDL_GetWindowID(Window);
 
 	SDL_PushEvent(@Event)
 End;
 
-Procedure HandleEvent(ev: PSDL_Event);
+Procedure HandleEvent_InGame(
+	ev: PSDL_Event;
+	FingerX, FingerY: sInt;
+	UFResult: UnfingerResult;
+	ShootLeftRect, ShootRightRect: PSDL_Rect;
+	MovementWheelSize: sInt
+); Inline;
 Var
 	Idx: sInt;
+Begin
+	(*
+	 * Lock the finger to the shoot buttons.
+	 * Note that both "shoot" buttons share the same single lock;
+	 * the player is allowed to move their finger from one button
+	 * to the other and back.
+	 *)
+	If (UFResult = UF_NONE) or (UFResult = UF_SHOOT) then begin
+		If FingerInRect(FingerX, FingerY, ShootLeftRect) then begin
+			ShootLeftButton.Touched := True;
+			ShootLeftButton.Finger := Ev^.TFinger.FingerID;
+			Key[KEY_SHOOTLEFT] := True;
+			Exit()
+		end;
+		If FingerInRect(FingerX, FingerY, ShootRightRect) then begin
+			ShootRightButton.Touched := True;
+			ShootRightButton.Finger := Ev^.TFinger.FingerID;
+			Key[KEY_SHOOTRIGHT] := True;
+			Exit()
+		end
+	end;
+
+	// Same here - lock the finger to the movement wheel.
+	If (UFResult = UF_NONE) or (UFResult = UF_MOVEMENT) then begin
+		Idx := FingerPosToMovementButtonIdx(FingerX, FingerY, MovementWheelSize);
+		If (Idx >= 0) then begin
+			MovementButton[Idx].Touched := True;
+			MovementButton[Idx].Finger := Ev^.TFinger.FingerID;
+			PressMovementKeys();
+			Exit()
+		end
+	end;
+End;
+
+Procedure HandleEvent_Slides(
+	ev: PSDL_Event;
+	FingerX, FingerY: sInt;
+	UFResult: UnfingerResult
+); Inline;
+Begin
+	If Not SlideRightButtonIsVisible() then Exit();
+	If (UFResult = UF_NONE) or (UFResult = UF_SLIDE_RIGHT) then begin
+		If FingerInRect(FingerX, FingerY, @SlideRightTouchArea) then begin
+			SlideRightButton.Touched := True;
+			SlideRightButton.Finger := Ev^.TFinger.FingerID;
+			Exit()
+		end
+	end;
+
+	If Not SlideLeftButtonIsVisible() then Exit();
+	If (UFResult = UF_NONE) or (UFResult = UF_SLIDE_LEFT) then begin
+		If FingerInRect(FingerX, FingerY, @SlideLeftTouchArea) then begin
+			SlideLeftButton.Touched := True;
+			SlideLeftButton.Finger := Ev^.TFinger.FingerID;
+			Exit()
+		end
+	end
+End;
+
+
+Procedure HandleEvent(ev: PSDL_Event);
+Var
 	FingerX, FingerY: sInt;
 	UFResult: UnfingerResult;
 
@@ -373,10 +542,16 @@ Begin
 	If (Visibility = TCV_NONE) then Exit();
 
 	If (Ev^.Type_ = SDL_FingerUp) then begin
-		// Contrary to other touch controls, the "go back" button is not
-		// a "hold" button, but rather a "release" button.
+		(*
+		 * Contrary to in-game controls, the "go back" and slide buttons
+		 * are activated when released, not when pressed.
+		 *)
 		UFResult := UnfingerButtons(Ev^.TFinger.FingerID);
-		If UFResult = UF_BACK then TriggerBackButton();
+		Case UFResult of
+			UF_BACK: FakeKeypress(SDL_SCANCODE_AC_BACK, SDLK_AC_BACK);
+			UF_SLIDE_LEFT: FakeKeypress(SDL_SCANCODE_LEFT, SDLK_LEFT);
+			UF_SLIDE_RIGHT: FakeKeypress(SDL_SCANCODE_RIGHT, SDLK_RIGHT);
+		end;
 
 		Exit()
 	end;
@@ -429,42 +604,11 @@ Begin
 		end
 	end;
 
-	// If the movement wheel and shoot buttons are not visible,
-	// do not allow interacting with them.
-	If (Visibility < TCV_ALL) then Exit();
-
-	(*
-	 * Same here - lock the finger to the shoot buttons.
-	 * Note that both "shoot" buttons share the same single lock;
-	 * the player is allowed to move their finger from one button
-	 * to the other and back.
-	 *)
-	If (UFResult = UF_NONE) or (UFResult = UF_SHOOT) then begin
-		If FingerInRect(FingerX, FingerY, ShootLeftRect) then begin
-			ShootLeftButton.Touched := True;
-			ShootLeftButton.Finger := Ev^.TFinger.FingerID;
-			Key[KEY_SHOOTLEFT] := True;
-			Exit()
-		end;
-		If FingerInRect(FingerX, FingerY, ShootRightRect) then begin
-			ShootRightButton.Touched := True;
-			ShootRightButton.Finger := Ev^.TFinger.FingerID;
-			Key[KEY_SHOOTRIGHT] := True;
-			Exit()
-		end
-	end;
-
-	// Same here - lock the finger to the movement wheel.
-	If (UFResult = UF_NONE) or (UFResult = UF_MOVEMENT) then begin
-		Idx := FingerPosToMovementButtonIdx(FingerX, FingerY, MovementWheelSize);
-		If (Idx >= 0) then begin
-			MovementButton[Idx].Touched := True;
-			MovementButton[Idx].Finger := Ev^.TFinger.FingerID;
-			PressMovementKeys();
-			Exit()
-		end
-	end;
-End;
+	If (Visibility = TCV_GAME) then
+		HandleEvent_InGame(ev, FingerX, FingerY, UFResult, ShootLeftRect, ShootRightRect, MovementWheelSize)
+	else
+		HandleEvent_Slides(ev, FingerX, FingerY, UFResult)
+end;
 
 Function EnlargeRect(Const Source: TSDL_Rect; Const EnlargeX, EnlargeY: uInt): TSDL_Rect;
 Begin
@@ -474,7 +618,7 @@ Begin
 	Result.H := Source.H + (2 * EnlargeY)
 End;
 
-Procedure SetPosition(NewDPadPos, NewShootBtnsPos, NewGoBackPos: PSDL_Rect);
+Procedure SetMovementWheelPosition(NewPos: TSDL_Rect);
 Const
 	(*
 	 * The movement wheel has a dual nature: it is rendered as an octagon,
@@ -491,130 +635,143 @@ Const
 	HEXAGON_TO_CIRCLE_RATIO = 1.0 / Sin(Pi * 3 / 8);
 Var
 	Idx: uInt;
-	BtnW, BtnH: uInt;
 	WheelRenderSize: uInt;
-	BtnExtraSize: uInt;
 
 	{$IFDEF LD25_DEBUG}
 	pt: uInt;
 	Angle: Double;
 	{$ENDIF}
 Begin
-	If (NewDPadPos <> NIL) then begin
-		If (NewDPadPos^.W <= NewDPadPos^.H) then
-			WheelRenderSize := NewDPadPos^.W div 2
-		else
-			WheelRenderSize := NewDPadPos^.H div 2;
+	WheelRenderSize := MinOfTwo(NewPos.W div 2, NewPos.H div 2);
 
-		MovementWheel.TouchSize := Trunc(WheelRenderSize * HEXAGON_TO_CIRCLE_RATIO);
-		MovementWheel.TouchExtraSize := (MovementWheel.TouchSize * 5) div 4; // +25%
-		MovementWheel.DeadZoneSize := MovementWheel.TouchSize div 5; // 20%
+	MovementWheel.TouchSize := Trunc(WheelRenderSize * HEXAGON_TO_CIRCLE_RATIO);
+	MovementWheel.TouchExtraSize := (MovementWheel.TouchSize * 5) div 4; // +25%
+	MovementWheel.DeadZoneSize := MovementWheel.TouchSize div 5; // 20%
 
-		MovementWheel.X := NewDPadPos^.X + (NewDPadPos^.W) div 2;
-		MovementWheel.Y := NewDPadPos^.Y + (NewDPadPos^.H) div 2;
+	MovementWheel.X := NewPos.X + (NewPos.W) div 2;
+	MovementWheel.Y := NewPos.Y + (NewPos.H) div 2;
 
-		For Idx := 0 to 7 do begin
-			With MovementButton[Idx] do begin
-				Position.X := MovementWheel.X;
-				If (Idx = 0) or (Idx = 4) then
-					Position.X -= (WheelRenderSize div 2)
-				else If (Idx > 4) then
-					Position.X -= WheelRenderSize;
+	For Idx := 0 to 7 do begin
+		With MovementButton[Idx] do begin
+			Position.X := MovementWheel.X;
+			If (Idx = 0) or (Idx = 4) then
+				Position.X -= (WheelRenderSize div 2)
+			else If (Idx > 4) then
+				Position.X -= WheelRenderSize;
 
-				Position.Y := MovementWheel.Y;
-				If (Idx = 2) or (Idx = 6) then
-					Position.Y -= (WheelRenderSize div 2)
-				else If (Idx < 2) or (Idx = 7) then
-					Position.Y -= WheelRenderSize;
+			Position.Y := MovementWheel.Y;
+			If (Idx = 2) or (Idx = 6) then
+				Position.Y -= (WheelRenderSize div 2)
+			else If (Idx < 2) or (Idx = 7) then
+				Position.Y -= WheelRenderSize;
 
-				Position.W := WheelRenderSize;
-				Position.H := WheelRenderSize;
-				MovementButton[Idx].Touched := False
-			end;
-
-			{$IFDEF LD25_DEBUG}
-			For pt := 0 to (OUTLINE_STEPS-1) do begin
-				Angle := 0 - (Pi / 2) - (Pi / 8) + (Pi * Idx / 4) + (Pi / 4 * pt / (OUTLINE_STEPS-1));
-				MovBtnOutline[Idx][1+pt] := ProjectPoint(MovementWheel.X, MovementWheel.Y, MovementWheel.TouchSize, Angle);
-				MovBtnExtraOutline[Idx][1+pt] := ProjectPoint(MovementWheel.X, MovementWheel.Y, MovementWheel.TouchExtraSize, Angle);
-
-				MovBtnOutline[Idx][OUTLINE_POINTS-1-pt] := ProjectPoint(MovementWheel.X, MovementWheel.Y, MovementWheel.DeadZoneSize, Angle);
-				MovBtnExtraOutline[Idx][OUTLINE_POINTS-1-pt] := MovBtnOutline[Idx][OUTLINE_POINTS-1-pt];
-			end;
-			MovBtnOutline[Idx][0] := MovBtnOutline[Idx][OUTLINE_POINTS-1];
-			MovBtnExtraOutline[Idx][0] := MovBtnExtraOutline[Idx][OUTLINE_POINTS-1];
-			{$ENDIF}
+			Position.W := WheelRenderSize;
+			Position.H := WheelRenderSize;
+			MovementButton[Idx].Touched := False
 		end;
 
-		// Mark virtual movement keys as not being pressed
-		Key[KEY_UP] := False;
-		Key[KEY_RIGHT] := False;
-		Key[KEY_DOWN] := False;
-		Key[KEY_LEFT] := False;
+		{$IFDEF LD25_DEBUG}
+		For pt := 0 to (OUTLINE_STEPS-1) do begin
+			Angle := 0 - (Pi / 2) - (Pi / 8) + (Pi * Idx / 4) + (Pi / 4 * pt / (OUTLINE_STEPS-1));
+			MovBtnOutline[Idx][1+pt] := ProjectPoint(MovementWheel.X, MovementWheel.Y, MovementWheel.TouchSize, Angle);
+			MovBtnExtraOutline[Idx][1+pt] := ProjectPoint(MovementWheel.X, MovementWheel.Y, MovementWheel.TouchExtraSize, Angle);
+
+			MovBtnOutline[Idx][OUTLINE_POINTS-1-pt] := ProjectPoint(MovementWheel.X, MovementWheel.Y, MovementWheel.DeadZoneSize, Angle);
+			MovBtnExtraOutline[Idx][OUTLINE_POINTS-1-pt] := MovBtnOutline[Idx][OUTLINE_POINTS-1-pt];
+		end;
+		MovBtnOutline[Idx][0] := MovBtnOutline[Idx][OUTLINE_POINTS-1];
+		MovBtnExtraOutline[Idx][0] := MovBtnExtraOutline[Idx][OUTLINE_POINTS-1];
+		{$ENDIF}
 	end;
-	If (NewShootBtnsPos <> NIL) then begin
-		If(NewShootBtnsPos^.H > NewShootBtnsPos^.W) then begin
-			BtnW := NewShootBtnsPos^.W;
-			BtnH := BtnW;
-			BtnExtraSize := (NewShootBtnsPos^.H - (BtnH * 2)) div 2;
+
+	// Mark virtual movement keys as not being pressed
+	Key[KEY_UP] := False;
+	Key[KEY_RIGHT] := False;
+	Key[KEY_DOWN] := False;
+	Key[KEY_LEFT] := False;
+End;
+
+Procedure SetShootButtonsPosition(NewPos: TSDL_Rect);
+Var
+	BtnW, BtnH: uInt;
+	BtnExtraSize: uInt;
+Begin
+	If(NewPos.H > NewPos.W) then begin
+		BtnW := NewPos.W;
+		BtnH := BtnW;
+		BtnExtraSize := (NewPos.H - (BtnH * 2)) div 2;
+	end else begin
+		BtnH := NewPos.H;
+		BtnW := BtnH;
+		BtnExtraSize := (NewPos.W - (BtnW * 2)) div 2;
+	end;
+
+	With ShootLeftButton do begin
+		Position.X := NewPos.X;
+		Position.Y := NewPos.Y;
+		Position.W := BtnW;
+		Position.H := BtnH;
+		Touched := False
+	end;
+
+	With ShootRightButton do begin
+		If(NewPos.H > NewPos.W) then begin
+			Position.X := NewPos.X;
+			Position.Y := NewPos.Y + NewPos.H - BtnH
 		end else begin
-			BtnH := NewShootBtnsPos^.H;
-			BtnW := BtnH;
-			BtnExtraSize := (NewShootBtnsPos^.W - (BtnW * 2)) div 2;
+			Position.X := NewPos.X + NewPos.W - BtnW;
+			Position.Y := NewPos.Y
 		end;
-
-		With ShootLeftButton do begin
-			Position.X := NewShootBtnsPos^.X;
-			Position.Y := NewShootBtnsPos^.Y;
-			Position.W := BtnW;
-			Position.H := BtnH;
-			Touched := False
-		end;
-
-		With ShootRightButton do begin
-			If(NewShootBtnsPos^.H > NewShootBtnsPos^.W) then begin
-				Position.X := NewShootBtnsPos^.X;
-				Position.Y := NewShootBtnsPos^.Y + NewShootBtnsPos^.H - BtnH
-			end else begin
-				Position.X := NewShootBtnsPos^.X + NewShootBtnsPos^.W - BtnW;
-				Position.Y := NewShootBtnsPos^.Y
-			end;
-			Position.W := BtnW;
-			Position.H := BtnH;
-			Touched := False
-		end;
-
-		ShootLeftTouchArea := EnlargeRect(ShootLeftButton.Position, (BtnW div 4), (BtnH div 4));
-		ShootRightTouchArea := EnlargeRect(ShootRightButton.Position, (BtnW div 4), (BtnH div 4));
-
-		ShootLeftExtraTouchArea := EnlargeRect(ShootLeftButton.Position, BtnExtraSize, BtnExtraSize);
-		ShootRightExtraTouchArea := EnlargeRect(ShootRightButton.Position, BtnExtraSize, BtnExtraSize);
-
-		// Mark virtual "shoot" keys as not being pressed
-		Key[KEY_SHOOTLEFT] := False;
-		Key[KEY_SHOOTRIGHT] := False;
+		Position.W := BtnW;
+		Position.H := BtnH;
+		Touched := False
 	end;
-	If (NewGoBackPos <> NIL) then begin
-		GoBackTriangle.X := NewGoBackPos^.X;
-		GoBackTriangle.Y := NewGoBackPos^.Y;
-		If (NewGoBackPos^.W > NewGoBackPos^.H) then
-			GoBackTriangle.Size := NewGoBackPos^.W
-		else
-			GoBackTriangle.Size := NewGoBackPos^.H;
 
-		GoBackTriangle.Flip := 0;
-		If (GoBackTriangle.X > 0) then begin
-			GoBackTriangle.X += NewGoBackPos^.W - 1;
-			GoBackTriangle.Flip := GoBackTriangle.Flip or SDL_FLIP_HORIZONTAL
-		end;
-		If (GoBackTriangle.Y > 0) then begin
-			GoBackTriangle.Y += NewGoBackPos^.H - 1;
-			GoBackTriangle.Flip := GoBackTriangle.Flip or SDL_FLIP_VERTICAL
-		end;
+	ShootLeftTouchArea := EnlargeRect(ShootLeftButton.Position, (BtnW div 4), (BtnH div 4));
+	ShootRightTouchArea := EnlargeRect(ShootRightButton.Position, (BtnW div 4), (BtnH div 4));
 
-		GoBackButton.Position := NewGoBackPos^;
-		GoBackButton.Touched := False
-	end
+	ShootLeftExtraTouchArea := EnlargeRect(ShootLeftButton.Position, BtnExtraSize, BtnExtraSize);
+	ShootRightExtraTouchArea := EnlargeRect(ShootRightButton.Position, BtnExtraSize, BtnExtraSize);
+
+	// Mark virtual "shoot" keys as not being pressed
+	Key[KEY_SHOOTLEFT] := False;
+	Key[KEY_SHOOTRIGHT] := False;
+End;
+
+Procedure SetGoBackButtonPosition(NewPos: TSDL_Rect);
+Begin
+	GoBackTriangle.X := NewPos.X;
+	GoBackTriangle.Y := NewPos.Y;
+	GoBackTriangle.Size := MaxOfTwo(NewPos.W, NewPos.H);
+
+	GoBackTriangle.Flip := 0;
+	If (GoBackTriangle.X > 0) then begin
+		GoBackTriangle.X += NewPos.W - 1;
+		GoBackTriangle.Flip := GoBackTriangle.Flip or SDL_FLIP_HORIZONTAL
+	end;
+	If (GoBackTriangle.Y > 0) then begin
+		GoBackTriangle.Y += NewPos.H - 1;
+		GoBackTriangle.Flip := GoBackTriangle.Flip or SDL_FLIP_VERTICAL
+	end;
+
+	GoBackButton.Position := NewPos;
+	GoBackButton.Touched := False
+End;
+
+Procedure SetSlideButtonsPosition(LeftPos, RightPos: TSDL_Rect);
+Var
+	ExtraWidth, ExtraHeight: uInt;
+Begin
+	SlideLeftButton.Position := LeftPos;
+	SlideRightButton.Position := RightPos;
+
+	ExtraWidth := MaxOfTwo(LeftPos.W, RightPos.W) div 4;
+	ExtraHeight := MaxOfTwo(LeftPos.H, RightPos.H) div 4;
+	SlideLeftTouchArea := EnlargeRect(SlideLeftButton.Position, ExtraWidth, ExtraHeight);
+	SlideRightTouchArea := EnlargeRect(SlideRightButton.Position, ExtraWidth, ExtraHeight);
+
+	SlideLeftButton.Touched := False;
+	SlideRightButton.Touched := False
 End;
 
 Procedure SetVisibility(NewValue: TouchControlVisibility);
@@ -623,10 +780,11 @@ Var
 Begin
 	Visibility := NewValue;
 
-	If Visibility < TCV_ONLY_BACK then
-		GoBackButton.Touched := False;
+	If Not BackButtonIsVisible() then GoBackButton.Touched := False;
+	If Not SlideLeftButtonIsVisible() then SlideLeftButton.Touched := False;
+	If Not SlideRightButtonIsVisible() then SlideRightButton.Touched := False;
 
-	If Visibility < TCV_ALL then begin
+	If Not GameButtonsAreVisible() then begin
 		ShootLeftButton.Touched := False;
 		ShootRightButton.Touched := False;
 		For Idx := 0 to 7 do MovementButton[Idx].Touched := False

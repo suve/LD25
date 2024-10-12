@@ -876,7 +876,7 @@ Begin
 	SDL_ShowCursor(0);
 	
 	For pk := Low(TPlayerKey) to High(TPlayerKey) do Key[pk]:=False;
-	{$IFDEF LD25_MOBILE} TouchControls.SetVisibility(TCV_ALL); {$ENDIF}
+	{$IFDEF LD25_MOBILE} TouchControls.SetVisibility(TCV_GAME); {$ENDIF}
 	
 	RoomChange:=RCHANGE_NONE;
 	Paused:=False; WantToQuit:=False; 

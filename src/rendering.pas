@@ -74,15 +74,16 @@ Var
 
 Const
 	BACK_SIZE = 40;
-	BUTTON_SIZE = 32;
 	DPAD_SIZE = 120;
+	SHOOT_SIZE = 32;
+	SLIDE_SIZE = 40;
 
-Procedure LandscapeMode(Out DPad, ShootBtns, BackBtn: TSDL_Rect);
+Procedure LandscapeMode(Out DPad, ShootBtns, BackBtn, SlideLeft, SlideRight: TSDL_Rect);
 Var
 	TotalWidth: sInt;
 	HorizontalOffset: sInt;
 Begin
-	TotalWidth := RESOL_W + DPAD_SIZE + BUTTON_SIZE;
+	TotalWidth := RESOL_W + DPAD_SIZE + SHOOT_SIZE;
 	TotalWidth := (TotalWidth * Wnd_H) div RESOL_H;
 	HorizontalOffset := (Wnd_W - TotalWidth) div 4;
 
@@ -90,7 +91,7 @@ Begin
 	DPad.H := DPad.W;
 	DPad.Y := (((RESOL_H - DPAD_SIZE) div 2) * Wnd_H) div RESOL_H;
 
-	ShootBtns.W := (BUTTON_SIZE * Wnd_H) div RESOL_H;
+	ShootBtns.W := (SHOOT_SIZE * Wnd_H) div RESOL_H;
 	ShootBtns.H := (ShootBtns.W * 7) div 2;
 	ShootBtns.Y := DPad.Y + ((DPad.H - ShootBtns.H) div 2);
 
@@ -101,6 +102,14 @@ Begin
 	BackBtn.W := (BACK_SIZE * Wnd_H) div RESOL_H;
 	BackBtn.H := BackBtn.W;
 	BackBtn.Y := 0;
+
+	SlideLeft.W := (ShootBtns.W * SLIDE_SIZE) div SHOOT_SIZE;
+	SlideLeft.H := SlideLeft.W;
+	SlideLeft.Y := DPad.Y + ((DPad.H - SlideLeft.H) div 2);
+	SlideLeft.X := HorizontalOffset;
+
+	SlideRight := SlideLeft;
+	SlideRight.X := Wnd_W - SlideRight.W - HorizontalOffset;
 
 	If(Not SwapTouchControls) then begin
 		DPad.X := HorizontalOffset;
@@ -115,7 +124,7 @@ Begin
 	end
 End;
 
-Procedure PortraitMode(Out DPad, ShootBtns, BackBtn: TSDL_Rect);
+Procedure PortraitMode(Out DPad, ShootBtns, BackBtn, SlideLeft, SlideRight: TSDL_Rect);
 Var
 	TotalHeight: sInt;
 	HorizontalOffset, VerticalOffset: sInt;
@@ -123,7 +132,7 @@ Begin
 	TotalHeight := RESOL_H + DPAD_SIZE;
 	TotalHeight := (TotalHeight * Wnd_W) div RESOL_W;
 	VerticalOffset := (Wnd_H - TotalHeight) div 3;
-	HorizontalOffset := (((RESOL_W - DPAD_SIZE - BUTTON_SIZE) div 4) * Wnd_W) div RESOL_W;
+	HorizontalOffset := (((RESOL_W - DPAD_SIZE - SHOOT_SIZE) div 4) * Wnd_W) div RESOL_W;
 
 	GameArea.X := 0;
 	GameArea.Y := VerticalOffset;
@@ -134,13 +143,21 @@ Begin
 	DPad.H := DPad.W;
 	DPad.Y := GameArea.Y + GameArea.H + VerticalOffset;
 
-	ShootBtns.W := (BUTTON_SIZE * Wnd_W) div RESOL_W;
+	ShootBtns.W := (SHOOT_SIZE * Wnd_W) div RESOL_W;
 	ShootBtns.H := (ShootBtns.W * 7) div 2;
 	ShootBtns.Y := DPad.Y + ((DPad.H - ShootBtns.H) div 2);
 
 	BackBtn.W := (BACK_SIZE * Wnd_W) div RESOL_W;
 	BackBtn.H := BackBtn.W;
 	BackBtn.Y := Wnd_H - BackBtn.H;
+
+	SlideLeft.W := (ShootBtns.W * SLIDE_SIZE) div SHOOT_SIZE;
+	SlideLeft.H := SlideLeft.W;
+	SlideLeft.Y := DPad.Y + ((DPad.H - SlideLeft.H) div 2);
+	SlideLeft.X := HorizontalOffset;
+
+	SlideRight := SlideLeft;
+	SlideRight.X := Wnd_W - SlideRight.W - HorizontalOffset;
 
 	If(Not SwapTouchControls) then begin
 		DPad.X := HorizontalOffset;
@@ -153,7 +170,7 @@ Begin
 	end
 End;
 
-Procedure SquareMode(Out DPad, ShootBtns, BackBtn: TSDL_Rect);
+Procedure SquareMode(Out DPad, ShootBtns, BackBtn, SlideLeft, SlideRight: TSDL_Rect);
 Const
 	SQRT_TWO = Sqrt(2);
 Var
@@ -179,13 +196,21 @@ Begin
 	DPad.H := (DPAD_SIZE * SquareSize) div (RESOL_H + DPAD_SIZE);
 	DPad.Y := Wnd_H - DPad.H - VerticalOffset;
 
-	ShootBtns.H := (BUTTON_SIZE * SquareSize) div (RESOL_H + DPAD_SIZE);
+	ShootBtns.H := (SHOOT_SIZE * SquareSize) div (RESOL_H + DPAD_SIZE);
 	ShootBtns.W := (ShootBtns.H * 7) div 2;
 	ShootBtns.Y := DPad.Y + ((DPad.H - ShootBtns.H) div 2);
 
 	BackBtn.W := (BACK_SIZE * SquareSize) div (RESOL_W + DPAD_SIZE);
 	BackBtn.H := (BACK_SIZE * SquareSize) div (RESOL_H + DPAD_SIZE);
 	BackBtn.Y := 0;
+
+	SlideLeft.H := (ShootBtns.H * SLIDE_SIZE) div SHOOT_SIZE;
+	SlideLeft.W := SlideLeft.H;
+	SlideLeft.Y := DPad.Y + ((DPad.H - SlideLeft.H) div 2);
+	SlideLeft.X := HorizontalOffset;
+
+	SlideRight := SlideLeft;
+	SlideRight.X := Wnd_W - SlideRight.W - HorizontalOffset;
 
 	(*
 	 * The game area can be made slightly bigger by accounting for the fact
@@ -229,46 +254,63 @@ End;
 
 Procedure PositionTouchControls();
 Const
+	{$IFDEF LD25_DEBUG}
+		ASCII_HT = #9;
+		ASCII_LF = #10;
+
+		LOG_FORMAT = 'Re-positioning: window size is %dx%d -> %s mode;' + ASCII_LF +
+			ASCII_HT + '- game: %dx%d @ %dx%d;' + ASCII_LF +
+			ASCII_HT + '- dpad: %dx%d @ %dx%d;' + ASCII_LF +
+			ASCII_HT + '- shbt: %dx%d @ %dx%d;' + ASCII_LF +
+			ASCII_HT + '- back: %dx%d @ %dx%d;' + ASCII_LF +
+			ASCII_HT + '- slid: %dx%d : %dx%d @ %dx%d' + ASCII_LF;
+	{$ENDIF}	
+
 	ASPECT_RATIO_MUL = 1000;
 
-	LANDSCAPE_WIDTH = RESOL_W + DPAD_SIZE + BUTTON_SIZE;
+	LANDSCAPE_WIDTH = RESOL_W + DPAD_SIZE + SHOOT_SIZE;
 	LANDSCAPE_RATIO = (LANDSCAPE_WIDTH * ASPECT_RATIO_MUL) div RESOL_H;
 
 	PORTRAIT_HEIGHT = RESOL_H + DPAD_SIZE;
 	PORTRAIT_RATIO = (RESOL_W * ASPECT_RATIO_MUL) div PORTRAIT_HEIGHT;
 Var
 	AspectRatio: uInt;
-	DPad, ShootBtns, BackBtn: TSDL_Rect;
+	DPad, ShootBtns, BackBtn, SlideLeft, SlideRight: TSDL_Rect;
 	{$IFDEF LD25_DEBUG} Mode: AnsiString; {$ENDIF}
 Begin
 	AspectRatio := (Wnd_W * ASPECT_RATIO_MUL) div Wnd_H;
 	If (AspectRatio >= LANDSCAPE_RATIO) then begin
 		{$IFDEF LD25_DEBUG} Mode := 'landscape'; {$ENDIF}
-		LandscapeMode(DPad, ShootBtns, BackBtn)
+		LandscapeMode(DPad, ShootBtns, BackBtn, SlideLeft, SlideRight)
 	end else
 	If (AspectRatio <= PORTRAIT_RATIO) then begin
 		{$IFDEF LD25_DEBUG} Mode := 'portrait'; {$ENDIF}
-		PortraitMode(DPad, ShootBtns, BackBtn)
+		PortraitMode(DPad, ShootBtns, BackBtn, SlideLeft, SlideRight)
 	end else begin
 		{$IFDEF LD25_DEBUG} Mode := 'square'; {$ENDIF}
-		SquareMode(DPad, ShootBtns, BackBtn)
+		SquareMode(DPad, ShootBtns, BackBtn, SlideLeft, SlideRight)
 	end;
 
 	{$IFDEF LD25_DEBUG}
 	SDL_LogDebug(
 		SDL_LOG_CATEGORY_APPLICATION,
-		'Positioning(%s): %dx%d -> game: %dx%d @ %dx%d; DPad: %dx%d @ %dx%d; shbt: %dx%d @ %dx%d; back: %dx%d @ %dx%d',
+		LOG_FORMAT,
 		[
-			PChar(Mode),
 			cint(Wnd_W), cint(Wnd_H),
+			PChar(Mode),
 			cint(GameArea.X), cint(GameArea.Y), cint(GameArea.W), cint(GameArea.H),
 			cint(DPad.X), cint(DPad.Y), cint(DPad.W), cint(DPad.H),
 			cint(ShootBtns.X), cint(ShootBtns.Y), cint(ShootBtns.W), cint(ShootBtns.H),
-			cint(BackBtn.X), cint(BackBtn.Y), cint(BackBtn.W), cint(BackBtn.H)
+			cint(BackBtn.X), cint(BackBtn.Y), cint(BackBtn.W), cint(BackBtn.H),
+			cint(SlideLeft.X), cint(SlideLeft.Y), cint(SlideRight.X), cint(SlideRight.Y), cint(SlideRight.W), cint(SlideRight.H)
 		]
 	);
 	{$ENDIF}
-	TouchControls.SetPosition(@DPad, @ShootBtns, @BackBtn)
+
+	TouchControls.SetMovementWheelPosition(DPad);
+	TouchControls.SetShootButtonsPosition(ShootBtns);
+	TouchControls.SetGoBackButtonPosition(BackBtn);
+	TouchControls.SetSlideButtonsPosition(SlideLeft, SlideRight)
 End;
 {$ENDIF}
 
