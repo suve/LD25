@@ -46,6 +46,7 @@ Var
 	RumbleEnabled: Boolean;
 
 Procedure InitControllers();
+Procedure HandleBatteryEvent(Ev: PSDL_Event);
 Procedure HandleDeviceEvent(Ev: PSDL_Event);
 
 
@@ -134,6 +135,26 @@ Begin
 		else
 			Toast.Show(TH_CONTROLLER_LOST, Name)
 	end
+End;
+
+Procedure HandleBatteryEvent(Ev: PSDL_Event);
+Var
+	Con: PSDL_GameController;
+	Header: TToastHeader;
+Begin
+	Case Ev^.jBattery.Level of
+		SDL_JOYSTICK_POWER_LOW:
+			Header := TH_BATTERY_LOW;
+		SDL_JOYSTICK_POWER_EMPTY:
+			Header := TH_BATTERY_CRITICAL;
+		otherwise
+			Exit
+	end;
+	
+	Con := List[Ev^.jBattery.Which];
+	If(Con = NIL) then Exit;
+
+	Toast.Show(Header, SDL_GameControllerName(Con))
 End;
 
 Procedure HandleDeviceEvent(Ev: PSDL_Event);

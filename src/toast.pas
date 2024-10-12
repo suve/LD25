@@ -24,7 +24,9 @@ Type
 	TToastHeader = (
 		TH_CONTROLLER_FOUND,
 		TH_CONTROLLER_SWITCHED,
-		TH_CONTROLLER_LOST
+		TH_CONTROLLER_LOST,
+		TH_BATTERY_LOW,
+		TH_BATTERY_CRITICAL
 	);
 
 Procedure Show(HeaderID: TToastHeader; Message: AnsiString);

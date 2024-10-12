@@ -232,6 +232,9 @@ Begin
 	If (Ev^.Type_ = SDL_ControllerDeviceAdded) or (Ev^.Type_ = SDL_ControllerDeviceRemoved) then begin
 		Controllers.HandleDeviceEvent(Ev)
 	end else
+	If (Ev^.Type_ = SDL_JoyBatteryUpdated) then begin
+		Controllers.HandleBatteryEvent(Ev)
+	end else
 	If (Ev^.Type_ = SDL_WindowEvent) and (Ev^.Window.Event = SDL_WINDOWEVENT_RESIZED) then
 		Rendering.HandleWindowResizedEvent(Ev);
 

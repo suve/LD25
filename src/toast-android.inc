@@ -21,7 +21,9 @@ Const
 	Headers: Array[TToastHeader] of AnsiString = (
 		'Controller found',
 		'Controller switched',
-		'Controller lost'
+		'Controller lost',
+		'Battery low',
+		'Battery critical'
 	);
 
 Var

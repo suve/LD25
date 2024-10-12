@@ -165,6 +165,9 @@ Begin
 		If (Ev.Type_ = SDL_ControllerDeviceAdded) or (Ev.Type_ = SDL_ControllerDeviceRemoved) then begin
 			Controllers.HandleDeviceEvent(@Ev)
 		end else
+		If (Ev.Type_ = SDL_JoyBatteryUpdated) then begin
+			Controllers.HandleBatteryEvent(@Ev)
+		end else
 		{$IFDEF LD25_MOBILE}
 		If (Ev.Type_ = SDL_FingerUp) or (Ev.Type_ = SDL_FingerDown) or (Ev.Type_ = SDL_FingerMotion) then begin
 			TouchControls.HandleEvent(@Ev)
