@@ -32,6 +32,22 @@ Uses
 	{$IFDEF LD25_MOBILE}, TouchControls {$ENDIF}
 ;
 
+Const
+	FADE_IN_TICKS = 240; // Slightly under a quarter of a second
+
+Procedure FadeIn(Time: uInt);
+Var
+	FadeColour: TSDL_Color;
+Begin
+	If Time > FADE_IN_TICKS then Exit();
+
+	FadeColour.R := 0;
+	FadeColour.G := 0;
+	FadeColour.B := 0;
+	FadeColour.A := (255 * (FADE_IN_TICKS - Time)) div FADE_IN_TICKS;
+	Shared.DrawRectFilled(NIL, @FadeColour)
+End;
+
 Procedure RenderSlide(SlideTime: uInt; Data: Pointer);
 Var
 	Img: PImage;
@@ -42,7 +58,9 @@ Begin
 	Dst.Y := 0;
 	Dst.W := Img^.W;
 	Dst.H := Img^.H;
-	DrawImage(Img, NIL, @Dst, NIL)
+	DrawImage(Img, NIL, @Dst, NIL);
+
+	FadeIn(SlideTime)
 End;
 
 Type
@@ -124,22 +142,6 @@ Begin
 	Data[SLIDES_IN] := TitleGfx;
 
 	ShowSlides(Funcs, Data, SLIDES_IN + 1)
-End;
-
-Const
-	FADE_IN_TICKS = 320; // Slightly under one third of a second
-
-Procedure FadeIn(Time: uInt);
-Var
-	FadeColour: TSDL_Color;
-Begin
-	If Time > FADE_IN_TICKS then Exit();
-
-	FadeColour.R := 0;
-	FadeColour.G := 0;
-	FadeColour.B := 0;
-	FadeColour.A := (255 * (FADE_IN_TICKS - Time)) div FADE_IN_TICKS;
-	Shared.DrawRectFilled(NIL, @FadeColour)
 End;
 
 Procedure RenderThanksScreen(SlideTime: uInt; Data: Pointer);
