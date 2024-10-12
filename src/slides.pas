@@ -341,7 +341,12 @@ Begin
 	PlayerStats.BestTimeCheck := Stats.CheckBestTime();
 	RenderStatsTexts(@PlayerStats);
 
-	For Idx := 0 to (SLIDES_OUT - 1) do begin
+	SanitizeColourOrder();
+	For Idx := 0 to 7 do begin
+		Funcs[Idx] := @RenderSlide;
+		Data[Idx] := SlideOut[ColOrder[Idx]]
+	end;
+	For Idx := 8 to (SLIDES_OUT - 1) do begin
 		Funcs[Idx] := @RenderSlide;
 		Data[Idx] := SlideOut[Idx]
 	end;

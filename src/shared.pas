@@ -158,12 +158,17 @@ Function ChangeRoom(NX,NY:sInt):Boolean;
 Procedure DestroyEntities(KillHero:Boolean=FALSE);
 Procedure ResetGamestate();
 
+// Sanitize the contents of the ColOrder array, ensuring that all entries
+// from [0] to [Given-1] contain a valid value, and there are no duplicates.
+Procedure SanitizeColourOrder();
+
 // Convenience function for reducing the amount of copy-pasted code.
 Procedure SaveCurrentGame(Reason: AnsiString = '');
 
 
 Implementation
 Uses
+	{$IFDEF LD25_DEBUG} ctypes, {$ENDIF}
 	Assets, Colours, ConfigFiles, FloatingText, Rendering, Rooms;
 
 Var
@@ -443,6 +448,107 @@ Begin
 	For C:=Low(Switch) to High(Switch) do Switch[C]:=False;
 
 	Carried:=0; Given:=0;
+End;
+
+Procedure SanitizeColourOrder();
+Var
+	HasOrder: Array[0..7] of Boolean;
+
+	Procedure FillUnknownValues(OnlyGiven: Boolean);
+	Var
+		Idx, Guess: sInt;
+	Begin
+		For Idx := 0 to (Given-1) do begin
+			If(ColOrder[Idx] >= 0) and (ColOrder[Idx] <= 7) then Continue;
+
+			// Go over all colours and assign the first retrieved colour
+			// which is not yet present in the ordering.
+			For Guess:=0 to 7 do begin
+				If(HasOrder[Guess]) then Continue;
+
+				If(OnlyGiven) and (ColState[Guess] <> STATE_GIVEN) then Continue;
+
+				HasOrder[Guess] := True;
+				ColOrder[Idx] := Guess;
+				Break
+			end
+		end
+	End;
+
+Var
+	Idx, Claim: sInt;
+Begin
+	{$IFDEF LD25_DEBUG}
+		SDL_LogDebug(
+			SDL_LOG_CATEGORY_APPLICATION,
+			'Sanitizing order of %d colours: %d (%s), %d (%s), %d (%s), %d (%s), %d (%s), %d (%s), %d (%s), %d (%s)',
+			[
+				cint(Given),
+				cint(ColOrder[0]), PChar(ColourIndexToName(ColOrder[0])),
+				cint(ColOrder[1]), PChar(ColourIndexToName(ColOrder[1])),
+				cint(ColOrder[2]), PChar(ColourIndexToName(ColOrder[2])),
+				cint(ColOrder[3]), PChar(ColourIndexToName(ColOrder[3])),
+				cint(ColOrder[4]), PChar(ColourIndexToName(ColOrder[4])),
+				cint(ColOrder[5]), PChar(ColourIndexToName(ColOrder[5])),
+				cint(ColOrder[6]), PChar(ColourIndexToName(ColOrder[6])),
+				cint(ColOrder[7]), PChar(ColourIndexToName(ColOrder[7]))
+			]
+		);
+	{$ENDIF}
+
+	If(Given = 0) then Exit;
+
+	// Mark all the colours as not having an ordering assigned
+	For Idx := 0 to 7 do HasOrder[Idx] := False;
+
+	// Go over the claimed ordering.
+	For Idx := 0 to (Given-1) do begin
+		Claim := ColOrder[Idx];
+
+		// Claimed ordering includes an invalid value. Ignore.
+		If(Claim < 0) or (Claim > 7) then Continue;
+
+		(*
+		 * a) Claimed ordering includes a colour that was not retrieved.
+		 * b) Claimed ordering includes a colour twice.
+		 * Set the value to "unknown" and move to next entry.
+		 *)
+		If(ColState[Claim] <> STATE_GIVEN) or (HasOrder[Claim]) then begin
+			ColOrder[Idx] := -1;
+			Continue
+		end;
+
+		// Seems ok!
+		HasOrder[Claim] := True
+	end;
+
+	// Go over the resulting ordering and look for unknown values.
+	// Fill unknown values with colours marked as given.
+	FillUnknownValues(True);
+
+	// Go over the result once again, using all colours.
+	// This will make sure the ordering always makes sense,
+	// even if the Given value is larger than the actual number
+	// of colours marked as STATE_GIVEN.
+	FillUnknownValues(False);
+
+	{$IFDEF LD25_DEBUG}
+		SDL_LogDebug(
+			SDL_LOG_CATEGORY_APPLICATION,
+			'Sanitized order of %d colours: %d (%s), %d (%s), %d (%s), %d (%s), %d (%s), %d (%s), %d (%s), %d (%s)',
+			[
+				cint(Given),
+				cint(ColOrder[0]), PChar(ColourIndexToName(ColOrder[0])),
+				cint(ColOrder[1]), PChar(ColourIndexToName(ColOrder[1])),
+				cint(ColOrder[2]), PChar(ColourIndexToName(ColOrder[2])),
+				cint(ColOrder[3]), PChar(ColourIndexToName(ColOrder[3])),
+				cint(ColOrder[4]), PChar(ColourIndexToName(ColOrder[4])),
+				cint(ColOrder[5]), PChar(ColourIndexToName(ColOrder[5])),
+				cint(ColOrder[6]), PChar(ColourIndexToName(ColOrder[6])),
+				cint(ColOrder[7]), PChar(ColourIndexToName(ColOrder[7]))
+			]
+		);
+	{$ENDIF}
 End;
 
 Procedure SaveCurrentGame(Reason: AnsiString = '');

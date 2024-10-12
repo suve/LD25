@@ -58,7 +58,6 @@ Function IHasGame(Const GM:TGameMode):Boolean;
 Implementation
 Uses
 	Classes, IniFiles, SysUtils,
-	{$IFDEF LD25_DEBUG} ctypes, {$ENDIF}
 	SDL2,
 	{$IFDEF LD25_COMPAT_V1} SDL1Keys, {$ENDIF}
 	BuildConfig, Colours, Rendering, Stats;
@@ -140,87 +139,6 @@ Begin
 	Exit(True)
 End;
 
-Procedure DetermineColourOrder(Var OrderClaimed: Array of sInt);
-Var
-	Idx, Claim, Guess: uInt;
-	HasOrder: Array[0..7] of Boolean;
-Begin
-	{$IFDEF LD25_DEBUG}
-		SDL_LogDebug(
-			SDL_LOG_CATEGORY_APPLICATION, 
-			'Claimed order of %d colour(s) in save: %d (%s), %d (%s), %d (%s), %d (%s), %d (%s), %d (%s), %d (%s), %d (%s)',
-			[
-				cint(Given),
-				cint(OrderClaimed[0]), PChar(ColourIndexToName(OrderClaimed[0])),
-				cint(OrderClaimed[1]), PChar(ColourIndexToName(OrderClaimed[1])),
-				cint(OrderClaimed[2]), PChar(ColourIndexToName(OrderClaimed[2])),
-				cint(OrderClaimed[3]), PChar(ColourIndexToName(OrderClaimed[3])),
-				cint(OrderClaimed[4]), PChar(ColourIndexToName(OrderClaimed[4])),
-				cint(OrderClaimed[5]), PChar(ColourIndexToName(OrderClaimed[5])),
-				cint(OrderClaimed[6]), PChar(ColourIndexToName(OrderClaimed[6])),
-				cint(OrderClaimed[7]), PChar(ColourIndexToName(OrderClaimed[7]))
-			]
-		);
-	{$ENDIF}
-
-	If(Given = 0) then Exit;
-
-	// Mark all the colours as not having an ordering assigned
-	For Idx := 0 to 7 do HasOrder[Idx] := False;
-
-	// Go over the claimed ordering.
-	For Idx := 0 to (Given-1) do begin
-		Claim := OrderClaimed[Idx];
-
-		// Claimed ordering includes an invalid value. Ignore.
-		If(Claim < 0) then Continue;
-
-		// Claimed ordering includes a colour that was not retrieved. Ignore.
-		If(ColState[Claim] <> STATE_GIVEN) then Continue;
-
-		// Claimed ordering includes a colour twice. Ignore.
-		If(HasOrder[Claim]) then Continue;
-
-		// Seems ok. Insert into the ordering.
-		HasOrder[Claim] := True;
-		ColOrder[Idx] := Claim
-	end;
-
-	// Go over the resulting ordering and look for unknown values.
-	For Idx := 0 to (Given-1) do begin
-		If(ColOrder[Idx] >= 0) then Continue;
-
-		// Go over all colours and assign the first retrieved colour
-		// which is not yet present in the ordering.
-		For Guess:=0 to 7 do begin
-			If(ColState[Guess] <> STATE_GIVEN) then Continue;
-			If(HasOrder[Guess]) then Continue;
-
-			HasOrder[Guess] := True;
-			ColOrder[Idx] := Guess;
-			Break
-		end
-	end;
-
-	{$IFDEF LD25_DEBUG}
-		SDL_LogDebug(
-			SDL_LOG_CATEGORY_APPLICATION,
-			'Determined order of %d colour(s) in save: %d (%s), %d (%s), %d (%s), %d (%s), %d (%s), %d (%s), %d (%s), %d (%s)',
-			[
-				cint(Given),
-				cint(ColOrder[0]), PChar(ColourIndexToName(ColOrder[0])),
-				cint(ColOrder[1]), PChar(ColourIndexToName(ColOrder[1])),
-				cint(ColOrder[2]), PChar(ColourIndexToName(ColOrder[2])),
-				cint(ColOrder[3]), PChar(ColourIndexToName(ColOrder[3])),
-				cint(ColOrder[4]), PChar(ColourIndexToName(ColOrder[4])),
-				cint(ColOrder[5]), PChar(ColourIndexToName(ColOrder[5])),
-				cint(ColOrder[6]), PChar(ColourIndexToName(ColOrder[6])),
-				cint(ColOrder[7]), PChar(ColourIndexToName(ColOrder[7]))
-			]
-		);
-	{$ENDIF}
-End;
-
 Procedure ReadStatsEntry(Ref: POptionalUInt; StrValue: AnsiString);
 Var
 	NumValue: uInt;
@@ -241,7 +159,6 @@ Var
 	Str: TStringList;
 	Path: AnsiString;
 	C: uInt;
-	OrderClaimed: Array[0..7] of sInt;
 Begin
 	WriteStr(Path,ConfPath,GM,'.ini');
 	Ini:=TIniFile.Create(Path);
@@ -263,8 +180,8 @@ Begin
 	end;
 
 	Ini.ReadSectionValues('History', Str);
-	For C:=0 to 7 do OrderClaimed[C] := ColourNameToIndex(Str.Values[Chr(49 + C)]);
-	DetermineColourOrder(OrderClaimed);
+	For C:=0 to 7 do ColOrder[C] := ColourNameToIndex(Str.Values[Chr(49 + C)]);
+	SanitizeColourOrder();
 
 	Stats.UnsetSaveStats();
 	Ini.ReadSectionValues('Stats', Str);
