@@ -64,6 +64,9 @@ Uses
 
 Const
 	ConfFileName = 'settings.ini';
+	Ordinals: Array[0..7] of AnsiString = (
+		'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth'
+	);
 
 // Check if ConfPath exists. If not, try to create it.
 Function CheckConfPath():Boolean;
@@ -119,7 +122,7 @@ Begin
 
 	Writeln(F, '[History]');
 	For Idx:=1 to Given do
-		Writeln(F, Idx, '=', ColourIndexToName(ColOrder[Idx-1]));
+		Writeln(F, Ordinals[Idx-1], '=', ColourIndexToName(ColOrder[Idx-1]));
 	Writeln(F);
 
 	Writeln(F, '[Stats]');
@@ -180,7 +183,7 @@ Begin
 	end;
 
 	Ini.ReadSectionValues('History', Str);
-	For C:=0 to 7 do ColOrder[C] := ColourNameToIndex(Str.Values[Chr(49 + C)]);
+	For C:=0 to 7 do ColOrder[C] := ColourNameToIndex(Str.Values[Ordinals[C]]);
 	SanitizeColourOrder();
 
 	Stats.UnsetSaveStats();
