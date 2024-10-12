@@ -138,12 +138,35 @@ Begin
 End;
 
 {$IFDEF LD25_DEBUG}
-Procedure SetOutlineColour(Touched: Boolean); Inline;
+Procedure UseYellowOutline(); Inline;
 Begin
-	If Touched then
-		SDL_SetRenderDrawColor(Renderer, 0, 255, 0, 255)
-	else
-		SDL_SetRenderDrawColor(Renderer, 255, 0, 0, 255)
+	SDL_SetRenderDrawColor(Renderer, 127, 127, 63, 255)
+End;
+
+Procedure UseRedOutline(); Inline;
+Begin
+	SDL_SetRenderDrawColor(Renderer, 255, 0, 0, 255)
+End;
+
+Procedure UseGreenOutline(); Inline;
+Begin
+	SDL_SetRenderDrawColor(Renderer, 0, 255, 0, 255)
+End;
+
+(*
+ * I'm rather unhappy with the fact that this function accepts two boolean
+ * parameters (4 possible inputs) when it produces 3 possible outputs.
+ * Seeing how it's debug code, I'm willing to let it slide.
+ *)
+Procedure SetOutlineColour(Visible, Touched: Boolean); Inline;
+Begin
+	If Visible then begin
+		If Touched then
+			UseGreenOutline()
+		else
+			UseRedOutline()
+	end else
+		UseYellowOutline()
 end;
 
 Procedure DebugGameButtonsVisible();
@@ -160,15 +183,14 @@ Begin
 		end
 	end;
 
-	// Draw un-touched movement buttons in red.
-	SDL_SetRenderDrawColor(Renderer, 255, 0, 0, 255);
+	// Draw un-touched movement buttons in red, and touched buttons in green.
+	// This is done in two separate steps so the green pixels overwrite red ones.
+	UseRedOutline();
 	For Idx := 0 to 7 do
 		If Not MovementButton[Idx].Touched then
 			SDL_RenderDrawLines(Renderer, WheelOutline[Idx], OUTLINE_POINTS);
 
-	// Draw currently touched buttons in green.
-	// This is done in two separate steps so the green pixels overwrite red ones.
-	SDL_SetRenderDrawColor(Renderer, 0, 255, 0, 255);
+	UseGreenOutline();
 	For Idx := 0 to 7 do
 		If MovementButton[Idx].Touched then
 			SDL_RenderDrawLines(Renderer, WheelOutline[Idx], OUTLINE_POINTS);
@@ -181,10 +203,10 @@ Begin
 		RightRect := @ShootRightTouchArea
 	end;
 
-	SetOutlineColour(ShootLeftButton.Touched);
+	SetOutlineColour(True, ShootLeftButton.Touched);
 	SDL_RenderDrawRect(Renderer, LeftRect);
 
-	SetOutlineColour(ShootRightButton.Touched);
+	SetOutlineColour(True, ShootRightButton.Touched);
 	SDL_RenderDrawRect(Renderer, RightRect)
 End;
 
@@ -194,7 +216,7 @@ Var
 	WheelOutline: MovementButtonOutlinePtr;
 	LeftRect, RightRect: PSDL_Rect;
 Begin
-	SDL_SetRenderDrawColor(Renderer, 127, 127, 63, 255);
+	UseYellowOutline();
 	For Idx := 0 to 7 do
 		SDL_RenderDrawLines(Renderer, MovBtnOutline[Idx], OUTLINE_POINTS);
 
@@ -204,17 +226,10 @@ End;
 
 Procedure DebugSlideButtons();
 Begin
-	// FIXME: Duplicated code
-	If Not SlideRightButtonIsVisible() then
-		SDL_SetRenderDrawColor(Renderer, 127, 127, 63, 255)
-	else
-		SetOutlineColour(SlideRightButton.Touched);
+	SetOutlineColour(SlideRightButtonIsVisible(), SlideRightButton.Touched);
 	SDL_RenderDrawRect(Renderer, @SlideRightTouchArea);
 
-	If Not SlideLeftButtonIsVisible() then
-		SDL_SetRenderDrawColor(Renderer, 127, 127, 63, 255)
-	else
-		SetOutlineColour(SlideLeftButton.Touched);
+	SetOutlineColour(SlideLeftButtonIsVisible(), SlideLeftButton.Touched);
 	SDL_RenderDrawRect(Renderer, @SlideLeftTouchArea);
 End;
 
@@ -223,10 +238,7 @@ Var
 	Idx: uInt;
 	TriVerts: Array[0..3] of TSDL_Point;
 Begin
-	If Not BackButtonIsVisible() then
-		SDL_SetRenderDrawColor(Renderer, 127, 127, 63, 255)
-	else
-		SetOutlineColour(GoBackButton.Touched);
+	SetOutlineColour(BackButtonIsVisible(), GoBackButton.Touched);
 
 	For Idx := 0 to 3 do begin
 		TriVerts[Idx].X := GoBackTriangle.X;
