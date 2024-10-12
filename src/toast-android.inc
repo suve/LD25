@@ -14,24 +14,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *)
-Unit toast;
+Uses
+	SDL2, ctypes;
 
-{$INCLUDE defines.inc}
+Var
+	Visible: Boolean;
 
-Interface
+Procedure SetVisibility(NewValue: Boolean);
+Begin
+	Visible := NewValue
+End;
 
 Procedure Show(Header, Message: AnsiString);
-Procedure SetVisibility(NewValue: Boolean);
+Const
+	DURATION_SHORT = 0;
+	DURATION_LONG = 1;
+Begin
+	If Not Visible then Exit;
+
+	Message := Header + ':' + #10 + Message;
+	SDL_AndroidShowToast(PChar(Message), DURATION_LONG, -1, -1, -1)
+End;
 
 Procedure Render();
-
-
-Implementation
-
-{$IFDEF ANDROID}
-	{$INCLUDE toast-android.inc}
-{$ELSE}
-	{$INCLUDE toast-other.inc}
-{$ENDIF}
-
-End.
+Begin
+	// This is a no-op on Android
+End;
