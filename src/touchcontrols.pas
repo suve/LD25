@@ -117,6 +117,26 @@ Begin
 		Result := 0
 End;
 
+Function BackButtonIsVisible(): Boolean; Inline;
+Begin
+	Result := Visibility > TCV_NONE
+End;
+
+Function SlideLeftButtonIsVisible(): Boolean; Inline;
+Begin
+	Result := Visibility = TCV_SLIDE_BOTH
+end;
+
+Function SlideRightButtonIsVisible(): Boolean; Inline;
+Begin
+	Result := (Visibility = TCV_SLIDE_RIGHT) or (Visibility = TCV_SLIDE_BOTH)
+end;
+
+Function GameButtonsAreVisible(): Boolean; Inline;
+Begin
+	Result := Visibility = TCV_GAME
+End;
+
 {$IFDEF LD25_DEBUG}
 Procedure SetOutlineColour(Touched: Boolean); Inline;
 Begin
@@ -185,13 +205,13 @@ End;
 Procedure DebugSlideButtons();
 Begin
 	// FIXME: Duplicated code
-	If (Visibility < TCV_SLIDE_RIGHT) then
+	If Not SlideRightButtonIsVisible() then
 		SDL_SetRenderDrawColor(Renderer, 127, 127, 63, 255)
 	else
 		SetOutlineColour(SlideRightButton.Touched);
 	SDL_RenderDrawRect(Renderer, @SlideRightTouchArea);
 
-	If (Visibility < TCV_SLIDE_BOTH) then
+	If Not SlideLeftButtonIsVisible() then
 		SDL_SetRenderDrawColor(Renderer, 127, 127, 63, 255)
 	else
 		SetOutlineColour(SlideLeftButton.Touched);
@@ -203,7 +223,7 @@ Var
 	Idx: uInt;
 	TriVerts: Array[0..3] of TSDL_Point;
 Begin
-	If (Visibility = TCV_NONE) then
+	If Not BackButtonIsVisible() then
 		SDL_SetRenderDrawColor(Renderer, 127, 127, 63, 255)
 	else
 		SetOutlineColour(GoBackButton.Touched);
@@ -281,6 +301,8 @@ End;
 
 Procedure Draw();
 Begin
+	// This could be replaced with XxxIsVisible() functions,
+	// but I am keeping it like this as a micro-optimisation.
 	If Visibility >= TCV_ONLY_BACK then begin
 		If Visibility = TCV_GAME then
 			DrawGameButtons()
@@ -293,7 +315,7 @@ Begin
 	end;
 
 	{$IFDEF LD25_DEBUG}
-		If Visibility = TCV_GAME then
+		If GameButtonsAreVisible() then
 			DebugGameButtonsVisible()
 		else
 			DebugGameButtonsHidden();
@@ -476,8 +498,7 @@ Procedure HandleEvent_Slides(
 	UFResult: UnfingerResult
 ); Inline;
 Begin
-	If (Visibility < TCV_SLIDE_RIGHT) or (Visibility = TCV_GAME) then Exit();
-
+	If Not SlideRightButtonIsVisible() then Exit();
 	If (UFResult = UF_NONE) or (UFResult = UF_SLIDE_RIGHT) then begin
 		If FingerInRect(FingerX, FingerY, @SlideRightTouchArea) then begin
 			SlideRightButton.Touched := True;
@@ -486,7 +507,7 @@ Begin
 		end
 	end;
 
-	If (Visibility <> TCV_SLIDE_BOTH) then Exit();
+	If Not SlideLeftButtonIsVisible() then Exit();
 	If (UFResult = UF_NONE) or (UFResult = UF_SLIDE_LEFT) then begin
 		If FingerInRect(FingerX, FingerY, @SlideLeftTouchArea) then begin
 			SlideLeftButton.Touched := True;
@@ -747,15 +768,11 @@ Var
 Begin
 	Visibility := NewValue;
 
-	If Visibility < TCV_ONLY_BACK then
-		GoBackButton.Touched := False;
+	If Not BackButtonIsVisible() then GoBackButton.Touched := False;
+	If Not SlideLeftButtonIsVisible() then SlideLeftButton.Touched := False;
+	If Not SlideRightButtonIsVisible() then SlideRightButton.Touched := False;
 
-	If (Visibility < TCV_SLIDE_RIGHT) or (Visibility = TCV_GAME) then
-		SlideRightButton.Touched := False;
-	If (Visibility < TCV_SLIDE_BOTH) or (Visibility = TCV_GAME) then
-		SlideLeftButton.Touched := False;
-
-	If Visibility <> TCV_GAME then begin
+	If Not GameButtonsAreVisible() then begin
 		ShootLeftButton.Touched := False;
 		ShootRightButton.Touched := False;
 		For Idx := 0 to 7 do MovementButton[Idx].Touched := False
