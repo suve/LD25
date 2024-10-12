@@ -20,7 +20,14 @@ Unit toast;
 
 Interface
 
-Procedure Show(Header, Message: AnsiString);
+Type
+	TToastHeader = (
+		TH_CONTROLLER_FOUND,
+		TH_CONTROLLER_SWITCHED,
+		TH_CONTROLLER_LOST
+	);
+
+Procedure Show(HeaderID: TToastHeader; Message: AnsiString);
 Procedure SetVisibility(NewValue: Boolean);
 
 Procedure Render();

@@ -19,6 +19,13 @@ Uses
 	SDL2,
 	Assets, Colours, Fonts, Rendering, Timekeeping;
 
+Const
+	Headers: Array[TToastHeader] of AnsiString = (
+		'CONTROLLER FOUND',
+		'CONTROLLER SWITCHED',
+		'CONTROLLER LOST'
+	);
+
 Var
 	Visible: Boolean;
 
@@ -41,7 +48,7 @@ Const
 
 	MAX_MSG_LENGTH = 35;
 
-Procedure Show(Header, Message: AnsiString);
+Procedure Show(HeaderID: TToastHeader; Message: AnsiString);
 Var
 	TicksNow, TicksLeft: uInt;
 Begin
@@ -52,7 +59,7 @@ Begin
 	Message := TrimRight(Message);
 	Message := UpCase(Message);
 
-	TextTop := Header;
+	TextTop := Headers[HeaderID];
 	TextBottom := Message;
 
 	TicksNow := Timekeeping.GetTicks();

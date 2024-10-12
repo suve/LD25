@@ -87,7 +87,7 @@ Begin
 
 	// If there is no active controller, use this one
 	If(Controller = NIL) then begin
-		Toast.Show('CONTROLLER FOUND', Name);
+		Toast.Show(TH_CONTROLLER_FOUND, Name);
 		Controller := Con
 	end
 End;
@@ -130,9 +130,9 @@ Begin
 	If(Con = Controller) then begin
 		SwitchActiveController();
 		If(Controller <> NIL) then
-			Toast.Show('CONTROLLER SWITCHED', SDL_GameControllerName(Controller))
+			Toast.Show(TH_CONTROLLER_SWITCHED, SDL_GameControllerName(Controller))
 		else
-			Toast.Show('CONTROLLER LOST', Name)
+			Toast.Show(TH_CONTROLLER_LOST, Name)
 	end
 End;
 

@@ -17,6 +17,13 @@
 Uses
 	SDL2, ctypes;
 
+Const
+	Headers: Array[TToastHeader] of AnsiString = (
+		'Controller found',
+		'Controller switched',
+		'Controller lost'
+	);
+
 Var
 	Visible: Boolean;
 
@@ -25,14 +32,14 @@ Begin
 	Visible := NewValue
 End;
 
-Procedure Show(Header, Message: AnsiString);
+Procedure Show(HeaderID: TToastHeader; Message: AnsiString);
 Const
 	DURATION_SHORT = 0;
 	DURATION_LONG = 1;
 Begin
 	If Not Visible then Exit;
 
-	Message := Header + ':' + #10 + Message;
+	Message := Headers[HeaderID] + ':' + #10 + Message;
 	SDL_AndroidShowToast(PChar(Message), DURATION_LONG, -1, -1, -1)
 End;
 
