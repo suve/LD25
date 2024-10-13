@@ -141,26 +141,44 @@ Begin
 			If (Ev.cAxis.Axis = SDL_CONTROLLER_AXIS_LEFTX) then begin
 				Key[KEY_LEFT ] := Ev.cAxis.Value < (-Controllers.DeadZone);
 				Key[KEY_RIGHT] := Ev.cAxis.Value > (+Controllers.DeadZone);
+				Controllers.SetLastUsedID(Ev.cAxis.Which)
 			end else
 			If (Ev.cAxis.Axis = SDL_CONTROLLER_AXIS_LEFTY) then begin
 				Key[KEY_UP  ] := Ev.cAxis.Value < (-Controllers.DeadZone);
 				Key[KEY_DOWN] := Ev.cAxis.Value > (+Controllers.DeadZone);
+				Controllers.SetLastUsedID(Ev.cAxis.Which)
 			end else begin
 				// These are not else-chained as that would prevent us from using
 				// an axis as a two-way trigger (i.e. on positive and negative value).
-				If (Ev.cAxis.Axis = PadShootLeft.Axis) then
+				If (Ev.cAxis.Axis = PadShootLeft.Axis) then begin
 					Key[KEY_SHOOTLEFT] := PadShootLeft.AxisTriggered(Ev.cAxis.Value);
-				If (Ev.cAxis.Axis = PadShootRight.Axis) then
+					Controllers.SetLastUsedID(Ev.cAxis.Which)
+				end;
+				If (Ev.cAxis.Axis = PadShootRight.Axis) then begin
 					Key[KEY_SHOOTRIGHT] := PadShootRight.AxisTriggered(Ev.cAxis.Value);
+					Controllers.SetLastUsedID(Ev.cAxis.Which)
+				end;
 			end
 		end else
 		If (Ev.Type_ = SDL_ControllerButtonDown) then begin
-			If (Ev.cButton.Button = PadShootLeft.Button) then Key[KEY_SHOOTLEFT ] := True else
-			If (Ev.cButton.Button = PadShootRight.Button) then Key[KEY_SHOOTRIGHT] := True else
+			If (Ev.cButton.Button = PadShootLeft.Button) then begin
+				Key[KEY_SHOOTLEFT] := True;
+				Controllers.SetLastUsedID(Ev.cButton.Which)
+			end else
+			If (Ev.cButton.Button = PadShootRight.Button) then begin
+				Key[KEY_SHOOTRIGHT] := True;
+				Controllers.SetLastUsedID(Ev.cButton.Which)
+			end else
 		end else
 		If (Ev.Type_ = SDL_ControllerButtonUp) then begin
-			If (Ev.cButton.Button = PadShootLeft.Button) then Key[KEY_SHOOTLEFT ] := False else
-			If (Ev.cButton.Button = PadShootRight.Button) then Key[KEY_SHOOTRIGHT] := False else
+			If (Ev.cButton.Button = PadShootLeft.Button) then begin
+				Key[KEY_SHOOTLEFT] := False;
+				Controllers.SetLastUsedID(Ev.cButton.Which)
+			end else
+			If (Ev.cButton.Button = PadShootRight.Button) then begin
+				Key[KEY_SHOOTRIGHT] := False;
+				Controllers.SetLastUsedID(Ev.cButton.Which)
+			end else
 		end else
 		If (Ev.Type_ = SDL_ControllerDeviceAdded) or (Ev.Type_ = SDL_ControllerDeviceRemoved) then begin
 			Controllers.HandleDeviceEvent(@Ev)
@@ -860,6 +878,7 @@ End;
 
 Procedure DamagePlayer(Const Power:Double);
 Var
+	Controller: PSDL_GameController;
 	HealthLeft: Double;
 	Intensity: Word;
 Begin
@@ -868,13 +887,16 @@ Begin
 
 	Stats.HitsTaken.Increase(1);
 
-	If(Controller <> NIL) and (Controllers.RumbleEnabled) then begin
-		HealthLeft := Hero^.HP - Power;
-		If(HealthLeft > 0) then
-			Intensity := $FFFF - Trunc($F000 * HealthLeft / Hero^.MaxHP)
-		else
-			Intensity := $FFFF;
-		SDL_GameControllerRumble(Controller, 0, Intensity, Hero^.InvLength)
+	If(Controllers.RumbleEnabled) then begin
+		Controller := Controllers.GetLastUsed();
+		If(Controller <> NIL) then begin
+			HealthLeft := Hero^.HP - Power;
+			If(HealthLeft > 0) then
+				Intensity := $FFFF - Trunc($F000 * HealthLeft / Hero^.MaxHP)
+			else
+				Intensity := $FFFF;
+			SDL_GameControllerRumble(Controller, 0, Intensity, Hero^.InvLength)
+		end
 	end;
 
 	{$IFDEF LD25_DEBUG}

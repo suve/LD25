@@ -40,14 +40,15 @@ Type
 	end;
 
 Var
-	Controller: PSDL_GameController;
-
 	DeadZone: cint16;
 	RumbleEnabled: Boolean;
 
 Procedure InitControllers();
 Procedure HandleBatteryEvent(Ev: PSDL_Event);
 Procedure HandleDeviceEvent(Ev: PSDL_Event);
+
+Function GetLastUsed(): PSDL_GameController;
+Procedure SetLastUsedID(ID: TSDL_JoystickID);
 
 
 Implementation
@@ -57,9 +58,25 @@ Uses
 	Toast;
 
 Var
+	LastUsedID: TSDL_JoystickID;
+	LastUsedCon: PSDL_GameController;
+
 	// TODO: Replace this with some kind of sparse array that can handle
 	//       elements being added and removed.
 	List: Array[0..255] of PSDL_GameController;
+
+Function GetLastUsed(): PSDL_GameController;
+Begin
+	Result := LastUsedCon
+End;
+
+Procedure SetLastUsedID(ID: TSDL_JoystickID);
+Begin
+	If(ID = LastUsedID) then Exit;
+
+	LastUsedID := ID;
+	LastUsedCon := SDL_GameControllerFromInstanceID(ID)
+End;
 
 Procedure AddController(Con: PSDL_GameController);
 Const
@@ -87,27 +104,29 @@ Begin
 	]);
 
 	// If there is no active controller, use this one
-	If(Controller = NIL) then begin
+	If(LastUsedCon = NIL) then begin
 		Toast.Show(TH_CONTROLLER_FOUND, Name);
-		Controller := Con
+
+		LastUsedID := ID;
+		LastUsedCon := Con
 	end
 End;
 
 Procedure SwitchActiveController();
 Var
 	Idx: uInt;
-	JoyID: TSDL_JoystickID;
 Begin
-	Controller := NIL;
+	LastUsedID := -1;
+	LastUsedCon := NIL;
 
 	For Idx := Low(List) to High(List) do begin
 		If(List[Idx] <> NIL) then begin
-			Controller := List[Idx];
-			JoyID := SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(Controller));
+			LastUsedCon := List[Idx];
+			LastUsedID := SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(LastUsedCon));
 
 			SDL_Log('Switched active controller to #%ld "%s"', [
-				clong(JoyID),
-				SDL_GameControllerName(Controller)
+				clong(LastUsedID),
+				SDL_GameControllerName(LastUsedCon)
 			]);
 			Exit
 		end
@@ -128,10 +147,10 @@ Begin
 	SDL_GameControllerClose(Con);
 
 	List[JoyID] := NIL;
-	If(Con = Controller) then begin
+	If(Con = LastUsedCon) then begin
 		SwitchActiveController();
-		If(Controller <> NIL) then
-			Toast.Show(TH_CONTROLLER_SWITCHED, SDL_GameControllerName(Controller))
+		If(LastUsedCon <> NIL) then
+			Toast.Show(TH_CONTROLLER_SWITCHED, SDL_GameControllerName(LastUsedCon))
 		else
 			Toast.Show(TH_CONTROLLER_LOST, Name)
 	end
@@ -178,8 +197,10 @@ Var
 Begin
 	// Clear out list of connected controllers
 	For Idx := Low(List) to High(List) do List[Idx] := NIL;
-	// Clear out active controller pointer
-	Controller := NIL;
+
+	// Clear out last used controller info
+	LastUsedID := -1;
+	LastUsedCon := NIL;
 
 	SDL_Log('Initializing SDL game controller subsystem...', []);
 	If(SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER) <> 0) then begin
