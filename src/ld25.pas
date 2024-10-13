@@ -472,6 +472,236 @@ Begin
 End;
 {$ENDIF}
 
+Procedure ConfigureGamepad();
+Const
+	DEAD_ZONE_MIN = 0;
+	DEAD_ZONE_MAX = 75;
+	DEAD_ZONE_STEP = 5;
+
+	MAX_NAMES = 4;
+Var
+	ControllerCount: sInt;
+	ControllerNames: Array[0..(MAX_NAMES - 1)] of AnsiString;
+
+	AssignToBind: PControllerBinding;
+	AssignTextColour: PSDL_Colour;
+	DeadZoneStr, LeftStr, RightStr: AnsiString;
+
+	Procedure UpdateDeadZoneText();
+	Begin
+		WriteStr(DeadZoneStr, (cint32(Controllers.DeadZone) * 100) div SDL_JOYSTICK_AXIS_MAX, '%')
+	End;
+
+	Procedure ChangeDeadZone();
+	Var
+		Percentage: uInt;
+	Begin
+		Percentage := (cuint32(Controllers.DeadZone) * 100) div SDL_JOYSTICK_AXIS_MAX;
+		Percentage := Percentage - (Percentage mod DEAD_ZONE_STEP);
+		Percentage := Percentage + DEAD_ZONE_STEP;
+		If(Percentage > DEAD_ZONE_MAX) then Percentage := DEAD_ZONE_MIN;
+
+		Controllers.DeadZone := (Percentage * SDL_JOYSTICK_AXIS_MAX) div 100;
+		UpdateDeadZoneText()
+	End;
+
+	Procedure MaybeAssignAxis(Ev: PSDL_Event);
+	Begin
+		If(AssignToBind = NIL) then Exit;
+
+		// Left thumbstick is hard-coded for movement
+		If(Ev^.cAxis.Axis = SDL_CONTROLLER_AXIS_LEFTX) or (Ev^.cAxis.Axis = SDL_CONTROLLER_AXIS_LEFTY) then Exit;
+
+		// Respect the dead zone setting when assigning
+		If(Ev^.cAxis.Value > -Controllers.DeadZone) and (Ev^.cAxis.Value < +Controllers.DeadZone) then Exit;
+
+		AssignToBind^.SetAxis(Ev^.cAxis.Axis, Ev^.cAxis.Value);
+		LeftStr := PadShootLeft.ToPrettyString();
+		RightStr := PadShootRight.ToPrettyString();
+		AssignToBind := NIL
+	End;
+
+	Procedure MaybeAssignButton(Ev: PSDL_Event);
+	Begin
+		If(AssignToBind = NIL) then Exit;
+
+		AssignToBind^.SetButton(Ev^.cButton.Button);
+
+		LeftStr := PadShootLeft.ToPrettyString();
+		RightStr := PadShootRight.ToPrettyString();
+		AssignToBind := NIL
+	End;
+
+	Procedure UpdateControllerList();
+	Var
+		DevCount, DevIdx: sInt;
+		Name: PChar;
+	Begin
+		ControllerCount := 0;
+
+		DevCount := SDL_NumJoysticks();
+		For DevIdx := 0 to (DevCount-1) do begin
+			If(SDL_IsGameController(DevIdx) <> SDL_TRUE) then Continue;
+
+			Name := SDL_JoystickNameForIndex(DevIdx);
+			If(Name <> NIL) then
+				ControllerNames[ControllerCount] := UpCase(Name)
+			else
+				ControllerNames[ControllerCount] := 'UNKNOWN DEVICE';
+
+			ControllerCount += 1;
+			If(ControllerCount = MAX_NAMES) then Break
+		end;
+
+		If(ControllerCount > 0) then begin
+			AssignTextColour := @MenuActiveColour
+		end else begin
+			AssignTextColour := @MenuInactiveColour;
+			AssignToBind := NIL
+		end
+	End;
+
+Const
+	BLINK_PERIOD = 575;
+
+	RumbleStr: Array[Boolean] of AnsiString = ('DISABLED', 'ENABLED');
+Var
+	Idx, YPos: uInt;
+	DeadRect, RumbleRect, LeftRect, RightRect: TSDL_Rect;
+Begin
+	AssignToBind := NIL;
+
+	LeftStr := PadShootLeft.ToPrettyString();
+	RightStr := PadShootRight.ToPrettyString();
+	UpdateDeadZoneText();
+	UpdateControllerList();
+
+	DeadRect.X := (RESOL_W div 4);
+	DeadRect.W := (RESOL_W div 2);
+	DeadRect.H := (Font^.CharH * 2) + ((3 * (Font^.CharH + Font^.SpacingY)) div 2);
+	RumbleRect := DeadRect;
+	LeftRect := DeadRect;
+	RightRect := DeadRect;
+
+	While True do begin
+		Rendering.BeginFrame();
+		DrawTitle();
+
+		YPos := TitleGfx^.H;
+		Font^.Scale := 2;
+		PrintText('GAMEPAD SETTINGS',Font,(RESOL_W div 2),YPos,ALIGN_CENTRE,ALIGN_TOP, @WhiteColour);
+
+		Font^.Scale := 1;
+		YPos += (5 * (Font^.CharH + Font^.SpacingY)) div 2;
+		DeadRect.Y := YPos;
+		PrintText('D - DEAD ZONE', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, @MenuActiveColour);
+		YPos += (3 * (Font^.CharH + Font^.SpacingY)) div 2;
+		PrintText(DeadZoneStr, Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
+
+		YPos += (4 * (Font^.CharH + Font^.SpacingY)) div 2;
+		RumbleRect.Y := YPos;
+		PrintText('V - VIBRATION', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, @MenuActiveColour);
+		YPos += (3 * (Font^.CharH + Font^.SpacingY)) div 2;
+		PrintText(RumbleStr[Controllers.RumbleEnabled], Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
+
+		YPos += (4 * (Font^.CharH + Font^.SpacingY)) div 2;
+		LeftRect.Y := YPos;
+		PrintText('L - SHOOT LEFT', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, AssignTextColour);
+		YPos += (3 * (Font^.CharH + Font^.SpacingY)) div 2;
+		If(AssignToBind = @PadShootLeft) then begin
+			If(((GetTicks() div BLINK_PERIOD) mod 2) = 0) then
+				PrintText('???', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
+		end else
+			PrintText(LeftStr, Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
+
+		YPos += (4 * (Font^.CharH + Font^.SpacingY)) div 2;
+		RightRect.Y := YPos;
+		PrintText('R - SHOOT RIGHT', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, AssignTextColour);
+		YPos += (3 * (Font^.CharH + Font^.SpacingY)) div 2;
+		If(AssignToBind = @PadShootRight) then begin
+			If(((GetTicks() div BLINK_PERIOD) mod 2) = 0) then
+				PrintText('???', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
+		end else
+			PrintText(RightStr, Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
+
+		Font^.Scale := 2;
+		YPos += (5 * (Font^.CharH + Font^.SpacingY)) div 2;
+		PrintText('ACTIVE CONTROLLERS',Font,(RESOL_W div 2),YPos,ALIGN_CENTRE,ALIGN_TOP, @WhiteColour);
+
+		Font^.Scale := 1;
+		YPos += (5 * (Font^.CharH + Font^.SpacingY)) div 2;
+		If(ControllerCount > 0) then begin
+			For Idx := 0 to (ControllerCount - 1) do begin
+				PrintText(ControllerNames[Idx], Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, @GreyColour);
+				YPos += (3 * (Font^.CharH + Font^.SpacingY)) div 2
+			end
+		end else begin
+			PrintText('(NONE)', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, @GreyColour)
+		end;
+
+		Rendering.FinishFrame();
+
+		AdvanceTime();
+		UpdateMenuColours();
+
+		While (SDL_PollEvent(@Ev)>0) do begin
+			If (Ev.Type_ = SDL_QuitEv) then begin
+				Shutdown:=True; Exit() 
+			end else
+			If (Ev.Type_ = SDL_KeyDown) then begin
+				If ((Ev.Key.Keysym.Sym = SDLK_Escape) or (Ev.Key.Keysym.Sym = SDLK_AC_BACK)) then begin
+					If(AssignToBind <> NIL) then
+						AssignToBind := NIL
+					else
+						Exit()
+				end else
+				If (Ev.Key.Keysym.Sym = SDLK_D) then begin
+					ChangeDeadZone()
+				end else
+				If (Ev.Key.Keysym.Sym = SDLK_V) then begin
+					Controllers.RumbleEnabled := Not Controllers.RumbleEnabled
+				end else
+				If (Ev.Key.Keysym.Sym = SDLK_L) then begin
+					If(ControllerCount > 0) then AssignToBind := @PadShootLeft
+				end else
+				If (Ev.Key.Keysym.Sym = SDLK_R) then begin
+					If(ControllerCount > 0) then AssignToBind := @PadShootRight
+				end else
+			end else
+			If (Ev.Type_ = SDL_MouseButtonDown) then begin
+				{$IFDEF LD25_MOBILE} TranslateMouseEventCoords(@Ev); {$ENDIF}
+				If(MouseInRect(DeadRect)) then begin
+					ChangeDeadZone()
+				end else
+				If(MouseInRect(RumbleRect)) then begin
+					Controllers.RumbleEnabled := Not Controllers.RumbleEnabled
+				end else
+				If(MouseInRect(LeftRect)) then begin
+					If(ControllerCount > 0) then AssignToBind := @PadShootLeft
+				end else
+				If(MouseInRect(RightRect)) then begin
+					If(ControllerCount > 0) then AssignToBind := @PadShootRight
+				end else
+			end else
+			If (Ev.Type_ = SDL_ControllerAxisMotion) then begin
+				MaybeAssignAxis(@Ev)
+			end else
+			If (Ev.Type_ = SDL_ControllerButtonUp) then begin
+				MaybeAssignButton(@Ev)
+			end else
+			If (Ev.Type_ = SDL_ControllerDeviceAdded) or (Ev.Type_ = SDL_ControllerDeviceRemoved) then begin
+				Controllers.HandleDeviceEvent(@Ev);
+				UpdateControllerList();
+			end else
+			If (Ev.Type_ = SDL_JoyBatteryUpdated) then begin
+				Controllers.HandleBatteryEvent(@Ev)
+			end else
+			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
+				HandleWindowResizedEvent(@Ev)
+		end;
+	end;
+End;
+
 (*
  * TODO:
  * The drawing code is copy-pasted from Game.DrawRoom().
@@ -853,7 +1083,7 @@ Begin
 	else
 		LoadColour := @MenuInactiveColour;
 
-	Menu.Create(8);
+	Menu.Create(9);
 	Menu.SetFontScale(2);
 	Menu.AddItem('I', 'INTRODUCTION', @MenuActiveColour);
 	Menu.AddItem('C', 'CONTINUE', ContinueColour);
@@ -864,6 +1094,7 @@ Begin
 	{$ELSE}
 		Menu.AddItem('O', 'CHANGE OPTIONS', @MenuActiveColour);
 	{$ENDIF}
+	Menu.AddItem('P', 'GAMEPAD SETTINGS', @MenuActiveColour);
 	Menu.AddItem('S', 'SET COLOURS', @MenuActiveColour);
 	{$IFDEF LD25_DONATE}
 		Menu.AddItem('D', 'DONATE', @MenuActiveColour);
@@ -1232,6 +1463,7 @@ begin
 				MenuChoice:='L'
 			end;
 			'S': SetColours();
+			'P': ConfigureGamepad();
 			{$IFDEF LD25_MOBILE}
 				'O': TweakOptions();
 			{$ELSE}
