@@ -61,10 +61,6 @@ Var
 	LastUsedID: TSDL_JoystickID;
 	LastUsedCon: PSDL_GameController;
 
-	// TODO: Replace this with some kind of sparse array that can handle
-	//       elements being added and removed.
-	List: Array[0..255] of PSDL_GameController;
-
 Function GetLastUsed(): PSDL_GameController;
 Begin
 	Result := LastUsedCon
@@ -78,7 +74,7 @@ Begin
 	LastUsedCon := SDL_GameControllerFromInstanceID(ID)
 End;
 
-Procedure AddController(Con: PSDL_GameController);
+Procedure AddController(DeviceIndex: cint);
 Const
 	POWER_TEXT: Array[SDL_JOYSTICK_POWER_UNKNOWN..SDL_JOYSTICK_POWER_WIRED] of AnsiString = (
 		'unknown', 'empty', 'low', 'medium', 'full', 'wired'
@@ -86,15 +82,26 @@ Const
 Var
 	Joy: PSDL_Joystick;
 	ID: TSDL_JoystickID;
+
+	Con: PSDL_GameController;
 	Name: PChar;
 Begin
+	Con := SDL_GameControllerOpen(DeviceIndex);
+	If(Con = NIL) then begin
+		SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 'Failed to open device #%d (%s): %s', [
+			cint(DeviceIndex),
+			SDL_GameControllerNameForIndex(DeviceIndex),
+			SDL_GetError()
+		]);
+		Exit
+	end;
+
 	Joy := SDL_GameControllerGetJoystick(Con);
 	ID := SDL_JoystickInstanceID(Joy);
 
-	List[ID] := Con;
-
 	Name := SDL_GameControllerName(Con);
-	SDL_Log('Opened game controller #%ld "%s" (%d axes, %d buttons, %d rumble; power: %s)', [
+	SDL_Log('Opened device #%d / controller #%ld "%s" (%d axes, %d buttons, %d rumble; power: %s)', [
+		cint(DeviceIndex),
 		clong(ID),
 		Name,
 		SDL_JoystickNumAxes(Joy),
@@ -105,24 +112,31 @@ Begin
 	Toast.Show(TH_CONTROLLER_FOUND, Name)
 End;
 
-Procedure RemoveController(Con: PSDL_GameController);
+Procedure RemoveController(JoyID: TSDL_JoystickID);
 Var
-	JoyID: TSDL_JoystickID;
+	Con: PSDL_GameController;
 	Name: AnsiString;
 Begin
-	JoyID := SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(Con));
-	Name := SDL_GameControllerName(Con);
-	
-	SDL_GameControllerClose(Con);
-
-	SDL_Log('Closed game controller #%ld "%s"', [clong(JoyID), PChar(Name)]);
-	Toast.Show(TH_CONTROLLER_LOST, Name);
-
-	List[JoyID] := NIL;
-	If(JoyID = LastUsedID) then begin
+	If(LastUsedID = JoyID) then begin
 		LastUsedID := -1;
 		LastUsedCon := NIL
-	end
+	end;
+
+	Con := SDL_GameControllerFromInstanceID(JoyID);
+	If(Con = NIL) then begin
+		SDL_LogWarn(
+			SDL_LOG_CATEGORY_APPLICATION,
+			'SDL says it removed controller #%ld, but no such controller exists',
+			[clong(JoyID)]
+		);
+		Exit
+	end;
+
+	Name := SDL_GameControllerName(Con);
+	SDL_GameControllerClose(Con);
+
+	SDL_Log('Closed controller #%ld "%s"', [clong(JoyID), PChar(Name)]);
+	Toast.Show(TH_CONTROLLER_LOST, Name)
 End;
 
 Procedure HandleBatteryEvent(Ev: PSDL_Event);
@@ -139,7 +153,7 @@ Begin
 			Exit
 	end;
 	
-	Con := List[Ev^.jBattery.Which];
+	Con := SDL_GameControllerFromInstanceID(Ev^.jBattery.Which);
 	If(Con = NIL) then Exit;
 
 	Toast.Show(Header, SDL_GameControllerName(Con))
@@ -149,29 +163,22 @@ Procedure HandleDeviceEvent(Ev: PSDL_Event);
 Var
 	Con: PSDL_GameController;
 Begin
-	If(Ev^.Type_ = SDL_ControllerDeviceAdded) then begin
-		Con := SDL_GameControllerOpen(Ev^.cDevice.Which);
-		If(Con <> NIL) then AddController(Con)
-	end else
-	If(Ev^.Type_ = SDL_ControllerDeviceRemoved) then begin
-		Con := List[Ev^.cDevice.Which];
-		If(Con <> NIL) then RemoveController(Con)
-	end else
+	If(Ev^.Type_ = SDL_ControllerDeviceAdded) then
+		AddController(Ev^.cDevice.Which)
+	else
+	If(Ev^.Type_ = SDL_ControllerDeviceRemoved) then
+		RemoveController(Ev^.cDevice.Which)
+	else
 End;
 
 Procedure InitControllers();
 Var
 	Idx, Count: sInt;
-	Con: PSDL_GameController;
 Begin
-	// Clear out list of connected controllers
-	For Idx := Low(List) to High(List) do List[Idx] := NIL;
-
-	// Clear out last used controller info
 	LastUsedID := -1;
 	LastUsedCon := NIL;
 
-	SDL_Log('Initializing SDL game controller subsystem...', []);
+	SDL_Log('Initializing SDL2 game controller subsystem...', []);
 	If(SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER) <> 0) then begin
 		SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 'Failed to initialize SDL2 game controller subsystem! Error details: %s', [SDL_GetError()]);
 		Exit()
@@ -184,21 +191,9 @@ Begin
 		Exit()
 	end;
 
-	For Idx := 0 to (Count - 1) do begin
-		If(SDL_IsGameController(Idx) <> SDL_TRUE) then Continue;
-
-		Con := SDL_GameControllerOpen(Idx);
-		If(Con = NIL) then begin
-			SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 'Failed to open game controller #%d (%s): %s', [
-				cint(Idx),
-				SDL_GameControllerNameForIndex(Idx),
-				SDL_GetError()
-			]);
-			Continue
-		end;
-	
-		AddController(Con)
-	end
+	For Idx := 0 to (Count - 1) do
+		If(SDL_IsGameController(Idx) = SDL_TRUE) then
+			AddController(Idx)
 end;
 
 Function TControllerBinding.AxisTriggered(Value: cint16): Boolean;
