@@ -102,37 +102,7 @@ Begin
 		SDL_GameControllerHasRumble(Con),
 		PChar(POWER_TEXT[SDL_JoystickCurrentPowerLevel(Joy)])
 	]);
-
-	// If there is no active controller, use this one
-	If(LastUsedCon = NIL) then begin
-		Toast.Show(TH_CONTROLLER_FOUND, Name);
-
-		LastUsedID := ID;
-		LastUsedCon := Con
-	end
-End;
-
-Procedure SwitchActiveController();
-Var
-	Idx: uInt;
-Begin
-	LastUsedID := -1;
-	LastUsedCon := NIL;
-
-	For Idx := Low(List) to High(List) do begin
-		If(List[Idx] <> NIL) then begin
-			LastUsedCon := List[Idx];
-			LastUsedID := SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(LastUsedCon));
-
-			SDL_Log('Switched active controller to #%ld "%s"', [
-				clong(LastUsedID),
-				SDL_GameControllerName(LastUsedCon)
-			]);
-			Exit
-		end
-	end;
-
-	SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 'No active controllers found!', [])
+	Toast.Show(TH_CONTROLLER_FOUND, Name)
 End;
 
 Procedure RemoveController(Con: PSDL_GameController);
@@ -142,17 +112,16 @@ Var
 Begin
 	JoyID := SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(Con));
 	Name := SDL_GameControllerName(Con);
-
-	SDL_Log('Closed game controller #%ld "%s"', [clong(JoyID), PChar(Name)]);
+	
 	SDL_GameControllerClose(Con);
 
+	SDL_Log('Closed game controller #%ld "%s"', [clong(JoyID), PChar(Name)]);
+	Toast.Show(TH_CONTROLLER_LOST, Name);
+
 	List[JoyID] := NIL;
-	If(Con = LastUsedCon) then begin
-		SwitchActiveController();
-		If(LastUsedCon <> NIL) then
-			Toast.Show(TH_CONTROLLER_SWITCHED, SDL_GameControllerName(LastUsedCon))
-		else
-			Toast.Show(TH_CONTROLLER_LOST, Name)
+	If(JoyID = LastUsedID) then begin
+		LastUsedID := -1;
+		LastUsedCon := NIL
 	end
 End;
 

@@ -22,7 +22,6 @@ Uses
 Const
 	Headers: Array[TToastHeader] of AnsiString = (
 		'CONTROLLER FOUND',
-		'CONTROLLER SWITCHED',
 		'CONTROLLER LOST',
 		'BATTERY LOW',
 		'BATTERY CRITICAL'
