@@ -52,6 +52,7 @@ Procedure HandleDeviceEvent(Ev: PSDL_Event);
 
 Function GetLastUsed(): PSDL_GameController;
 Procedure SetLastUsedID(ID: TSDL_JoystickID);
+Procedure RumbleLastUsed(LowFreq, HighFreq: cuint16; DurationMs: cuint32);
 
 Procedure GetControllerNames(Out Count: sInt; Out Names: Array of AnsiString);
 
@@ -77,6 +78,12 @@ Begin
 
 	LastUsedID := ID;
 	LastUsedCon := SDL_GameControllerFromInstanceID(ID)
+End;
+
+Procedure RumbleLastUsed(LowFreq, HighFreq: cuint16; DurationMs: cuint32);
+Begin
+	If(RumbleEnabled) and (LastUsedCon <> NIL) then
+		SDL_GameControllerRumble(LastUsedCon, LowFreq, HighFreq, DurationMs)
 End;
 
 Procedure AddController(DeviceIndex: cint);

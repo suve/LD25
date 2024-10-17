@@ -505,6 +505,14 @@ Var
 		UpdateDeadZoneText()
 	End;
 
+	Procedure ToggleRumble();
+	Var
+		Con: PSDL_GameController;
+	Begin
+		Controllers.RumbleEnabled := Not Controllers.RumbleEnabled;
+		Controllers.RumbleLastUsed($3FFF, $AAAA, 480)
+	End;
+
 	Procedure MaybeAssignAxis(Ev: PSDL_Event);
 	Begin
 		If(AssignToBind = NIL) then Exit;
@@ -646,7 +654,7 @@ Begin
 					ChangeDeadZone()
 				end else
 				If (Ev.Key.Keysym.Sym = SDLK_V) then begin
-					Controllers.RumbleEnabled := Not Controllers.RumbleEnabled
+					ToggleRumble()
 				end else
 				If (Ev.Key.Keysym.Sym = SDLK_L) then begin
 					If(ControllerCount > 0) then AssignToBind := @PadShootLeft
@@ -661,7 +669,7 @@ Begin
 					ChangeDeadZone()
 				end else
 				If(MouseInRect(RumbleRect)) then begin
-					Controllers.RumbleEnabled := Not Controllers.RumbleEnabled
+					ToggleRumble()
 				end else
 				If(MouseInRect(LeftRect)) then begin
 					If(ControllerCount > 0) then AssignToBind := @PadShootLeft
@@ -671,9 +679,11 @@ Begin
 				end else
 			end else
 			If (Ev.Type_ = SDL_ControllerAxisMotion) then begin
+				Controllers.SetLastUsedID(Ev.cAxis.Which);
 				MaybeAssignAxis(@Ev)
 			end else
 			If (Ev.Type_ = SDL_ControllerButtonUp) then begin
+				Controllers.SetLastUsedID(Ev.cButton.Which);
 				MaybeAssignButton(@Ev)
 			end else
 			If (Ev.Type_ = SDL_ControllerDeviceAdded) or (Ev.Type_ = SDL_ControllerDeviceRemoved) then begin

@@ -891,6 +891,8 @@ Begin
 
 	Stats.HitsTaken.Increase(1);
 
+	// Not using the Controllers.RumbleLastUsed() helper function here
+	// to avoid needlessly calculating the Intensity if there is no controller.
 	If(Controllers.RumbleEnabled) then begin
 		Controller := Controllers.GetLastUsed();
 		If(Controller <> NIL) then begin
