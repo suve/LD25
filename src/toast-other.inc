@@ -17,7 +17,7 @@
 Uses
 	SysUtils,
 	SDL2,
-	Assets, Colours, Fonts, Rendering, Timekeeping;
+	Assets, Colours, Fonts, MathUtils, Rendering, Timekeeping;
 
 Const
 	Headers: Array[TToastHeader] of AnsiString = (
@@ -31,7 +31,7 @@ Const
 Var
 	Visible: Boolean;
 
-	EndsAt: uInt;
+	Width, EndsAt: uInt;
 	TextTop, TextBottom: AnsiString;
 
 Procedure SetVisibility(NewValue: Boolean);
@@ -48,11 +48,25 @@ Const
 	TICKS_HIDE = 400;
 	TICKS_TOTAL = TICKS_SHOW + TICKS_LINGER + TICKS_HIDE;
 
-	MAX_MSG_LENGTH = 35;
+	HEIGHT = 20;
+
+	MARGIN_X = 3;
+	MARGIN_Y = 2;
+
+	ICON_WIDTH = 20;
+	ICON_HEIGHT = 15;
+	ICON_MARGIN = 5;
+
+	MIN_WIDTH = 160;
+	MAX_WIDTH = 272;
 
 Procedure Show(HeaderID: TToastHeader; Message: AnsiString);
+Const
+	// 6px = font spacing
+	MAX_MSG_LENGTH = (MAX_WIDTH - 2 * (MARGIN_X + 1) - ICON_WIDTH - ICON_MARGIN) div 6;
 Var
 	TicksNow, TicksLeft: uInt;
+	TextLength: uInt;
 Begin
 	If(Not Visible) then Exit;
 
@@ -63,6 +77,11 @@ Begin
 
 	TextTop := Headers[HeaderID];
 	TextBottom := Message;
+
+	// Ugh, what a mess
+	TextLength := MaxOfTwo(Length(TextTop), Length(TextBottom));
+	Width := (2 * (MARGIN_X + 1)) + ICON_WIDTH + ICON_MARGIN + ((TextLength * 6) - 1);
+	If(Width < MIN_WIDTH) then Width := MIN_WIDTH;
 
 	TicksNow := Timekeeping.GetTicks();
 	If(TicksNow >= EndsAt) then begin
@@ -86,17 +105,6 @@ Begin
 End;
 
 Procedure Render();
-Const
-	WIDTH = 160;
-	HEIGHT = 20;
-
-	MARGIN_X = 2;
-	MARGIN_Y = 2;
-
-	ICON_WIDTH = 20;
-	ICON_HEIGHT = 15;
-	ICON_MARGIN = 3;
-
 Var
 	Rect: TSDL_Rect;
 	Ticks: uInt;
@@ -108,7 +116,7 @@ Begin
 	Ticks := EndsAt - Ticks;
 
 	Rect.X := (RESOL_W - WIDTH) div 2;
-	Rect.W := WIDTH;
+	Rect.W := Width;
 
 	If(Ticks <= TICKS_HIDE) then
 		Rect.Y := ((Ticks * HEIGHT) div TICKS_HIDE) - HEIGHT
