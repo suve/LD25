@@ -1293,6 +1293,13 @@ Begin
 	end else
 		SDL_Log('Failed to initialize SDL2 audio - skipping SDL2_mixer init.', []);
 
+	(*
+	 * Do not show controller toasts while loading.
+	 * On desktop, this will save us from a segfault due to missing font.
+	 * On Android, this will prevent us from showing the "found device" toast
+	 * twice. (First during init and then after init is finished.)
+	 *)
+	Toast.SetVisibility(False);
 	InitControllers();
 
 	SDL_Log('Opening window...', []);
@@ -1327,7 +1334,6 @@ Begin
 		// are still being loaded (touch-controls.png is quite far down the list)
 		TouchControls.SetVisibility(TCV_NONE);
 	{$ENDIF}
-	Toast.SetVisibility(False);
 
 	SDL_Log('Loading assets...', []);
 	RegisterAllAssets();
