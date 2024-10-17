@@ -63,7 +63,7 @@ Implementation
 Uses
 	ctypes,
 	{$IFDEF LD25_MOBILE} TouchControls, {$ENDIF}
-	Shared;
+	Shared, Toast;
 
 Var
 	WindowTex: PSDL_Texture;
@@ -433,6 +433,9 @@ End;
 
 Procedure FinishFrame();
 Begin
+	// This really, really stinks
+	Toast.Render();
+
 	SDL_SetRenderTarget(Renderer, WindowTex);
 	{$IFDEF LD25_MOBILE}
 	SDL_RenderSetLogicalSize(Renderer, Wnd_W, Wnd_H);

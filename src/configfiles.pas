@@ -60,13 +60,15 @@ Uses
 	Classes, IniFiles, SysUtils,
 	SDL2,
 	{$IFDEF LD25_COMPAT_V1} SDL1Keys, {$ENDIF}
-	BuildConfig, Colours, Rendering, Stats;
+	BuildConfig, Colours, Controllers, Rendering, Stats;
 
 Const
 	ConfFileName = 'settings.ini';
 	Ordinals: Array[0..7] of AnsiString = (
 		'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth'
 	);
+
+	DEFAULT_DEADZONE = SDL_JOYSTICK_AXIS_MAX div 4;
 
 // Check if ConfPath exists. If not, try to create it.
 Function CheckConfPath():Boolean;
@@ -251,6 +253,13 @@ Begin
 	For K:=Low(K) to High(K) do Writeln(F,K,'=',KeyBind[K]);
 	Writeln(F);
 
+	Writeln(F, '[Gamepad]');
+	Writeln(F, 'DeadZone=', Controllers.DeadZone);
+	Writeln(F, 'Rumble=', BoolToStr(Controllers.RumbleEnabled, 'True', 'False'));
+	Writeln(F, 'ShootLeft=', PadShootLeft.Serialize());
+	Writeln(F, 'ShootRight=', PadShootRight.Serialize());
+	Writeln(F);
+
 	{$IFDEF LD25_MOBILE}
 		Writeln(F, '[TouchControls]');
 		Writeln(F, 'Swapped=', BoolToStr(SwapTouchControls, 'True', 'False'));
@@ -298,6 +307,21 @@ Begin
 	end;
 	
 	If(Version = 2) then begin
+		(*
+		 * FIXME: The game should differentiate between v2.1 and v2.2 config files
+		 *        so it can skip the gamepad section when loading older configs.
+		 *
+		 *        Alternatively, the parsing code here could be modified to enable
+		 *        differentiating between entries that are missing, and entries
+		 *        that have an empty-string value; then, missing entries could be
+		 *        set to a default value.
+		 *)
+		Ini.ReadSectionValues('Gamepad', Str);
+		Controllers.DeadZone:=StrToIntDef(Str.Values['DeadZone'], DEFAULT_DEADZONE);
+		Controllers.RumbleEnabled:=StrToBoolDef(Str.Values['Rumble'],True);
+		PadShootLeft.Deserialize(Str.Values['ShootLeft']);
+		PadShootRight.Deserialize(Str.Values['ShootRight']);
+
 		{$IFDEF LD25_MOBILE}
 			Ini.ReadSectionValues('TouchControls', Str);
 			SwapTouchControls:=StrToBoolDef(Str.Values['Swapped'], False);
@@ -363,6 +387,12 @@ Begin
 	KeyBind[KEY_SHOOTLEFT]:=SDLK_Z;   KeyBind[KEY_SHOOTRIGHT]:=SDLK_X;
 	KeyBind[KEY_VOLDOWN]:=SDLK_MINUS; KeyBind[KEY_VOLUP]:=SDLK_EQUALS;
 	KeyBind[KEY_PAUSE]:=SDLK_P;
+
+	// Gamepad bindings
+	Controllers.DeadZone := DEFAULT_DEADZONE;
+	Controllers.RumbleEnabled := True;
+	PadShootLeft.SetButton(SDL_CONTROLLER_BUTTON_A);
+	PadShootRight.SetButton(SDL_CONTROLLER_BUTTON_B);
 
 	// Window size
 	Wnd_W:=WINDOW_W; Wnd_H:=WINDOW_H; Wnd_F:=False;

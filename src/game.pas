@@ -29,8 +29,8 @@ Implementation
 Uses
 	SDL2,
 	{$IFDEF LD25_MOBILE} ctypes, TouchControls, {$ENDIF}
-	Assets, Colours, ConfigFiles, Entities, FloatingText, Fonts, Images,
-	MathUtils, Rendering, Rooms, Shared, Sprites, Stats;
+	Assets, Colours, ConfigFiles, Controllers, Entities, FloatingText, Fonts,
+	Images, MathUtils, Rendering, Rooms, Shared, Sprites, Stats, Timekeeping;
 
 Type
 	TRoomChange = (
@@ -137,6 +137,55 @@ Begin
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_ShootLeft] ) then Key[KEY_ShootLeft] :=False else
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_ShootRight]) then Key[KEY_ShootRight]:=False else
 		end else
+		If (Ev.Type_ = SDL_ControllerAxisMotion) then begin
+			If (Ev.cAxis.Axis = SDL_CONTROLLER_AXIS_LEFTX) then begin
+				Key[KEY_LEFT ] := Ev.cAxis.Value < (-Controllers.DeadZone);
+				Key[KEY_RIGHT] := Ev.cAxis.Value > (+Controllers.DeadZone);
+				Controllers.SetLastUsedID(Ev.cAxis.Which)
+			end else
+			If (Ev.cAxis.Axis = SDL_CONTROLLER_AXIS_LEFTY) then begin
+				Key[KEY_UP  ] := Ev.cAxis.Value < (-Controllers.DeadZone);
+				Key[KEY_DOWN] := Ev.cAxis.Value > (+Controllers.DeadZone);
+				Controllers.SetLastUsedID(Ev.cAxis.Which)
+			end else begin
+				// These are not else-chained as that would prevent us from using
+				// an axis as a two-way trigger (i.e. on positive and negative value).
+				If (Ev.cAxis.Axis = PadShootLeft.Axis) then begin
+					Key[KEY_SHOOTLEFT] := PadShootLeft.AxisTriggered(Ev.cAxis.Value);
+					Controllers.SetLastUsedID(Ev.cAxis.Which)
+				end;
+				If (Ev.cAxis.Axis = PadShootRight.Axis) then begin
+					Key[KEY_SHOOTRIGHT] := PadShootRight.AxisTriggered(Ev.cAxis.Value);
+					Controllers.SetLastUsedID(Ev.cAxis.Which)
+				end;
+			end
+		end else
+		If (Ev.Type_ = SDL_ControllerButtonDown) then begin
+			If (Ev.cButton.Button = PadShootLeft.Button) then begin
+				Key[KEY_SHOOTLEFT] := True;
+				Controllers.SetLastUsedID(Ev.cButton.Which)
+			end else
+			If (Ev.cButton.Button = PadShootRight.Button) then begin
+				Key[KEY_SHOOTRIGHT] := True;
+				Controllers.SetLastUsedID(Ev.cButton.Which)
+			end else
+		end else
+		If (Ev.Type_ = SDL_ControllerButtonUp) then begin
+			If (Ev.cButton.Button = PadShootLeft.Button) then begin
+				Key[KEY_SHOOTLEFT] := False;
+				Controllers.SetLastUsedID(Ev.cButton.Which)
+			end else
+			If (Ev.cButton.Button = PadShootRight.Button) then begin
+				Key[KEY_SHOOTRIGHT] := False;
+				Controllers.SetLastUsedID(Ev.cButton.Which)
+			end else
+		end else
+		If (Ev.Type_ = SDL_ControllerDeviceAdded) or (Ev.Type_ = SDL_ControllerDeviceRemoved) then begin
+			Controllers.HandleDeviceEvent(@Ev)
+		end else
+		If (Ev.Type_ = SDL_JoyBatteryUpdated) then begin
+			Controllers.HandleBatteryEvent(@Ev)
+		end else
 		{$IFDEF LD25_MOBILE}
 		If (Ev.Type_ = SDL_FingerUp) or (Ev.Type_ = SDL_FingerDown) or (Ev.Type_ = SDL_FingerMotion) then begin
 			TouchControls.HandleEvent(@Ev)
@@ -162,12 +211,12 @@ Begin
 	end
 End;
 
-Procedure Animate(Const Ticks:uInt);
+Procedure Animate(); Inline;
 Begin
 	{$IFDEF LD25_DEBUG}
 		If(CheatFreeze = FREEZE_ALL) then AniFra:=0 else
 	{$ENDIF}
-	AniFra:=(Ticks div AnimTime) mod 2
+	AniFra:=(Timekeeping.GetTicks() div AnimTime) mod 2
 End;
 
 Procedure CalculateHero(Const Time:uInt);
@@ -832,11 +881,27 @@ Begin
 End;
 
 Procedure DamagePlayer(Const Power:Double);
+Var
+	Controller: PSDL_GameController;
+	HealthLeft: Double;
+	Intensity: Word;
 Begin
 	PlaySfx(SFX_HIT);
 	Hero^.InvTimer := Hero^.InvLength;
 
 	Stats.HitsTaken.Increase(1);
+
+	If(Controllers.RumbleEnabled) then begin
+		Controller := Controllers.GetLastUsed();
+		If(Controller <> NIL) then begin
+			HealthLeft := Hero^.HP - Power;
+			If(HealthLeft > 0) then
+				Intensity := $FFFF - Trunc($F000 * HealthLeft / Hero^.MaxHP)
+			else
+				Intensity := $FFFF;
+			SDL_GameControllerRumble(Controller, 0, Intensity, Hero^.InvLength)
+		end
+	end;
 
 	{$IFDEF LD25_DEBUG}
 	If(CheatInvulnerability) then Exit;
@@ -868,10 +933,9 @@ Function PlayGame():Boolean;
 Const
 	DELTA_MAXIMUM = 100; // Limit timestep to 100ms (10 updates/s)
 Var
-	DeltaTime, Ticks, Timestep: uInt;
+	DeltaTime, Timestep: uInt;
 	pk: TPlayerKey;
 Begin
-	GetDeltaTime(DeltaTime);
 	SetAllowScreensaver(False);
 	SDL_ShowCursor(0);
 	
@@ -886,11 +950,18 @@ Begin
 	Font^.Scale := 1;
 
 	{$IFDEF LD25_DEBUG} ResetDebugCheats(); {$ENDIF}
+
+	// Advance the timer before entering the game loop.
+	// In the case that transitioning from menu back to the game took some
+	// time, this will ensure that the player will not get surprised
+	// by the game suddenly jumping forward.
+	AdvanceTime();
 	Repeat
 		If (RoomChange <> RCHANGE_NONE) then PerformRoomChange();
 		
-		GetDeltaTime(DeltaTime, Ticks);
-		Animate(Ticks);
+		DeltaTime := AdvanceTime();
+
+		Animate();
 		GatherInput();
 
 		If (Not Paused) then begin

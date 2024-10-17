@@ -28,7 +28,8 @@ Implementation
 Uses
 	SysUtils,
 	SDL2,
-	Assets, Colours, Fonts, Images, Rendering, Shared, Stats
+	Assets, Colours, Controllers, Fonts, Images, Rendering, Shared, Stats,
+	Timekeeping
 	{$IFDEF LD25_MOBILE}, TouchControls {$ENDIF}
 ;
 
@@ -99,7 +100,7 @@ Begin
 		Rendering.FinishFrame();
 
 		Action := ACT_NONE;
-		GetDeltaTime(DeltaTime);
+		DeltaTime := AdvanceTime();
 		While (SDL_PollEvent(@Ev)>0) do begin
 			If (Ev.Type_ = SDL_QuitEv) then begin
 				Shutdown:=True; Exit()
@@ -116,6 +117,12 @@ Begin
 					Action := ACT_NEXT;
 				SDLK_LEFT:
 					Action := ACT_PREV;
+			end else
+			If (Ev.Type_ = SDL_ControllerDeviceAdded) or (Ev.Type_ = SDL_ControllerDeviceRemoved) then begin
+				Controllers.HandleDeviceEvent(@Ev)
+			end else
+			If (Ev.Type_ = SDL_JoyBatteryUpdated) then begin
+				Controllers.HandleBatteryEvent(@Ev)
 			end else
 			If (Ev.Type_ = SDL_WindowEvent) and (Ev.Window.Event = SDL_WINDOWEVENT_RESIZED) then
 				HandleWindowResizedEvent(@Ev)
