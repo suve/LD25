@@ -220,9 +220,9 @@ Begin
 
 		JoyName := SDL_JoystickNameForIndex(DevIdx);
 		If(JoyName <> NIL) then
-			Names[Count] := UpCase(JoyName)
+			Names[Count] := JoyName
 		else
-			Names[Count] := 'UNKNOWN DEVICE';
+			Names[Count] := 'Unknown device';
 
 		Count += 1;
 		If(Count >= Length(Names)) then Break

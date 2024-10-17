@@ -533,10 +533,14 @@ Var
 	End;
 
 	Procedure UpdateControllerList();
+	Var
+		NameIdx: sInt;
 	Begin
 		GetControllerNames(ControllerCount, ControllerNames);
 
 		If(ControllerCount > 0) then begin
+			For NameIdx := 0 to (ControllerCount - 1) do
+				ControllerNames[NameIdx] := UpCase(ControllerNames[NameIdx]);
 			AssignTextColour := @MenuActiveColour
 		end else begin
 			AssignTextColour := @MenuInactiveColour;
