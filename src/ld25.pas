@@ -1227,6 +1227,9 @@ Var
 	GM: TGameMode;
 	OldMask, NewMask: TFPUExceptionMask;
 	Assload: Assets.TLoadingResult;
+
+	ControllerCount: sInt;
+	ControllerNames: Array[0..4] of AnsiString;
 Begin
 	StartTime:=GetTimeStamp(); Randomize();
 
@@ -1333,14 +1336,31 @@ Begin
 	end else
 		SDL_Log('All assets loaded successfully.', []);
 
+	// Init buffers with some default sizes
 	PlayerBullets.Create(16);
 	EnemyBullets.Create(16);
 	Gibs.Create(GIBS_PIECES_TOTAL * 4);
-
 	Mobs.Create(8);
 	Hero:=NIL;
 
+	(*
+	 * Toast duration is not tied to the "real" number of ticks as reported by SDL,
+	 * but rather to the cached value found in the Timekeeping unit.
+	 * Advancing the timer here ensures that the toast is shown for the full
+	 * intended duration, not affected by the startup time.
+	 *)
+	Timekeeping.AdvanceTime();
+
+	// This is not the best way to do this, as the user could potentially have
+	// more controllers than the length of the array, but - eh, good enough.
+	GetControllerNames(ControllerCount, ControllerNames);
 	Toast.SetVisibility(True);
+	If(ControllerCount > 0) then
+		If(ControllerCount > 1) then
+			Toast.Show(TH_CONTROLLER_FOUND_MULTIPLE, IntToStr(ControllerCount) + ' devices')
+		else
+			Toast.Show(TH_CONTROLLER_FOUND, ControllerNames[0]);
+
 	SDL_Log('All done! Initialization finished in %ld ms.', [clong(TimeStampDiffMillis(StartTime, GetTimeStamp()))])
 End;
 

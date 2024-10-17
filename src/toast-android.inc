@@ -20,6 +20,7 @@ Uses
 Const
 	Headers: Array[TToastHeader] of AnsiString = (
 		'Controller found',
+		'Controllers found',
 		'Controller lost',
 		'Battery low',
 		'Battery critical'
