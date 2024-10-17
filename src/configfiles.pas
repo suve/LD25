@@ -68,7 +68,7 @@ Const
 		'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth'
 	);
 
-	DEFAULT_DEADZONE = SDL_JOYSTICK_AXIS_MAX div 4;
+	DEFAULT_DEADZONE = 0.25;
 
 // Check if ConfPath exists. If not, try to create it.
 Function CheckConfPath():Boolean;
@@ -254,7 +254,7 @@ Begin
 	Writeln(F);
 
 	Writeln(F, '[Gamepad]');
-	Writeln(F, 'DeadZone=', Controllers.DeadZone);
+	Writeln(F, 'DeadZone=', Controllers.DeadZone.Percentage:0:4);
 	Writeln(F, 'Rumble=', BoolToStr(Controllers.RumbleEnabled, 'True', 'False'));
 	Writeln(F, 'ShootLeft=', PadShootLeft.Serialize());
 	Writeln(F, 'ShootRight=', PadShootRight.Serialize());
@@ -317,7 +317,7 @@ Begin
 		 *        set to a default value.
 		 *)
 		Ini.ReadSectionValues('Gamepad', Str);
-		Controllers.DeadZone:=StrToIntDef(Str.Values['DeadZone'], DEFAULT_DEADZONE);
+		Controllers.DeadZone.Percentage:=StrToFloatDef(Str.Values['DeadZone'], DEFAULT_DEADZONE);
 		Controllers.RumbleEnabled:=StrToBoolDef(Str.Values['Rumble'],True);
 		PadShootLeft.Deserialize(Str.Values['ShootLeft']);
 		PadShootRight.Deserialize(Str.Values['ShootRight']);
@@ -389,7 +389,7 @@ Begin
 	KeyBind[KEY_PAUSE]:=SDLK_P;
 
 	// Gamepad bindings
-	Controllers.DeadZone := DEFAULT_DEADZONE;
+	Controllers.DeadZone.Percentage := DEFAULT_DEADZONE;
 	Controllers.RumbleEnabled := True;
 	PadShootLeft.SetButton(SDL_CONTROLLER_BUTTON_A);
 	PadShootRight.SetButton(SDL_CONTROLLER_BUTTON_B);

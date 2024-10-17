@@ -487,22 +487,17 @@ Var
 	AssignTextColour: PSDL_Colour;
 	DeadZoneStr, LeftStr, RightStr: AnsiString;
 
-	Procedure UpdateDeadZoneText();
-	Begin
-		WriteStr(DeadZoneStr, (cint32(Controllers.DeadZone) * 100) div SDL_JOYSTICK_AXIS_MAX, '%')
-	End;
-
 	Procedure ChangeDeadZone();
 	Var
 		Percentage: uInt;
 	Begin
-		Percentage := (cuint32(Controllers.DeadZone) * 100) div SDL_JOYSTICK_AXIS_MAX;
+		Percentage := Trunc(DeadZone.Percentage * 100);
 		Percentage := Percentage - (Percentage mod DEAD_ZONE_STEP);
 		Percentage := Percentage + DEAD_ZONE_STEP;
 		If(Percentage > DEAD_ZONE_MAX) then Percentage := DEAD_ZONE_MIN;
 
-		Controllers.DeadZone := (Percentage * SDL_JOYSTICK_AXIS_MAX) div 100;
-		UpdateDeadZoneText()
+		Controllers.DeadZone.Percentage := Percentage / 100;
+		WriteStr(DeadZoneStr, Percentage, '%')
 	End;
 
 	Procedure ToggleRumble();
@@ -521,7 +516,7 @@ Var
 		If(Ev^.cAxis.Axis = SDL_CONTROLLER_AXIS_LEFTX) or (Ev^.cAxis.Axis = SDL_CONTROLLER_AXIS_LEFTY) then Exit;
 
 		// Respect the dead zone setting when assigning
-		If(Ev^.cAxis.Value > -Controllers.DeadZone) and (Ev^.cAxis.Value < +Controllers.DeadZone) then Exit;
+		If(Ev^.cAxis.Value > -Controllers.DeadZone.Value) and (Ev^.cAxis.Value < +Controllers.DeadZone.Value) then Exit;
 
 		AssignToBind^.SetAxis(Ev^.cAxis.Axis, Ev^.cAxis.Value);
 		LeftStr := PadShootLeft.ToPrettyString();
@@ -568,7 +563,7 @@ Begin
 
 	LeftStr := PadShootLeft.ToPrettyString();
 	RightStr := PadShootRight.ToPrettyString();
-	UpdateDeadZoneText();
+	WriteStr(DeadZoneStr, Trunc(DeadZone.Percentage * 100), '%');
 	UpdateControllerList();
 
 	DeadRect.X := (RESOL_W div 4);

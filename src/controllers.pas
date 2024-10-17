@@ -42,8 +42,24 @@ Type
 		Procedure Deserialize(From: AnsiString);
 	end;
 
+	PPercentageValue = ^TPercentageValue;
+	TPercentageValue = object
+		Private
+			Raw: cint16;
+			Perc: Single;
+
+			Procedure SetRaw(Arg: cint16);
+			Procedure SetPerc(Arg: Single);
+
+		Public
+			Property Value: cint16
+				read Raw write SetRaw;
+			Property Percentage: Single
+				read Perc write SetPerc;
+	end;
+
 Var
-	DeadZone: cint16;
+	DeadZone: TPercentageValue;
 	RumbleEnabled: Boolean;
 
 Procedure InitControllers();
@@ -236,12 +252,31 @@ Begin
 	end
 End;
 
+Procedure TPercentageValue.SetRaw(Arg: cint16);
+Begin
+	If(Arg < 0) then Arg := 0;
+
+	Self.Raw := Arg;
+	Self.Perc := Self.Raw / $7FFF
+End;
+
+Procedure TPercentageValue.SetPerc(Arg: Single);
+Begin
+	If(Arg < 0.0) then
+		Arg := 0.0
+	else if(Arg > 1.0) then
+		Arg := 1.0;
+
+	Self.Perc := Arg;
+	Self.Raw := Trunc($7FFF * Self.Perc)
+End;
+
 Function TControllerBinding.AxisTriggered(Value: cint16): Boolean;
 Begin
 	If(Not Self.Negative) then
-		Result := Value > (+DeadZone)
+		Result := Value > (+DeadZone.Value)
 	else
-		Result := Value < (-DeadZone)
+		Result := Value < (-DeadZone.Value)
 End;
 
 Procedure TControllerBinding.SetAxis(Value: TSDL_GameControllerAxis; Direction: cint32);
