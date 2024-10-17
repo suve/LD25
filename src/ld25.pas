@@ -533,25 +533,8 @@ Var
 	End;
 
 	Procedure UpdateControllerList();
-	Var
-		DevCount, DevIdx: sInt;
-		Name: PChar;
 	Begin
-		ControllerCount := 0;
-
-		DevCount := SDL_NumJoysticks();
-		For DevIdx := 0 to (DevCount-1) do begin
-			If(SDL_IsGameController(DevIdx) <> SDL_TRUE) then Continue;
-
-			Name := SDL_JoystickNameForIndex(DevIdx);
-			If(Name <> NIL) then
-				ControllerNames[ControllerCount] := UpCase(Name)
-			else
-				ControllerNames[ControllerCount] := 'UNKNOWN DEVICE';
-
-			ControllerCount += 1;
-			If(ControllerCount = MAX_NAMES) then Break
-		end;
+		GetControllerNames(ControllerCount, ControllerNames);
 
 		If(ControllerCount > 0) then begin
 			AssignTextColour := @MenuActiveColour

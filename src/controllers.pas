@@ -53,6 +53,8 @@ Procedure HandleDeviceEvent(Ev: PSDL_Event);
 Function GetLastUsed(): PSDL_GameController;
 Procedure SetLastUsedID(ID: TSDL_JoystickID);
 
+Procedure GetControllerNames(Out Count: sInt; Out Names: Array of AnsiString);
+
 
 Implementation
 
@@ -198,6 +200,34 @@ Begin
 		If(SDL_IsGameController(Idx) = SDL_TRUE) then
 			AddController(Idx)
 end;
+
+Procedure GetControllerNames(Out Count: sInt; Out Names: Array of AnsiString);
+Var
+	DevCount, DevIdx: sInt;
+	JoyName: PChar;
+Begin
+	Count := 0;
+	If(Length(Names) = 0) then Exit;
+
+	DevCount := SDL_NumJoysticks();
+	If(DevCount < 0) then begin
+		Count := -1;
+		Exit
+	end;
+
+	For DevIdx := 0 to (DevCount-1) do begin
+		If(SDL_IsGameController(DevIdx) <> SDL_TRUE) then Continue;
+
+		JoyName := SDL_JoystickNameForIndex(DevIdx);
+		If(JoyName <> NIL) then
+			Names[Count] := UpCase(JoyName)
+		else
+			Names[Count] := 'UNKNOWN DEVICE';
+
+		Count += 1;
+		If(Count >= Length(Names)) then Break
+	end
+End;
 
 Function TControllerBinding.AxisTriggered(Value: cint16): Boolean;
 Begin
