@@ -34,7 +34,7 @@ Function GetTimeStamp(): TTimeStamp;
 Function TimestampDiffMillis(Const First, Second: TTimeStamp): sInt;
 
 // Get the current number of ticks.
-// This number will stay constant until the next call to GetDeltaTime().
+// This number will stay constant until the next call to AdvanceTime().
 Function GetTicks(): uInt;
 
 // Advance the time and report the number of ticks passed.
@@ -45,7 +45,7 @@ Function AdvanceTime(): uInt;
 Implementation
 
 Uses
-	SDL2;
+	SDL2, ctypes;
 
 Var
 	Ticks: uInt;
@@ -55,7 +55,13 @@ Var
 	NewTicks: uInt;
 Begin
 	While True do begin
-		NewTicks := SDL_GetTicks();
+		{$IF SIZEOF(NativeUInt) >= SIZEOF(cuint64)}
+			NewTicks := SDL_GetTicks64();
+		{$ELSEIF SIZEOF(NativeUInt) >= SIZEOF(cuint32)}
+			NewTicks := SDL_GetTicks();
+		{$ELSE}
+			{$ERROR NativeUInt is smaller than 32 bits}
+		{$ENDIF}
 		If((NewTicks - Ticks) >= TICKS_MINIMUM) then Break;
 		SDL_Delay(1)
 	end;
