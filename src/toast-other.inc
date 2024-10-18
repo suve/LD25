@@ -19,13 +19,24 @@ Uses
 	SDL2,
 	Assets, Colours, Fonts, MathUtils, Rendering, Timekeeping;
 
+Type
+	TToastIcon = (
+		TI_GAMEPAD,
+		TI_BATTERY
+	);
+
+	TToastTemplate = record
+		Header: AnsiString;
+		Icon: TToastIcon;
+	end;
+
 Const
-	Headers: Array[TToastHeader] of AnsiString = (
-		'CONTROLLER FOUND',
-		'CONTROLLERS FOUND',
-		'CONTROLLER LOST',
-		'BATTERY LOW',
-		'BATTERY CRITICAL'
+	Templates: Array[TToastHeader] of TToastTemplate = (
+		(Header: 'CONTROLLER FOUND'; Icon: TI_GAMEPAD),
+		(Header: 'CONTROLLERS FOUND'; Icon: TI_GAMEPAD),
+		(Header: 'CONTROLLER LOST'; Icon: TI_GAMEPAD),
+		(Header: 'BATTERY LOW'; Icon: TI_BATTERY),
+		(Header: 'BATTERY CRITICAL'; Icon: TI_BATTERY)
 	);
 
 Var
@@ -33,6 +44,7 @@ Var
 
 	Width, EndsAt: uInt;
 	TextTop, TextBottom: AnsiString;
+	IconSrc: TSDL_Rect;
 
 Procedure SetVisibility(NewValue: Boolean);
 Begin
@@ -75,13 +87,18 @@ Begin
 	Message := TrimRight(Message);
 	Message := UpCase(Message);
 
-	TextTop := Headers[HeaderID];
+	TextTop := Templates[HeaderID].Header;
 	TextBottom := Message;
 
 	// Ugh, what a mess
 	TextLength := MaxOfTwo(Length(TextTop), Length(TextBottom));
 	Width := (2 * (MARGIN_X + 1)) + ICON_WIDTH + ICON_MARGIN + ((TextLength * 6) - 1);
 	If(Width < MIN_WIDTH) then Width := MIN_WIDTH;
+
+	IconSrc.X := 0;
+	IconSrc.Y := Ord(Templates[HeaderID].Icon) * ICON_HEIGHT;
+	IconSrc.W := ICON_WIDTH;
+	IconSrc.H := ICON_HEIGHT;
 
 	TicksNow := Timekeeping.GetTicks();
 	If(TicksNow >= EndsAt) then begin
@@ -160,5 +177,5 @@ Begin
 	Rect.Y += MARGIN_Y;
 	Rect.W := ICON_WIDTH;
 	Rect.H := ICON_HEIGHT;
-	SDL_RenderCopy(Renderer, GamepadGfx^.Tex, NIL, @Rect)
+	SDL_RenderCopy(Renderer, ToastGfx^.Tex, @IconSrc, @Rect)
 End;

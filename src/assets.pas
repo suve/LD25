@@ -42,13 +42,16 @@ Var
 	IconSurf: PSDL_Surface;
 	TitleGfx, UIgfx: PImage;
 	TileGfx, ColourGfx, EntityGfx: PImage;
-	GamepadGfx: PImage;
 
 	SlideIn  : Array[0..SLIDES_IN-1] of PImage;
 	SlideOut : Array[0..SLIDES_OUT-1] of PImage;
 
 	{$IFDEF LD25_MOBILE}
 	TouchControlsGfx: PImage;
+	{$ENDIF}
+
+	{$IFNDEF ANDOID}
+	ToastGfx: PImage;
 	{$ENDIF}
 
 	Font, NumFont : PFont;
@@ -208,9 +211,12 @@ Begin
 	For idx:=0 to (SLIDES_IN-1) do RegisterImage('slides/intro' + IntToStr(idx) + '.png', @SlideIn[idx], @COLOUR_BLACK);
 	For idx:=0 to (SLIDES_OUT-1) do RegisterImage('slides/outro' + IntToStr(idx) + '.png', @SlideOut[idx], @COLOUR_BLACK);
 
-	RegisterImage('gfx/gamepad0.png', @GamepadGfx, @COLOUR_LIME);
 	{$IFDEF LD25_MOBILE}
 	RegisterImage('gfx/touch-controls.png', @TouchControlsGfx, @COLOUR_LIME);
+	{$ENDIF}
+
+	{$IFNDEF ANDROID}
+	RegisterImage('gfx/toasts.png', @ToastGfx, @COLOUR_LIME);
 	{$ENDIF}
 
 	// ----- ROOMS -----
