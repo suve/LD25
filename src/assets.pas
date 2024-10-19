@@ -46,7 +46,7 @@ Var
 	SlideIn  : Array[0..SLIDES_IN-1] of PImage;
 	SlideOut : Array[0..SLIDES_OUT-1] of PImage;
 
-	GamepadGfx: PImage;
+	GamepadGfx, GamepadButtonsGfx: PImage;
 
 	{$IFDEF LD25_MOBILE}
 	TouchControlsGfx: PImage;
@@ -214,6 +214,7 @@ Begin
 	For idx:=0 to (SLIDES_OUT-1) do RegisterImage('slides/outro' + IntToStr(idx) + '.png', @SlideOut[idx], @COLOUR_BLACK);
 
 	RegisterImage('gfx/gamepad.png', @GamepadGfx, @COLOUR_LIME);
+	RegisterImage('gfx/gamepad-buttons.png', @GamepadButtonsGfx, @COLOUR_LIME);
 
 	{$IFDEF LD25_MOBILE}
 	RegisterImage('gfx/touch-controls.png', @TouchControlsGfx, @COLOUR_LIME);

@@ -24,6 +24,12 @@ Uses
 	ctypes, SDL2;
 
 Type
+	TControllerBindingValidity = (
+		CBV_INVALID,
+		CBV_AXIS,
+		CBV_BUTTON
+	);
+
 	PControllerBinding = ^TControllerBinding;
 	TControllerBinding = object
 		Axis: TSDL_GameControllerAxis;
@@ -32,6 +38,7 @@ Type
 		Button: TSDL_GameControllerButton;
 
 		Function AxisTriggered(Value: cint16): Boolean;
+		Function IsValid(): TControllerBindingValidity;
 
 		Procedure SetAxis(Value: TSDL_GameControllerAxis; Direction: cint32);
 		Procedure SetButton(Value: TSDL_GameControllerButton);
@@ -295,60 +302,73 @@ Begin
 	Self.Button := Value
 End;
 
+Function TControllerBinding.IsValid(): TControllerBindingValidity;
+Begin
+	If(Self.Axis > SDL_CONTROLLER_AXIS_INVALID) and (Self.Axis < SDL_CONTROLLER_AXIS_MAX)
+	then
+		Result := CBV_AXIS
+	else
+	If(Self.Button > SDL_CONTROLLER_BUTTON_INVALID) and (Self.Button < SDL_CONTROLLER_BUTTON_MAX)
+	then
+		Result := CBV_BUTTON
+	else
+		Result := CBV_INVALID
+End;
+
 Function TControllerBinding.ToPrettyString(): AnsiString;
 Var
-	AxisValid, ButtonValid: Boolean;
 	ThumbBitmask: uInt;
 Begin
-	AxisValid := (Self.Axis > SDL_CONTROLLER_AXIS_INVALID) and (Self.Axis < SDL_CONTROLLER_AXIS_MAX);
-	ButtonValid := (Self.Button > SDL_CONTROLLER_BUTTON_INVALID) and (Self.Button < SDL_CONTROLLER_BUTTON_MAX);
+	Case Self.IsValid() of
+		CBV_AXIS: begin
+			If(Self.Axis <= SDL_CONTROLLER_AXIS_RIGHTY) then begin
+				ThumbBitmask := 0;
+				// Axis direction
+				If(Self.Negative) then ThumbBitmask += $01;
+				// Horizontal (0) or vertical (1) axis
+				If((Self.Axis mod 2) = 1) then ThumbBitmask += $02;
+				// Left (0) or right (1) axis
+				If((Self.Axis div 2) = 1) then ThumbBitmask += $04;
 
-	If(AxisValid) then begin
-		If(Self.Axis <= SDL_CONTROLLER_AXIS_RIGHTY) then begin
-			ThumbBitmask := 0;
-			// Axis direction
-			If(Self.Negative) then ThumbBitmask += $01;
-			// Horizontal (0) or vertical (1) axis
-			If((Self.Axis mod 2) = 1) then ThumbBitmask += $02;
-			// Left (0) or right (1) axis
-			If((Self.Axis div 2) = 1) then ThumbBitmask += $04;
+				Case ThumbBitmask of
+					0: Result := 'LEFT STICK/RIGHT';
+					1: Result := 'LEFT STICK/LEFT';
+					2: Result := 'LEFT STICK/DOWN';
+					3: Result := 'LEFT STICK/UP';
+					4: Result := 'RIGHT STICK/RIGHT';
+					5: Result := 'RIGHT STICK/LEFT';
+					6: Result := 'RIGHT STICK/DOWN';
+					7: Result := 'RIGHT STICK/UP';
+				end
+			end else
+			If(Self.Axis = SDL_CONTROLLER_AXIS_TRIGGERLEFT) then
+				Result := 'LEFT TRIGGER'
+			else
+				Result := 'RIGHT TRIGGER'
+		end;
 
-			Case ThumbBitmask of
-				0: Result := 'LEFT STICK/RIGHT';
-				1: Result := 'LEFT STICK/LEFT';
-				2: Result := 'LEFT STICK/DOWN';
-				3: Result := 'LEFT STICK/UP';
-				4: Result := 'RIGHT STICK/RIGHT';
-				5: Result := 'RIGHT STICK/LEFT';
-				6: Result := 'RIGHT STICK/DOWN';
-				7: Result := 'RIGHT STICK/UP';
-			end
-		end else
-		If(Self.Axis = SDL_CONTROLLER_AXIS_TRIGGERLEFT) then
-			Result := 'LEFT TRIGGER'
-		else
-			Result := 'RIGHT TRIGGER'
-	end else If(ButtonValid) then
-		Result := UpCase(SDL_GameControllerGetStringForButton(Self.Button)) + ' BUTTON'
-	else
-		Result := '(UNASSIGNED)'
+		CBV_BUTTON:
+			Result := UpCase(SDL_GameControllerGetStringForButton(Self.Button)) + ' BUTTON';
+
+		CBV_INVALID:
+			Result := '(UNASSIGNED)'
+	end
 End;
 
 Function TControllerBinding.Serialize(): AnsiString;
 Const
 	AXIS_PREFIX: Array[Boolean] of ShortString = ('ap', 'an');
-Var
-	AxisValid, ButtonValid: Boolean;
 Begin
-	AxisValid := (Self.Axis > SDL_CONTROLLER_AXIS_INVALID) and (Self.Axis < SDL_CONTROLLER_AXIS_MAX);
-	ButtonValid := (Self.Button > SDL_CONTROLLER_BUTTON_INVALID) and (Self.Button < SDL_CONTROLLER_BUTTON_MAX);
+	Case Self.IsValid() of
+		CBV_AXIS:
+			WriteStr(Result, AXIS_PREFIX[Self.Negative], Self.Axis);
 
-	If(AxisValid) then
-		WriteStr(Result, AXIS_PREFIX[Self.Negative], Self.Axis)
-	else If (ButtonValid) then
-		WriteStr(Result, 'bt', Self.Button)
-	else
-		Result := 'X'
+		CBV_BUTTON:
+			WriteStr(Result, 'bt', Self.Button);
+
+		CBV_INVALID:
+			Result := 'X'
+	end
 End;
 
 Procedure TControllerBinding.Deserialize(From: AnsiString);
