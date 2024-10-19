@@ -26,8 +26,8 @@ uses
 	SysUtils, Math, ctypes,
 	SDL2, SDL2_image, SDL2_mixer,
 	Assets, Colours, ConfigFiles, Controllers, FloatingText, Fonts, Game,
-	Images, Objects, MathUtils, Menus, Menus.Main, Rendering, Rooms, Shared,
-	Slides, Stats, Timekeeping, Toast,
+	Images, Objects, MathUtils, Menus, Menus.Gameworld, Menus.Main, Rendering,
+	Rooms, Shared, Slides, Stats, Timekeeping, Toast,
 	{$IFDEF LD25_MOBILE}
 		TouchControls
 	{$ELSE}
@@ -846,78 +846,6 @@ Begin
 End;
 {$ENDIF}
 
-Function GameworldDialog(Const Load:Boolean):Char;
-Const
-	WorldName: Array[TGameMode] of AnsiString = (
-		'TUTORIAL',
-		'CLASSIC'
-	);
-Var
-	Msg: AnsiString;
-	OK: Array[TGameMode] of Boolean;
-	GM: TGameMode;
-
-	Menu: TMenu;
-	Col: PSDL_Colour;
-	Choice: Char;
-	YPos: uInt;
-Begin
-	If Load then begin
-		Msg:='LOAD GAME';
-		For GM:=Low(GM) to High(GM) do Ok[GM]:=SaveExists[GM]
-	end else begin
-		Msg:='NEW GAME';
-		For GM:=Low(GM) to High(GM) do Ok[GM]:=True
-	end;
-
-	Menu.Create(Length(WorldName));
-	Menu.SetFontScale(2);
-	For GM := Low(GM) to High(GM) do begin
-		If (Ok[GM]) then
-			Col := @MenuActiveColour
-		else
-			Col := @MenuInactiveColour;
-		Menu.AddItem(WorldName[GM][1], WorldName[GM], Col)
-	end;
-
-	Result := '?';
-	While (Result = '?') do begin
-		Rendering.BeginFrame();
-		DrawTitle();
-
-		Font^.Scale := 2;
-		YPos := TitleGfx^.H;
-		PrintText(Msg, Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
-		YPos += ((Font^.CharH * Font^.Scale) * 3) div 2;
-		PrintText('SELECT GAMEWORLD', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, NIL);
-		YPos += (Font^.CharH * Font^.Scale);
-
-		Menu.SetVerticalOffset(YPos);
-		Menu.Draw();
-
-		Rendering.FinishFrame();
-
-		AdvanceTime();
-		UpdateMenuColours();
-
-		While (SDL_PollEvent(@Ev)>0) do begin
-			Choice := Menu.ProcessEvent(@Ev);
-			If (Choice = 'T') then begin
-				If (Ok[GM_TUTORIAL]) then Result := 'T'
-			end else
-			If (Choice = 'C') then begin
-				If (Ok[GM_ORIGINAL]) then Result := 'C'
-			end else
-			If (Choice = CHOICE_QUIT) then begin
-				Shutdown := True;
-				Result := 'Q'
-			end else
-			If (Choice = CHOICE_BACK) then Result := 'Q'
-		end
-	end;
-	Menu.Destroy()
-End;
-
 Procedure LoadConfig();
 Begin
 	(*
@@ -1258,7 +1186,7 @@ begin
 			'I': ShowIntro();
 			'C': PlayGame();
 			'N': begin
-				MenuChoice:=GameworldDialog(False);
+				MenuChoice:=GameworldDialog(GWSR_NEW_GAME);
 				Case MenuChoice of
 					'T': begin NewGame(GM_TUTORIAL); PlayGame() end;
 					'C': begin NewGame(GM_ORIGINAL); PlayGame() end;
@@ -1266,7 +1194,7 @@ begin
 				MenuChoice:='N'
 			end;
 			'L': begin
-				MenuChoice:=GameworldDialog(True);
+				MenuChoice:=GameworldDialog(GWSR_LOAD_GAME);
 				Case MenuChoice of
 					'T': If(GameloadRequest(GM_TUTORIAL)) then PlayGame();
 					'C': If(GameloadRequest(GM_ORIGINAL)) then PlayGame();
