@@ -69,11 +69,15 @@ Type
 
 Procedure DrawTitle();
 
+// FIXME: This should take the event as a parameter,
+//        instead of implicitly using Shared.Ev
+Function MouseInRect(Const Rect: TSDL_Rect):Boolean; Inline;
+
 
 Implementation
 
 Uses
-	Assets, Colours, Controllers, Fonts, Images, Rendering, Shared
+	Assets, Colours, Controllers, Fonts, Images, MathUtils, Rendering, Shared
 	{$IFDEF LD25_MOBILE}, TouchControls {$ENDIF}
 ;
 
@@ -278,6 +282,11 @@ Begin
 
 	Font^.Scale := 1;
 	PrintText(VersionText, Assets.Font, (RESOL_W div 2), 82, ALIGN_CENTRE, ALIGN_MIDDLE, @WhiteColour)
+End;
+
+Function MouseInRect(Const Rect: TSDL_Rect):Boolean; Inline;
+Begin
+	Result := Overlap(Rect.X, Rect.Y, Rect.W, Rect.H, Ev.Button.X, Ev.Button.Y, 1, 1)
 End;
 
 end.
