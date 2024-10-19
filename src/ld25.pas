@@ -35,22 +35,6 @@ uses
 Var
 	MenuChoice:Char;
 
-Procedure DrawTitle();
-Const
-	VersionText = 'V.' + GAMEVERS
-		{$IFDEF LD25_DEBUG} + ' // DEBUG @ ' + {$INCLUDE %DATE%} + ', ' + {$INCLUDE %TIME%}{$ENDIF}
-	;
-Var
-	Dst: TSDL_Rect;
-Begin
-	Dst.X := 0; Dst.Y := 0;
-	Dst.W := TitleGfx^.W; Dst.H := TitleGfx^.H;
-	DrawImage(TitleGfx, NIL, @Dst, NIL);
-	
-	Font^.Scale := 1;
-	PrintText(VersionText, Assets.Font, (RESOL_W div 2), 82, ALIGN_CENTRE, ALIGN_MIDDLE, @WhiteColour)
-End;
-
 Procedure PrintMenuText(Const Text:AnsiString; Const X, Y:sInt; Const AlignX: THorizontalAlign; Const Colour: PSDL_Colour; Out Rect: TSDL_Rect);
 Var
 	W, H: sInt;

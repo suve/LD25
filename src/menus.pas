@@ -67,10 +67,13 @@ Type
 			Destructor Destroy();
 	end;
 
+Procedure DrawTitle();
+
+
 Implementation
 
 Uses
-	Assets, Controllers, Fonts, Rendering, Shared
+	Assets, Colours, Controllers, Fonts, Images, Rendering, Shared
 	{$IFDEF LD25_MOBILE}, TouchControls {$ENDIF}
 ;
 
@@ -259,6 +262,22 @@ End;
 Destructor TMenu.Destroy();
 Begin
 	SetLength(Self.Items, 0)
+End;
+
+Procedure DrawTitle();
+Const
+	VersionText = 'V.' + GAMEVERS
+		{$IFDEF LD25_DEBUG} + ' // DEBUG @ ' + {$INCLUDE %DATE%} + ', ' + {$INCLUDE %TIME%}{$ENDIF}
+	;
+Var
+	Dst: TSDL_Rect;
+Begin
+	Dst.X := 0; Dst.Y := 0;
+	Dst.W := TitleGfx^.W; Dst.H := TitleGfx^.H;
+	DrawImage(TitleGfx, NIL, @Dst, NIL);
+
+	Font^.Scale := 1;
+	PrintText(VersionText, Assets.Font, (RESOL_W div 2), 82, ALIGN_CENTRE, ALIGN_MIDDLE, @WhiteColour)
 End;
 
 end.
