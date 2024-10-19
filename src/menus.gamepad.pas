@@ -110,10 +110,17 @@ Var
 Const
 	BLINK_PERIOD = 575;
 
+	PAD_WIDTH = RESOL_W div 4;
+	HORIZ_OFFSET = (RESOL_W * 7) div 40;
+
+	PAD_X = (RESOL_W div 2) - HORIZ_OFFSET - (PAD_WIDTH div 2);
+	SETTINGS_X = (RESOL_W div 2) + HORIZ_OFFSET;
+
 	RumbleStr: Array[Boolean] of AnsiString = ('DISABLED', 'ENABLED');
 Var
 	Idx, YPos: uInt;
 	DeadRect, RumbleRect, LeftRect, RightRect: TSDL_Rect;
+	PadRect: TSDL_Rect;
 Begin
 	AssignToBind := NIL;
 
@@ -129,6 +136,10 @@ Begin
 	LeftRect := DeadRect;
 	RightRect := DeadRect;
 
+	PadRect.X := PAD_X;
+	PadRect.W := PAD_WIDTH;
+	PadRect.H := (GamepadGfx^.H * GamepadGfx^.W) div PAD_WIDTH;
+
 	While True do begin
 		Rendering.BeginFrame();
 		DrawTitle();
@@ -140,35 +151,35 @@ Begin
 		Font^.Scale := 1;
 		YPos += (5 * (Font^.CharH + Font^.SpacingY)) div 2;
 		DeadRect.Y := YPos;
-		PrintText('D - DEAD ZONE', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, @MenuActiveColour);
+		PrintText('D - DEAD ZONE', Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @MenuActiveColour);
 		YPos += (3 * (Font^.CharH + Font^.SpacingY)) div 2;
-		PrintText(DeadZoneStr, Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
+		PrintText(DeadZoneStr, Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
 
 		YPos += (4 * (Font^.CharH + Font^.SpacingY)) div 2;
 		RumbleRect.Y := YPos;
-		PrintText('V - VIBRATION', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, @MenuActiveColour);
+		PrintText('V - VIBRATION', Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @MenuActiveColour);
 		YPos += (3 * (Font^.CharH + Font^.SpacingY)) div 2;
-		PrintText(RumbleStr[Controllers.RumbleEnabled], Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
+		PrintText(RumbleStr[Controllers.RumbleEnabled], Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
 
 		YPos += (4 * (Font^.CharH + Font^.SpacingY)) div 2;
 		LeftRect.Y := YPos;
-		PrintText('L - SHOOT LEFT', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, AssignTextColour);
+		PrintText('L - SHOOT LEFT', Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, AssignTextColour);
 		YPos += (3 * (Font^.CharH + Font^.SpacingY)) div 2;
 		If(AssignToBind = @PadShootLeft) then begin
 			If(((GetTicks() div BLINK_PERIOD) mod 2) = 0) then
-				PrintText('???', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
+				PrintText('???', Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
 		end else
-			PrintText(LeftStr, Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
+			PrintText(LeftStr, Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
 
 		YPos += (4 * (Font^.CharH + Font^.SpacingY)) div 2;
 		RightRect.Y := YPos;
-		PrintText('R - SHOOT RIGHT', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, AssignTextColour);
+		PrintText('R - SHOOT RIGHT', Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, AssignTextColour);
 		YPos += (3 * (Font^.CharH + Font^.SpacingY)) div 2;
 		If(AssignToBind = @PadShootRight) then begin
 			If(((GetTicks() div BLINK_PERIOD) mod 2) = 0) then
-				PrintText('???', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
+				PrintText('???', Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
 		end else
-			PrintText(RightStr, Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
+			PrintText(RightStr, Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
 
 		Font^.Scale := 2;
 		YPos += (5 * (Font^.CharH + Font^.SpacingY)) div 2;
@@ -184,6 +195,9 @@ Begin
 		end else begin
 			PrintText('(NONE)', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, @GreyColour)
 		end;
+
+		PadRect.Y := ((DeadRect.Y + RightRect.Y + RightRect.H) div 2) - (PadRect.H div 2);
+		SDL_RenderCopy(Renderer, GamepadGfx^.Tex, NIL, @PadRect);
 
 		Rendering.FinishFrame();
 
