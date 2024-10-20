@@ -211,7 +211,7 @@ Begin
 	If (Self.OffsetsAreDirty) then Self.RecalculateOffsets();
 
 	YPos := Self.VertPos + Self.VertSpacing;
-	RowHeight := Assets.Font^.CharH * Assets.Font^.Scale;
+	RowHeight := Assets.Font^.CharH * Self.FontScale;
 
 	Idx := (Ev^.Button.Y - YPos) div (RowHeight + VertSpacing);
 	If (Idx >= 0) and (Idx < Self.Count) then begin
