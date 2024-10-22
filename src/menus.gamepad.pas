@@ -279,6 +279,11 @@ End;
 
 Procedure ConfigureGamepad();
 Const
+	LABEL_DEAD_ZONE = {$IFNDEF LD25_MOBILE} 'D - ' + {$ENDIF} 'DEAD ZONE';
+	LABEL_RUMBLE    = {$IFNDEF LD25_MOBILE} 'V - ' + {$ENDIF} 'VIBRATION';
+	LABEL_SHT_LE    = {$IFNDEF LD25_MOBILE} 'L - ' + {$ENDIF} 'SHOOT LEFT';
+	LABEL_SHT_RI    = {$IFNDEF LD25_MOBILE} 'R - ' + {$ENDIF} 'SHOOT RIGHT';
+
 	DEAD_ZONE_MIN = 0;
 	DEAD_ZONE_MAX = 75;
 	DEAD_ZONE_STEP = 5;
@@ -407,19 +412,19 @@ Begin
 		Font^.Scale := 1;
 		YPos += (5 * (Font^.CharH + Font^.SpacingY)) div 2;
 		DeadRect.Y := YPos;
-		PrintText('D - DEAD ZONE', Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @MenuActiveColour);
+		PrintText(LABEL_DEAD_ZONE, Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @MenuActiveColour);
 		YPos += (3 * (Font^.CharH + Font^.SpacingY)) div 2;
 		PrintText(DeadZoneStr, Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
 
 		YPos += (4 * (Font^.CharH + Font^.SpacingY)) div 2;
 		RumbleRect.Y := YPos;
-		PrintText('V - VIBRATION', Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @MenuActiveColour);
+		PrintText(LABEL_RUMBLE, Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @MenuActiveColour);
 		YPos += (3 * (Font^.CharH + Font^.SpacingY)) div 2;
 		PrintText(RumbleStr[Controllers.RumbleEnabled], Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
 
 		YPos += (4 * (Font^.CharH + Font^.SpacingY)) div 2;
 		LeftRect.Y := YPos;
-		PrintText('L - SHOOT LEFT', Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, AssignTextColour);
+		PrintText(LABEL_SHT_LE, Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, AssignTextColour);
 		YPos += (3 * (Font^.CharH + Font^.SpacingY)) div 2;
 		If(AssignToBind = @PadShootLeft) then begin
 			If(((GetTicks() div BLINK_PERIOD) mod 2) = 0) then
@@ -429,7 +434,7 @@ Begin
 
 		YPos += (4 * (Font^.CharH + Font^.SpacingY)) div 2;
 		RightRect.Y := YPos;
-		PrintText('R - SHOOT RIGHT', Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, AssignTextColour);
+		PrintText(LABEL_SHT_RI, Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, AssignTextColour);
 		YPos += (3 * (Font^.CharH + Font^.SpacingY)) div 2;
 		If(AssignToBind = @PadShootRight) then begin
 			If(((GetTicks() div BLINK_PERIOD) mod 2) = 0) then
