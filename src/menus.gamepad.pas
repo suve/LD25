@@ -286,7 +286,7 @@ Const
 	MAX_NAMES = 4;
 Var
 	ControllerCount: sInt;
-	ControllerNames: Array[0..(MAX_NAMES - 1)] of AnsiString;
+	ControllerInfo: Array[0..(MAX_NAMES - 1)] of TControllerInfo;
 
 	AssignToBind: PControllerBinding;
 	AssignTextColour: PSDL_Colour;
@@ -349,11 +349,11 @@ Var
 	Var
 		NameIdx: sInt;
 	Begin
-		GetControllerNames(ControllerCount, ControllerNames);
+		EnumerateControllers(ControllerCount, ControllerInfo);
 
 		If(ControllerCount > 0) then begin
 			For NameIdx := 0 to (ControllerCount - 1) do
-				ControllerNames[NameIdx] := UpCase(ControllerNames[NameIdx]);
+				ControllerInfo[NameIdx].Name := UpCase(ControllerInfo[NameIdx].Name);
 			AssignTextColour := @MenuActiveColour
 		end else begin
 			AssignTextColour := @MenuInactiveColour;
@@ -375,6 +375,8 @@ Var
 	Idx, YPos: uInt;
 	DeadRect, RumbleRect, LeftRect, RightRect: TSDL_Rect;
 	PadRect: TSDL_Rect;
+	LastUsedControllerID: TSDL_JoystickID;
+	TextColour: PSDL_Colour;
 Begin
 	OnAssign();
 	WriteStr(DeadZoneStr, Trunc(DeadZone.Percentage * 100), '%');
@@ -442,8 +444,14 @@ Begin
 		Font^.Scale := 1;
 		YPos += (5 * (Font^.CharH + Font^.SpacingY)) div 2;
 		If(ControllerCount > 0) then begin
+			LastUsedControllerID := Controllers.GetLastUsedID();
 			For Idx := 0 to (ControllerCount - 1) do begin
-				PrintText(ControllerNames[Idx], Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, @GreyColour);
+				If(ControllerInfo[Idx].JoystickID = LastUsedControllerID) then
+					TextColour := @SilverColour
+				else
+					TextColour := @GreyColour;
+
+				PrintText(ControllerInfo[Idx].Name, Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, TextColour);
 				YPos += (3 * (Font^.CharH + Font^.SpacingY)) div 2
 			end
 		end else begin

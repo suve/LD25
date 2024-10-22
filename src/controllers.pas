@@ -49,6 +49,13 @@ Type
 		Procedure Deserialize(From: AnsiString);
 	end;
 
+	PControllerInfo = ^TControllerInfo;
+	TControllerInfo = record
+		DeviceID: cint32;
+		JoystickID: TSDL_JoystickID;
+		Name: AnsiString;
+	end;
+
 	PPercentageValue = ^TPercentageValue;
 	TPercentageValue = object
 		Private
@@ -74,10 +81,11 @@ Procedure HandleBatteryEvent(Ev: PSDL_Event);
 Procedure HandleDeviceEvent(Ev: PSDL_Event);
 
 Function GetLastUsed(): PSDL_GameController;
+Function GetLastUsedID(): TSDL_JoystickID;
 Procedure SetLastUsedID(ID: TSDL_JoystickID);
 Procedure RumbleLastUsed(LowFreq, HighFreq: cuint16; DurationMs: cuint32);
 
-Procedure GetControllerNames(Out Count: sInt; Out Names: Array of AnsiString);
+Procedure EnumerateControllers(Out Count: sInt; Out Info: Array of TControllerInfo);
 
 
 Implementation
@@ -93,6 +101,11 @@ Var
 Function GetLastUsed(): PSDL_GameController;
 Begin
 	Result := LastUsedCon
+End;
+
+Function GetLastUsedID(): TSDL_JoystickID;
+Begin
+	Result := LastUsedID
 End;
 
 Procedure SetLastUsedID(ID: TSDL_JoystickID);
@@ -231,13 +244,13 @@ Begin
 			AddController(Idx)
 end;
 
-Procedure GetControllerNames(Out Count: sInt; Out Names: Array of AnsiString);
+Procedure EnumerateControllers(Out Count: sInt; Out Info: Array of TControllerInfo);
 Var
-	DevCount, DevIdx: sInt;
+	DevCount, DevIdx: cint32;
 	JoyName: PChar;
 Begin
 	Count := 0;
-	If(Length(Names) = 0) then Exit;
+	If(Length(Info) = 0) then Exit;
 
 	DevCount := SDL_NumJoysticks();
 	If(DevCount < 0) then begin
@@ -248,14 +261,17 @@ Begin
 	For DevIdx := 0 to (DevCount-1) do begin
 		If(SDL_IsGameController(DevIdx) <> SDL_TRUE) then Continue;
 
+		Info[Count].DeviceID := DevIdx;
+		Info[Count].JoystickID := SDL_JoystickGetDeviceInstanceID(DevIdx);
+
 		JoyName := SDL_JoystickNameForIndex(DevIdx);
 		If(JoyName <> NIL) then
-			Names[Count] := JoyName
+			Info[Count].Name := JoyName
 		else
-			Names[Count] := 'Unknown device';
+			Info[Count].Name := 'Unknown device';
 
 		Count += 1;
-		If(Count >= Length(Names)) then Break
+		If(Count >= Length(Info)) then Break
 	end
 End;
 

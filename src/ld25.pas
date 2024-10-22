@@ -182,7 +182,7 @@ Var
 	Assload: Assets.TLoadingResult;
 
 	ControllerCount: sInt;
-	ControllerNames: Array[0..4] of AnsiString;
+	ControllerInfo: Array[0..4] of TControllerInfo;
 Begin
 	StartTime:=GetTimeStamp(); Randomize();
 
@@ -312,13 +312,13 @@ Begin
 
 	// This is not the best way to do this, as the user could potentially have
 	// more controllers than the length of the array, but - eh, good enough.
-	GetControllerNames(ControllerCount, ControllerNames);
+	EnumerateControllers(ControllerCount, ControllerInfo);
 	Toast.SetVisibility(True);
 	If(ControllerCount > 0) then
 		If(ControllerCount > 1) then
 			Toast.Show(TH_CONTROLLER_FOUND_MULTIPLE, IntToStr(ControllerCount) + ' devices')
 		else
-			Toast.Show(TH_CONTROLLER_FOUND, ControllerNames[0]);
+			Toast.Show(TH_CONTROLLER_FOUND, ControllerInfo[0].Name);
 
 	SDL_Log('All done! Initialization finished in %ld ms.', [clong(TimeStampDiffMillis(StartTime, GetTimeStamp()))])
 End;

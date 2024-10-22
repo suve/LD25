@@ -23,7 +23,8 @@ Uses SDL2;
 
 Const
 	WhiteColour: TSDL_Colour = (R: 255; G: 255; B: 255; A: 255);
-	GreyColour: TSDL_Colour = (R: 128; G: 128; B: 128; A: 255);
+	SilverColour: TSDL_Colour = (R: 191; G: 191; B: 191; A: 255);
+	GreyColour: TSDL_Colour = (R: 127; G: 127; B: 127; A: 255);
 	BlackColour: TSDL_Colour = (R: 0; G: 0; B: 0; A: 255);
 	LimeColour: TSDL_Colour = (R: 0; G: 255; B: 0; A: 255);
 	RedColour: TSDL_Colour = (R: 255; G: 0; B: 0; A: 255);
