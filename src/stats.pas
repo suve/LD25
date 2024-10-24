@@ -42,6 +42,9 @@ Type
 	TOptionalUInt = specialize TOptional<uInt>;
 	POptionalUInt = ^TOptionalUInt;
 
+	TOptionalFloat = specialize TOptional<Double>;
+	POptionalFloat = ^TOptionalFloat;
+
 	TBestTimeCheck = (
 		BTC_NOTIME, // Cannot determine (TotalTime was unset)
 		BTC_FIRST,  // First time playing (BestTime was unset)
@@ -60,6 +63,7 @@ Var
 	KillsMade: TOptionalUInt;
 	ShotsFired: TOptionalUInt;
 	ShotsHit: TOptionalUInt;
+	DistanceTravelled: TOptionalFloat;
 
 Function CheckBestTime():TBestTimeCheck;
 
@@ -113,6 +117,7 @@ Begin
 	KillsMade.SetTo(0);
 	ShotsFired.SetTo(0);
 	ShotsHit.SetTo(0);
+	DistanceTravelled.SetTo(0.0);
 End;
 
 Procedure UnsetSaveStats();
@@ -123,6 +128,7 @@ Begin
 	KillsMade.Unset();
 	ShotsFired.Unset();
 	ShotsHit.Unset();
+	DistanceTravelled.Unset();
 End;
 
 Procedure UnsetGlobalStats();

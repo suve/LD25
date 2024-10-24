@@ -219,57 +219,77 @@ Begin
 	AniFra:=(Timekeeping.GetTicks() div AnimTime) mod 2
 End;
 
-Procedure CalculateHero(Const Time:uInt);
+Procedure CalculateLivingHero(Const Time:uInt); Inline;
+Var
+	XDif, YDif, ChkX, ChkY: Double;
+	OldX, OldY, Dist: Double;
+Begin
+	Hero^.Calculate(Time);
+	If(Hero^.XVel = 0.0) and (Hero^.YVel = 0.0) then Exit();
+
+	XDif := Hero^.XVel * Time / 1000;
+	YDif := Hero^.YVel * Time / 1000;
+
+	OldX := Hero^.X;
+	OldY := Hero^.Y;
+
+	{$IFDEF LD25_DEBUG}
+	If (Not CheatNoClip) then begin
+	{$ENDIF}
+		If (XDif <> 0.0) then begin
+			ChkX := Hero^.X;
+			If (XDif > 0.0) then ChkX += Hero^.W - 1;
+
+			If (Not Room^.Collides(ChkX+XDif,Hero^.Y)) and (Not Room^.Collides(ChkX+XDif,Hero^.Y+Hero^.H-1)) then
+				Hero^.X:=Hero^.X+XDif
+		end;
+
+		If (YDif <> 0.0) then begin
+			ChkY := Hero^.Y;
+			If (YDif > 0.0) then ChkY += Hero^.H - 1;
+
+			If (Not Room^.Collides(Hero^.X,ChkY+YDif)) and (Not Room^.Collides(Hero^.X+Hero^.W-1,ChkY+YDif)) then
+				Hero^.Y:=Hero^.Y+YDif
+		end;
+	{$IFDEF LD25_DEBUG}
+	end else begin
+		Hero^.X:=Hero^.X+XDif; Hero^.Y:=Hero^.Y+YDif
+	end;
+	{$ENDIF}
+
+	Dist := Hypotenuse(Hero^.X - OldX, Hero^.Y - OldY);
+	Stats.DistanceTravelled.Increase(Dist)
+End;
+
+Procedure CalculateDeadHero(Const Time:uInt); Inline;
 Var
 	C: sInt;
-	XDif, YDif, ChkX, ChkY: Double;
 Begin
-	If (Hero^.HP > 0.0) then begin
-		Hero^.Calculate(Time);
-		
-		XDif:=Hero^.XVel*Time/1000;
-		YDif:=Hero^.YVel*Time/1000;
-		
-		{$IFDEF LD25_DEBUG}
-		If (Not CheatNoClip) then begin
-		{$ENDIF}
-			If (XDif<>0) then begin
-				If (XDif<0) then ChkX:=Hero^.X else ChkX:=Hero^.X+Hero^.W-1;
-				
-				If (Not Room^.Collides(ChkX+XDif,Hero^.Y)) and (Not Room^.Collides(ChkX+XDif,Hero^.Y+Hero^.H-1)) then 
-					Hero ^.X:=Hero^.X+XDif
-			end;
-			
-			If (YDif<>0) then begin
-				If (YDif<0) then ChkY:=Hero^.Y else ChkY:=Hero^.Y+Hero^.H-1;
-				
-				If (Not Room^.Collides(Hero^.X,ChkY+YDif)) and (Not Room^.Collides(Hero^.X+Hero^.W-1,ChkY+YDif)) then
-					Hero^.Y:=Hero^.Y+YDif
-			end;
-		{$IFDEF LD25_DEBUG}
-		end else begin 
-			Hero^.X:=Hero^.X+XDif; Hero^.Y:=Hero^.Y+YDif 
-		end
-		{$ENDIF}
-	end else begin
-		If (DeadTime > 0) then 
-			DeadTime-=Time
-		else begin
-			ChangeRoom(RespRoom[GameMode].X,RespRoom[GameMode].Y);
-			Hero^.mX:=RespPos[GameMode].X; Hero^.mY:=RespPos[GameMode].Y;
-			
-			Hero^.HP:=Hero^.MaxHP;
-			Hero^.FireTimer:=0;
-			Hero^.InvTimer:=0;
-			
-			For C:=0 to 7 do
-				If (ColState[C]=STATE_PICKED) then
-					ColState[C]:=STATE_NONE;
-			Carried:=0;
+	If (DeadTime > 0) then
+		DeadTime-=Time
+	else begin
+		ChangeRoom(RespRoom[GameMode].X,RespRoom[GameMode].Y);
+		Hero^.mX:=RespPos[GameMode].X; Hero^.mY:=RespPos[GameMode].Y;
 
-			SaveCurrentGame('upon death')
-		end 
+		Hero^.HP:=Hero^.MaxHP;
+		Hero^.FireTimer:=0;
+		Hero^.InvTimer:=0;
+
+		For C:=0 to 7 do
+			If (ColState[C]=STATE_PICKED) then
+				ColState[C]:=STATE_NONE;
+		Carried:=0;
+
+		SaveCurrentGame('upon death')
 	end
+End;
+
+Procedure CalculateHero(Const Time:uInt);
+Begin
+	If (Hero^.HP > 0.0) then
+		CalculateLivingHero(Time)
+	else
+		CalculateDeadHero(Time)
 End;
 
 Procedure CalculateCrystalPickup();
