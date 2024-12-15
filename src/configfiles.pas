@@ -67,6 +67,9 @@ Const
 	Ordinals: Array[0..7] of AnsiString = (
 		'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth'
 	);
+	ControllerMovementModeNames: Array[TControllerMovementMode] of AnsiString = (
+		'invalid', 'left-stick', 'right-stick', 'dpad'
+	);
 
 	DEFAULT_DEADZONE = 0.25;
 
@@ -256,6 +259,7 @@ Begin
 	Writeln(F, '[Gamepad]');
 	Writeln(F, 'DeadZone=', Controllers.DeadZone.Percentage:0:4);
 	Writeln(F, 'Rumble=', BoolToStr(Controllers.RumbleEnabled, 'True', 'False'));
+	Writeln(F, 'Movement=', ControllerMovementModeNames[PadMovementMode]);
 	Writeln(F, 'ShootLeft=', PadShootLeft.Serialize());
 	Writeln(F, 'ShootRight=', PadShootRight.Serialize());
 	Writeln(F);
@@ -282,6 +286,7 @@ Var
 	Version, C: sInt;
 	KeyBindName, CapitalisedColourName:AnsiString;
 	K:TPlayerKey;
+	MoveMode: TControllerMovementMode;
 Begin
 	Str:=TStringList.Create();
 	
@@ -321,6 +326,15 @@ Begin
 		Controllers.RumbleEnabled:=StrToBoolDef(Str.Values['Rumble'],True);
 		PadShootLeft.Deserialize(Str.Values['ShootLeft']);
 		PadShootRight.Deserialize(Str.Values['ShootRight']);
+
+		If(Str.Values['Movement'] <> '') then begin
+			PadMovementMode := CMM_INVALID;
+			For MoveMode := CMM_LEFT_STICK to CMM_DPAD do
+				If(Str.Values['Movement'] = ControllerMovementModeNames[MoveMode]) then begin
+					PadMovementMode := MoveMode;
+					Break
+				end
+		end;
 
 		{$IFDEF LD25_MOBILE}
 			Ini.ReadSectionValues('TouchControls', Str);
@@ -391,6 +405,7 @@ Begin
 	// Gamepad bindings
 	Controllers.DeadZone.Percentage := DEFAULT_DEADZONE;
 	Controllers.RumbleEnabled := True;
+	PadMovementMode := CMM_LEFT_STICK;
 	PadShootLeft.SetButton(SDL_CONTROLLER_BUTTON_A);
 	PadShootRight.SetButton(SDL_CONTROLLER_BUTTON_B);
 

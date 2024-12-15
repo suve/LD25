@@ -95,7 +95,34 @@ Begin
 End;
 {$ENDIF}
 
+Procedure HandleGamepadButton(Const NewState: Boolean);
+Var
+	btn: TSDL_GameControllerButton;
+Begin
+	btn := Ev.cButton.Button;
+
+	If (btn = PadShootLeft.Button) then Key[KEY_SHOOTLEFT] := NewState else
+	If (btn = PadShootRight.Button) then Key[KEY_SHOOTRIGHT] := NewState else
+	If (PadMovementMode = CMM_DPAD) then begin
+		If(btn = SDL_CONTROLLER_BUTTON_DPAD_UP) then Key[KEY_UP] := NewState else
+		If(btn = SDL_CONTROLLER_BUTTON_DPAD_RIGHT) then Key[KEY_RIGHT] := NewState else
+		If(btn = SDL_CONTROLLER_BUTTON_DPAD_DOWN) then Key[KEY_DOWN] := NewState else
+		If(btn = SDL_CONTROLLER_BUTTON_DPAD_LEFT) then Key[KEY_LEFT] := NewState
+		else Exit()
+	end
+	else Exit();
+
+	Controllers.SetLastUsedID(Ev.cButton.Which)
+End;
+
 Procedure GatherInput();
+Const
+	ControllerAxisMap: Array[TControllerMovementMode, 0..1] of TSDL_GameControllerAxis = (
+		(SDL_CONTROLLER_AXIS_INVALID, SDL_CONTROLLER_AXIS_INVALID),
+		(SDL_CONTROLLER_AXIS_LEFTX,   SDL_CONTROLLER_AXIS_LEFTY),
+		(SDL_CONTROLLER_AXIS_RIGHTX,  SDL_CONTROLLER_AXIS_RIGHTY),
+		(SDL_CONTROLLER_AXIS_INVALID, SDL_CONTROLLER_AXIS_INVALID)
+	);
 Var
 	NewPaused: Boolean;
 Begin
@@ -138,12 +165,12 @@ Begin
 			If (Ev.Key.Keysym.Sym = KeyBind[Key_ShootRight]) then Key[KEY_ShootRight]:=False else
 		end else
 		If (Ev.Type_ = SDL_ControllerAxisMotion) then begin
-			If (Ev.cAxis.Axis = SDL_CONTROLLER_AXIS_LEFTX) then begin
+			If (Ev.cAxis.Axis = ControllerAxisMap[PadMovementMode][0]) then begin
 				Key[KEY_LEFT ] := Ev.cAxis.Value < (-Controllers.DeadZone.Value);
 				Key[KEY_RIGHT] := Ev.cAxis.Value > (+Controllers.DeadZone.Value);
 				Controllers.SetLastUsedID(Ev.cAxis.Which)
 			end else
-			If (Ev.cAxis.Axis = SDL_CONTROLLER_AXIS_LEFTY) then begin
+			If (Ev.cAxis.Axis = ControllerAxisMap[PadMovementMode][1]) then begin
 				Key[KEY_UP  ] := Ev.cAxis.Value < (-Controllers.DeadZone.Value);
 				Key[KEY_DOWN] := Ev.cAxis.Value > (+Controllers.DeadZone.Value);
 				Controllers.SetLastUsedID(Ev.cAxis.Which)
@@ -161,24 +188,10 @@ Begin
 			end
 		end else
 		If (Ev.Type_ = SDL_ControllerButtonDown) then begin
-			If (Ev.cButton.Button = PadShootLeft.Button) then begin
-				Key[KEY_SHOOTLEFT] := True;
-				Controllers.SetLastUsedID(Ev.cButton.Which)
-			end else
-			If (Ev.cButton.Button = PadShootRight.Button) then begin
-				Key[KEY_SHOOTRIGHT] := True;
-				Controllers.SetLastUsedID(Ev.cButton.Which)
-			end else
+			HandleGamepadButton(True)
 		end else
 		If (Ev.Type_ = SDL_ControllerButtonUp) then begin
-			If (Ev.cButton.Button = PadShootLeft.Button) then begin
-				Key[KEY_SHOOTLEFT] := False;
-				Controllers.SetLastUsedID(Ev.cButton.Which)
-			end else
-			If (Ev.cButton.Button = PadShootRight.Button) then begin
-				Key[KEY_SHOOTRIGHT] := False;
-				Controllers.SetLastUsedID(Ev.cButton.Which)
-			end else
+			HandleGamepadButton(False)
 		end else
 		If (Ev.Type_ = SDL_ControllerDeviceAdded) or (Ev.Type_ = SDL_ControllerDeviceRemoved) then begin
 			Controllers.HandleDeviceEvent(@Ev)

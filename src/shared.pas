@@ -64,6 +64,10 @@ Type
 		KEY_SHOOTLEFT, KEY_SHOOTRIGHT,
 		KEY_PAUSE, KEY_VOLDOWN, KEY_VOLUP
 	);
+	TControllerMovementMode = (
+		CMM_INVALID = -1,
+		CMM_LEFT_STICK, CMM_RIGHT_STICK, CMM_DPAD
+	);
 	TEnemyType = (
 		ENEM_DRONE, ENEM_BASHER, ENEM_BALL, ENEM_SPITTER, ENEM_SPAMMER,
 		ENEM_SNEK,
@@ -104,6 +108,7 @@ Var
 	KeyBind: Array[TPlayerKey] of TSDL_Keycode;
 
 	// Game controller binds.
+	PadMovementMode: TControllerMovementMode;
 	PadShootLeft, PadShootRight: TControllerBinding;
 
 	GameOn : Boolean; // Is a game in progress?
