@@ -277,12 +277,28 @@ Begin
 	SDL_RenderCopyEx(Renderer, GamepadButtonsGfx^.Tex, Src, @Dst, 0.0, NIL, Flip)
 End;
 
+Type
+	TAssignmentTarget = (
+		AT_NONE = -1,
+		AT_SHOOT_LEFT,
+		AT_SHOOT_RIGHT,
+		AT_MOVEMENT
+	);
+
 Procedure ConfigureGamepad();
 Const
 	LABEL_DEAD_ZONE = {$IFNDEF LD25_MOBILE} 'D - ' + {$ENDIF} 'DEAD ZONE';
 	LABEL_RUMBLE    = {$IFNDEF LD25_MOBILE} 'V - ' + {$ENDIF} 'VIBRATION';
+	LABEL_MOVEMENT  = {$IFNDEF LD25_MOBILE} 'M - ' + {$ENDIF} 'MOVE';
 	LABEL_SHT_LE    = {$IFNDEF LD25_MOBILE} 'L - ' + {$ENDIF} 'SHOOT LEFT';
 	LABEL_SHT_RI    = {$IFNDEF LD25_MOBILE} 'R - ' + {$ENDIF} 'SHOOT RIGHT';
+
+	MOVEMENT_MODE_NAME: Array[TControllerMovementMode] of AnsiString = (
+		'UNASSIGNED', 'LEFT STICK', 'RIGHT STICK', 'D-PAD'
+	);
+	MOVEMENT_HIGHLIGHT: Array[TControllerMovementMode] of THighlightId = (
+		HL_NONE, HL_LEFT_STICK_LEFT, HL_RIGHT_STICK_LEFT, HL_DPAD_UP
+	);
 
 	DEAD_ZONE_MIN = 0;
 	DEAD_ZONE_MAX = 75;
@@ -293,10 +309,10 @@ Var
 	ControllerCount: sInt;
 	ControllerInfo: Array[0..(MAX_NAMES - 1)] of TControllerInfo;
 
-	AssignToBind: PControllerBinding;
+	AssignTo: TAssignmentTarget;
 	AssignTextColour: PSDL_Colour;
 	DeadZoneStr, LeftStr, RightStr: AnsiString;
-	LeftHighlight, RightHighlight: THighlightID;
+	MovementHighlight, LeftHighlight, RightHighlight: THighlightID;
 
 	Procedure ChangeDeadZone();
 	Var
@@ -325,29 +341,57 @@ Var
 		RightStr := PadShootRight.ToPrettyString();
 		RightHighlight := GetHighlightIdForBinding(@PadShootRight);
 
-		AssignToBind := NIL
+		AssignTo := AT_NONE
 	End;
 
 	Procedure MaybeAssignAxis(Ev: PSDL_Event);
+	Var
+		ax: TSDL_GameControllerAxis;
 	Begin
-		If(AssignToBind = NIL) then Exit;
-
-		// Left thumbstick is hard-coded for movement
-		If(Ev^.cAxis.Axis = SDL_CONTROLLER_AXIS_LEFTX) or (Ev^.cAxis.Axis = SDL_CONTROLLER_AXIS_LEFTY) then Exit;
+		If(AssignTo = AT_NONE) then Exit;
 
 		// Respect the dead zone setting when assigning
 		If(Ev^.cAxis.Value > -Controllers.DeadZone.Value) and (Ev^.cAxis.Value < +Controllers.DeadZone.Value) then Exit;
 
-		AssignToBind^.SetAxis(Ev^.cAxis.Axis, Ev^.cAxis.Value);
-		OnAssign()
+		ax := Ev^.cAxis.Axis;
+		If(AssignTo = AT_SHOOT_LEFT) then begin
+			PadShootLeft.SetAxis(ax, Ev^.cAxis.Value);
+			OnAssign()
+		end else
+		If(AssignTo = AT_SHOOT_RIGHT) then begin
+			PadShootRight.SetAxis(ax, Ev^.cAxis.Value);
+			OnAssign()
+		end else begin // Already checked for AT_NONE before
+			If(ax = SDL_CONTROLLER_AXIS_LEFTX) or (ax = SDL_CONTROLLER_AXIS_LEFTY) then begin
+				PadMovementMode := CMM_LEFT_STICK;
+				OnAssign()
+			end else
+			If(ax = SDL_CONTROLLER_AXIS_RIGHTX) or (ax = SDL_CONTROLLER_AXIS_RIGHTY) then begin
+				PadMovementMode := CMM_RIGHT_STICK;
+				OnAssign()
+			end else
+		end
 	End;
 
 	Procedure MaybeAssignButton(Ev: PSDL_Event);
+	Var
+		btn: TSDL_GameControllerButton;
 	Begin
-		If(AssignToBind = NIL) then Exit;
-
-		AssignToBind^.SetButton(Ev^.cButton.Button);
-		OnAssign()
+		btn := Ev^.cButton.Button;
+		If(AssignTo = AT_SHOOT_LEFT) then begin
+			PadShootLeft.SetButton(btn);
+			OnAssign()
+		end else
+		If(AssignTo = AT_SHOOT_RIGHT) then begin
+			PadShootRight.SetButton(btn);
+			OnAssign()
+		end else
+		If(AssignTo = AT_MOVEMENT) then begin
+			If(btn >= SDL_CONTROLLER_BUTTON_DPAD_UP) and (btn <= SDL_CONTROLLER_BUTTON_DPAD_RIGHT) then begin
+				PadMovementMode := CMM_DPAD;
+				OnAssign()
+			end
+		end
 	End;
 
 	Procedure UpdateControllerList();
@@ -362,7 +406,7 @@ Var
 			AssignTextColour := @MenuActiveColour
 		end else begin
 			AssignTextColour := @MenuInactiveColour;
-			AssignToBind := NIL
+			AssignTo := AT_NONE
 		end
 	End;
 
@@ -378,7 +422,8 @@ Const
 	RumbleStr: Array[Boolean] of AnsiString = ('DISABLED', 'ENABLED');
 Var
 	Idx, YPos: uInt;
-	DeadRect, RumbleRect, LeftRect, RightRect: TSDL_Rect;
+	BlinkVisible: Boolean;
+	DeadRect, RumbleRect, MovementRect, LeftRect, RightRect: TSDL_Rect;
 	PadRect: TSDL_Rect;
 	LastUsedControllerID: TSDL_JoystickID;
 	TextColour: PSDL_Colour;
@@ -402,6 +447,8 @@ Begin
 	SDL_SetTextureBlendMode(GamepadButtonsGfx^.Tex, SDL_BLENDMODE_BLEND);
 
 	While True do begin
+		BlinkVisible := ((GetTicks() div BLINK_PERIOD) mod 2) = 1;
+
 		Rendering.BeginFrame();
 		DrawTitle();
 
@@ -413,32 +460,39 @@ Begin
 		YPos += (5 * (Font^.CharH + Font^.SpacingY)) div 2;
 		DeadRect.Y := YPos;
 		PrintText(LABEL_DEAD_ZONE, Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @MenuActiveColour);
-		YPos += (3 * (Font^.CharH + Font^.SpacingY)) div 2;
+		YPos += (5 * (Font^.CharH + Font^.SpacingY)) div 4;
 		PrintText(DeadZoneStr, Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
 
-		YPos += (4 * (Font^.CharH + Font^.SpacingY)) div 2;
+		YPos += (7 * (Font^.CharH + Font^.SpacingY)) div 4;
 		RumbleRect.Y := YPos;
 		PrintText(LABEL_RUMBLE, Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @MenuActiveColour);
-		YPos += (3 * (Font^.CharH + Font^.SpacingY)) div 2;
+		YPos += (5 * (Font^.CharH + Font^.SpacingY)) div 4;
 		PrintText(RumbleStr[Controllers.RumbleEnabled], Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
 
-		YPos += (4 * (Font^.CharH + Font^.SpacingY)) div 2;
+		YPos += (7 * (Font^.CharH + Font^.SpacingY)) div 4;
+		MovementRect.Y := YPos;
+		PrintText(LABEL_MOVEMENT, Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, AssignTextColour);
+		YPos += (5 * (Font^.CharH + Font^.SpacingY)) div 4;
+		If(AssignTo = AT_MOVEMENT) then begin
+			If(BlinkVisible) then PrintText('???', Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
+		end else
+			PrintText(MOVEMENT_MODE_NAME[PadMovementMode], Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
+
+		YPos += (7 * (Font^.CharH + Font^.SpacingY)) div 4;
 		LeftRect.Y := YPos;
 		PrintText(LABEL_SHT_LE, Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, AssignTextColour);
-		YPos += (3 * (Font^.CharH + Font^.SpacingY)) div 2;
-		If(AssignToBind = @PadShootLeft) then begin
-			If(((GetTicks() div BLINK_PERIOD) mod 2) = 0) then
-				PrintText('???', Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
+		YPos += (5 * (Font^.CharH + Font^.SpacingY)) div 4;
+		If(AssignTo = AT_SHOOT_LEFT) then begin
+			If(BlinkVisible) then PrintText('???', Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
 		end else
 			PrintText(LeftStr, Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
 
-		YPos += (4 * (Font^.CharH + Font^.SpacingY)) div 2;
+		YPos += (7 * (Font^.CharH + Font^.SpacingY)) div 4;
 		RightRect.Y := YPos;
 		PrintText(LABEL_SHT_RI, Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, AssignTextColour);
-		YPos += (3 * (Font^.CharH + Font^.SpacingY)) div 2;
-		If(AssignToBind = @PadShootRight) then begin
-			If(((GetTicks() div BLINK_PERIOD) mod 2) = 0) then
-				PrintText('???', Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
+		YPos += (5 * (Font^.CharH + Font^.SpacingY)) div 4;
+		If(AssignTo = AT_SHOOT_RIGHT) then begin
+			If(BlinkVisible) then PrintText('???', Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
 		end else
 			PrintText(RightStr, Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
 
@@ -467,6 +521,9 @@ Begin
 		SDL_RenderCopy(Renderer, GamepadGfx^.Tex, NIL, @PadRect);
 		RenderHighlight(LeftHighlight, @PadRect, @LimeColour);
 		RenderHighlight(RightHighlight, @PadRect, @LimeColour);
+		If(PadMovementMode <> CMM_INVALID) then
+			For Idx := 0 to 3 do
+				RenderHighlight(THighlightID(Ord(MOVEMENT_HIGHLIGHT[PadMovementMode]) + Idx), @PadRect, @LimeColour);
 
 		Rendering.FinishFrame();
 
@@ -479,10 +536,7 @@ Begin
 			end else
 			If (Ev.Type_ = SDL_KeyDown) then begin
 				If ((Ev.Key.Keysym.Sym = SDLK_Escape) or (Ev.Key.Keysym.Sym = SDLK_AC_BACK)) then begin
-					If(AssignToBind <> NIL) then
-						AssignToBind := NIL
-					else
-						Exit()
+					If(AssignTo <> AT_NONE) then AssignTo := AT_NONE else Exit()
 				end else
 				If (Ev.Key.Keysym.Sym = SDLK_D) then begin
 					ChangeDeadZone()
@@ -490,11 +544,14 @@ Begin
 				If (Ev.Key.Keysym.Sym = SDLK_V) then begin
 					ToggleRumble()
 				end else
+				If (Ev.Key.Keysym.Sym = SDLK_M) then begin
+					If(ControllerCount > 0) then AssignTo := AT_MOVEMENT
+				end else
 				If (Ev.Key.Keysym.Sym = SDLK_L) then begin
-					If(ControllerCount > 0) then AssignToBind := @PadShootLeft
+					If(ControllerCount > 0) then AssignTo := AT_SHOOT_LEFT
 				end else
 				If (Ev.Key.Keysym.Sym = SDLK_R) then begin
-					If(ControllerCount > 0) then AssignToBind := @PadShootRight
+					If(ControllerCount > 0) then AssignTo := AT_SHOOT_RIGHT
 				end else
 			end else
 			If (Ev.Type_ = SDL_MouseButtonDown) then begin
@@ -505,11 +562,14 @@ Begin
 				If(MouseInRect(RumbleRect)) then begin
 					ToggleRumble()
 				end else
+				If(MouseInRect(MovementRect)) then begin
+					If(ControllerCount > 0) then AssignTo := AT_MOVEMENT
+				end else
 				If(MouseInRect(LeftRect)) then begin
-					If(ControllerCount > 0) then AssignToBind := @PadShootLeft
+					If(ControllerCount > 0) then AssignTo := AT_SHOOT_LEFT
 				end else
 				If(MouseInRect(RightRect)) then begin
-					If(ControllerCount > 0) then AssignToBind := @PadShootRight
+					If(ControllerCount > 0) then AssignTo := AT_SHOOT_RIGHT
 				end else
 			end else
 			If (Ev.Type_ = SDL_ControllerAxisMotion) then begin
