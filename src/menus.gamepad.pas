@@ -294,7 +294,7 @@ Const
 	LABEL_SHT_RI    = {$IFNDEF LD25_MOBILE} 'R - ' + {$ENDIF} 'SHOOT RIGHT';
 
 	MOVEMENT_MODE_NAME: Array[TControllerMovementMode] of AnsiString = (
-		'UNASSIGNED', 'LEFT STICK', 'RIGHT STICK', 'D-PAD'
+		'(UNASSIGNED)', 'LEFT STICK', 'RIGHT STICK', 'D-PAD'
 	);
 	MOVEMENT_HIGHLIGHT: Array[TControllerMovementMode] of THighlightId = (
 		HL_NONE, HL_LEFT_STICK_LEFT, HL_RIGHT_STICK_LEFT, HL_DPAD_UP
@@ -312,7 +312,7 @@ Var
 	AssignTo: TAssignmentTarget;
 	AssignTextColour: PSDL_Colour;
 	DeadZoneStr, LeftStr, RightStr: AnsiString;
-	MovementHighlight, LeftHighlight, RightHighlight: THighlightID;
+	LeftHighlight, RightHighlight: THighlightID;
 
 	Procedure ChangeDeadZone();
 	Var
@@ -344,9 +344,40 @@ Var
 		AssignTo := AT_NONE
 	End;
 
+	Procedure InvalidateAxis(ax: TSDL_GameControllerAxis; Negative: PBoolean);
+	Begin
+		If(PadShootLeft.Axis = ax) then
+			If(Negative = NIL) or (PadShootLeft.Negative = Negative^) then PadShootLeft.Invalidate();
+		If(PadShootRight.Axis = ax) then
+			If(Negative = NIL) or (PadShootRight.Negative = Negative^) then PadShootRight.Invalidate();
+
+		If(PadMovementMode = CMM_LEFT_STICK) then begin
+			If(ax = SDL_CONTROLLER_AXIS_LEFTX) or (ax = SDL_CONTROLLER_AXIS_LEFTY)
+				then PadMovementMode := CMM_INVALID
+		end else
+		If(PadMovementMode = CMM_RIGHT_STICK) then begin
+			If(ax = SDL_CONTROLLER_AXIS_RIGHTX) or (ax = SDL_CONTROLLER_AXIS_RIGHTY)
+				then PadMovementMode := CMM_INVALID
+		end else
+	End;
+
+	Procedure InvalidateButton(btn: TSDL_GameControllerButton);
+	Begin
+		If(PadShootLeft.Button = btn) then PadShootLeft.Invalidate();
+		If(PadShootRight.Button = btn) then PadShootRight.Invalidate();
+		
+		If(
+			(btn >= SDL_CONTROLLER_BUTTON_DPAD_UP) and
+			(btn <= SDL_CONTROLLER_BUTTON_DPAD_RIGHT) and
+			(PadMovementMode = CMM_DPAD)
+		) then
+			PadMovementMode := CMM_INVALID
+	End;
+
 	Procedure MaybeAssignAxis(Ev: PSDL_Event);
 	Var
 		ax: TSDL_GameControllerAxis;
+		neg: Boolean;
 	Begin
 		If(AssignTo = AT_NONE) then Exit;
 
@@ -354,19 +385,26 @@ Var
 		If(Ev^.cAxis.Value > -Controllers.DeadZone.Value) and (Ev^.cAxis.Value < +Controllers.DeadZone.Value) then Exit;
 
 		ax := Ev^.cAxis.Axis;
+		neg := Ev^.cAxis.Value < 0;
 		If(AssignTo = AT_SHOOT_LEFT) then begin
+			InvalidateAxis(ax, @neg);
 			PadShootLeft.SetAxis(ax, Ev^.cAxis.Value);
 			OnAssign()
 		end else
 		If(AssignTo = AT_SHOOT_RIGHT) then begin
+			InvalidateAxis(ax, @neg);
 			PadShootRight.SetAxis(ax, Ev^.cAxis.Value);
 			OnAssign()
 		end else begin // Already checked for AT_NONE before
 			If(ax = SDL_CONTROLLER_AXIS_LEFTX) or (ax = SDL_CONTROLLER_AXIS_LEFTY) then begin
+				InvalidateAxis(SDL_CONTROLLER_AXIS_LEFTX, NIL);
+				InvalidateAxis(SDL_CONTROLLER_AXIS_LEFTY, NIL);
 				PadMovementMode := CMM_LEFT_STICK;
 				OnAssign()
 			end else
 			If(ax = SDL_CONTROLLER_AXIS_RIGHTX) or (ax = SDL_CONTROLLER_AXIS_RIGHTY) then begin
+				InvalidateAxis(SDL_CONTROLLER_AXIS_RIGHTX, NIL);
+				InvalidateAxis(SDL_CONTROLLER_AXIS_RIGHTY, NIL);
 				PadMovementMode := CMM_RIGHT_STICK;
 				OnAssign()
 			end else
@@ -379,15 +417,19 @@ Var
 	Begin
 		btn := Ev^.cButton.Button;
 		If(AssignTo = AT_SHOOT_LEFT) then begin
+			InvalidateButton(btn);
 			PadShootLeft.SetButton(btn);
 			OnAssign()
 		end else
 		If(AssignTo = AT_SHOOT_RIGHT) then begin
+			InvalidateButton(btn);
 			PadShootRight.SetButton(btn);
 			OnAssign()
 		end else
 		If(AssignTo = AT_MOVEMENT) then begin
 			If(btn >= SDL_CONTROLLER_BUTTON_DPAD_UP) and (btn <= SDL_CONTROLLER_BUTTON_DPAD_RIGHT) then begin
+				For btn := SDL_CONTROLLER_BUTTON_DPAD_UP to SDL_CONTROLLER_BUTTON_DPAD_RIGHT do
+					InvalidateButton(btn);
 				PadMovementMode := CMM_DPAD;
 				OnAssign()
 			end

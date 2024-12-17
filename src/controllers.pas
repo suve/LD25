@@ -42,6 +42,7 @@ Type
 
 		Procedure SetAxis(Value: TSDL_GameControllerAxis; Direction: cint32);
 		Procedure SetButton(Value: TSDL_GameControllerButton);
+		Procedure Invalidate();
 
 		Function ToPrettyString(): AnsiString;
 
@@ -316,6 +317,11 @@ Begin
 	Self.Negative := False;
 
 	Self.Button := Value
+End;
+
+Procedure TControllerBinding.Invalidate();
+Begin
+	Self.SetButton(SDL_CONTROLLER_BUTTON_INVALID)
 End;
 
 Function TControllerBinding.IsValid(): TControllerBindingValidity;
