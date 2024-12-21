@@ -469,15 +469,25 @@ Var
 	PadRect: TSDL_Rect;
 	LastUsedControllerID: TSDL_JoystickID;
 	TextColour: PSDL_Colour;
+
+	OptionFirstMargin, OptionOuterMargin, OptionInnerMargin: sInt;
 Begin
 	OnAssign();
 	WriteStr(DeadZoneStr, Trunc(DeadZone.Percentage * 100), '%');
 	UpdateControllerList();
 
-	DeadRect.X := (RESOL_W div 4);
+	// Distance between "gamepad settings" header and first option label
+	OptionFirstMargin := (5 * (Font^.CharH + Font^.SpacingY)) div 2;
+	// Distance between option-A value and option-B label
+	OptionOuterMargin := (7 * (Font^.CharH + Font^.SpacingY)) div 4;
+	// Distance between option-A label and option-A value
+	OptionInnerMargin := (5 * (Font^.CharH + Font^.SpacingY)) div 4;
+
+	DeadRect.X := (RESOL_W div 4) + HORIZ_OFFSET;
 	DeadRect.W := (RESOL_W div 2);
-	DeadRect.H := (Font^.CharH * 2) + ((3 * (Font^.CharH + Font^.SpacingY)) div 2);
+	DeadRect.H := (Font^.CharH * 2) + OptionInnerMargin;
 	RumbleRect := DeadRect;
+	MovementRect := DeadRect;
 	LeftRect := DeadRect;
 	RightRect := DeadRect;
 
@@ -499,40 +509,40 @@ Begin
 		PrintText('GAMEPAD SETTINGS',Font,(RESOL_W div 2),YPos,ALIGN_CENTRE,ALIGN_TOP, @WhiteColour);
 
 		Font^.Scale := 1;
-		YPos += (5 * (Font^.CharH + Font^.SpacingY)) div 2;
+		YPos += OptionFirstMargin;
 		DeadRect.Y := YPos;
 		PrintText(LABEL_DEAD_ZONE, Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @MenuActiveColour);
-		YPos += (5 * (Font^.CharH + Font^.SpacingY)) div 4;
+		YPos += OptionInnerMargin;
 		PrintText(DeadZoneStr, Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
 
-		YPos += (7 * (Font^.CharH + Font^.SpacingY)) div 4;
+		YPos += OptionOuterMargin;
 		RumbleRect.Y := YPos;
 		PrintText(LABEL_RUMBLE, Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @MenuActiveColour);
-		YPos += (5 * (Font^.CharH + Font^.SpacingY)) div 4;
+		YPos += OptionInnerMargin;
 		PrintText(RumbleStr[Controllers.RumbleEnabled], Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
 
-		YPos += (7 * (Font^.CharH + Font^.SpacingY)) div 4;
+		YPos += OptionOuterMargin;
 		MovementRect.Y := YPos;
 		PrintText(LABEL_MOVEMENT, Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, AssignTextColour);
-		YPos += (5 * (Font^.CharH + Font^.SpacingY)) div 4;
+		YPos += OptionInnerMargin;
 		If(AssignTo = AT_MOVEMENT) then begin
 			If(BlinkVisible) then PrintText('???', Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
 		end else
 			PrintText(MOVEMENT_MODE_NAME[PadMovementMode], Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
 
-		YPos += (7 * (Font^.CharH + Font^.SpacingY)) div 4;
+		YPos += OptionOuterMargin;
 		LeftRect.Y := YPos;
 		PrintText(LABEL_SHT_LE, Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, AssignTextColour);
-		YPos += (5 * (Font^.CharH + Font^.SpacingY)) div 4;
+		YPos += OptionInnerMargin;
 		If(AssignTo = AT_SHOOT_LEFT) then begin
 			If(BlinkVisible) then PrintText('???', Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
 		end else
 			PrintText(LeftStr, Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
 
-		YPos += (7 * (Font^.CharH + Font^.SpacingY)) div 4;
+		YPos += OptionOuterMargin;
 		RightRect.Y := YPos;
 		PrintText(LABEL_SHT_RI, Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, AssignTextColour);
-		YPos += (5 * (Font^.CharH + Font^.SpacingY)) div 4;
+		YPos += OptionInnerMargin;
 		If(AssignTo = AT_SHOOT_RIGHT) then begin
 			If(BlinkVisible) then PrintText('???', Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
 		end else
