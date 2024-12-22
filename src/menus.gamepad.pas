@@ -461,6 +461,8 @@ Const
 	PAD_X = (RESOL_W div 2) - HORIZ_OFFSET - (PAD_WIDTH div 2);
 	SETTINGS_X = (RESOL_W div 2) + HORIZ_OFFSET;
 
+	LABEL_ALIGNMENT = {$IFDEF LD25_MOBILE} ALIGN_CENTRE {$ELSE} ALIGN_LEFT {$ENDIF};
+
 	RumbleStr: Array[Boolean] of AnsiString = ('DISABLED', 'ENABLED');
 Var
 	Idx, YPos: uInt;
@@ -471,6 +473,7 @@ Var
 	TextColour: PSDL_Colour;
 
 	OptionFirstMargin, OptionOuterMargin, OptionInnerMargin: sInt;
+	OptionLabelX: sInt;
 Begin
 	OnAssign();
 	WriteStr(DeadZoneStr, Trunc(DeadZone.Percentage * 100), '%');
@@ -482,6 +485,13 @@ Begin
 	OptionOuterMargin := (7 * (Font^.CharH + Font^.SpacingY)) div 4;
 	// Distance between option-A label and option-A value
 	OptionInnerMargin := (5 * (Font^.CharH + Font^.SpacingY)) div 4;
+
+	{$IFDEF LD25_MOBILE}
+		OptionLabelX := SETTINGS_X;
+	{$ELSE}
+		Font^.Scale := 1;
+		OptionLabelX := SETTINGS_X - (GetTextWidth(LABEL_SHT_RI, Font) div 2);
+	{$ENDIF}
 
 	DeadRect.X := (RESOL_W div 4) + HORIZ_OFFSET;
 	DeadRect.W := (RESOL_W div 2);
@@ -511,19 +521,19 @@ Begin
 		Font^.Scale := 1;
 		YPos += OptionFirstMargin;
 		DeadRect.Y := YPos;
-		PrintText(LABEL_DEAD_ZONE, Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @MenuActiveColour);
+		PrintText(LABEL_DEAD_ZONE, Font, OptionLabelX, YPos, LABEL_ALIGNMENT, ALIGN_TOP, @MenuActiveColour);
 		YPos += OptionInnerMargin;
 		PrintText(DeadZoneStr, Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
 
 		YPos += OptionOuterMargin;
 		RumbleRect.Y := YPos;
-		PrintText(LABEL_RUMBLE, Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @MenuActiveColour);
+		PrintText(LABEL_RUMBLE, Font, OptionLabelX, YPos, LABEL_ALIGNMENT, ALIGN_TOP, @MenuActiveColour);
 		YPos += OptionInnerMargin;
 		PrintText(RumbleStr[Controllers.RumbleEnabled], Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
 
 		YPos += OptionOuterMargin;
 		MovementRect.Y := YPos;
-		PrintText(LABEL_MOVEMENT, Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, AssignTextColour);
+		PrintText(LABEL_MOVEMENT, Font, OptionLabelX, YPos, LABEL_ALIGNMENT, ALIGN_TOP, AssignTextColour);
 		YPos += OptionInnerMargin;
 		If(AssignTo = AT_MOVEMENT) then begin
 			If(BlinkVisible) then PrintText('???', Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
@@ -532,7 +542,7 @@ Begin
 
 		YPos += OptionOuterMargin;
 		LeftRect.Y := YPos;
-		PrintText(LABEL_SHT_LE, Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, AssignTextColour);
+		PrintText(LABEL_SHT_LE, Font, OptionLabelX, YPos, LABEL_ALIGNMENT, ALIGN_TOP, AssignTextColour);
 		YPos += OptionInnerMargin;
 		If(AssignTo = AT_SHOOT_LEFT) then begin
 			If(BlinkVisible) then PrintText('???', Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
@@ -541,7 +551,7 @@ Begin
 
 		YPos += OptionOuterMargin;
 		RightRect.Y := YPos;
-		PrintText(LABEL_SHT_RI, Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, AssignTextColour);
+		PrintText(LABEL_SHT_RI, Font, OptionLabelX, YPos, LABEL_ALIGNMENT, ALIGN_TOP, AssignTextColour);
 		YPos += OptionInnerMargin;
 		If(AssignTo = AT_SHOOT_RIGHT) then begin
 			If(BlinkVisible) then PrintText('???', Font, SETTINGS_X, YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
