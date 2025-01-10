@@ -53,6 +53,8 @@ Var
 	PauseTxt: TSDL_Point;
 	Paused, WantToQuit: Boolean;
 	RoomChange: TRoomChange;
+	// Intermediate variable used to reduce rounding errors
+	RoomDistanceTravelled: Double;
 
 {$IFDEF LD25_DEBUG}
 	Type
@@ -73,6 +75,12 @@ Begin
 	else
 		SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, '0')
 end;
+
+Procedure TransferRoomDistanceTravelled();
+Begin
+	Stats.DistanceTravelled.Increase(RoomDistanceTravelled);
+	RoomDistanceTravelled := 0.0
+End;
 
 {$IFDEF LD25_DEBUG}
 Procedure TriggerInvulnerabilityCheat(); Inline;
@@ -258,7 +266,7 @@ Begin
 	{$ENDIF}
 
 	Dist := Hypotenuse(Hero^.X - OldX, Hero^.Y - OldY);
-	Stats.DistanceTravelled.Increase(Dist)
+	RoomDistanceTravelled += Dist
 End;
 
 Procedure CalculateDeadHero(Const Time:uInt); Inline;
@@ -268,6 +276,7 @@ Begin
 	If (DeadTime > 0) then
 		DeadTime-=Time
 	else begin
+		TransferRoomDistanceTravelled();
 		ChangeRoom(RespRoom[GameMode].X,RespRoom[GameMode].Y);
 		Hero^.mX:=RespPos[GameMode].X; Hero^.mY:=RespPos[GameMode].Y;
 
@@ -875,7 +884,8 @@ Begin
 			If (ChangeRoom(Room^.X-1,Room^.Y)) then Hero^.mX:=(ROOM_W-1)
 		end
 	end;
-	
+
+	TransferRoomDistanceTravelled();
 	RoomChange := RCHANGE_NONE
 End;
 
@@ -965,6 +975,7 @@ Begin
 	{$IFDEF LD25_MOBILE} TouchControls.SetVisibility(TCV_GAME); {$ENDIF}
 	
 	RoomChange:=RCHANGE_NONE;
+	RoomDistanceTravelled := 0.0;
 	Paused:=False; WantToQuit:=False; 
 	Frames:=0; FrameTime:=0; FrameStr:='???';
 	
@@ -999,6 +1010,8 @@ Begin
 		CountFrames(DeltaTime);
 
 	Until WantToQuit;
+
+	TransferRoomDistanceTravelled();
 
 	{$IFDEF LD25_MOBILE} TouchControls.SetVisibility(TCV_NONE); {$ENDIF}
 
