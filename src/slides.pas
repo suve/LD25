@@ -218,6 +218,7 @@ Type
 		ShotsFired: AnsiString;
 		ShotsHit: AnsiString;
 		Accuracy: AnsiString;
+		Distance: AnsiString;
 		BestTimeCheck: TBestTimeCheck;
 	end;
 
@@ -257,6 +258,7 @@ End;
 Procedure RenderStatsTexts(Ptr: PPlayerStats);
 Var
 	Time, Fired, Hit: uInt;
+	Distance: Double;
 Begin
 	If Stats.TotalTime.Get(@Time) then
 		Ptr^.TotalTime := FormatTimeString(Time)
@@ -281,6 +283,11 @@ Begin
 			Ptr^.Accuracy := '-'
 	end else
 		Ptr^.Accuracy := '???';
+
+	If Stats.DistanceTravelled.Get(@Distance) then
+		WriteStr(Ptr^.Distance, (Distance / TILE_W):0:1, ' TILES')
+	else
+		Ptr^.Distance := '???';
 End;
 
 
@@ -297,7 +304,7 @@ Begin
 	Dst.W := TitleGfx^.W; Dst.H := TitleGfx^.H;
 	DrawImage(TitleGfx, NIL, @Dst, NIL);
 
-	YPos := TitleGfx^.H + (Font^.CharH * 3 div 2);
+	YPos := TitleGfx^.H;
 	Font^.Scale := 2;
 	PrintText('YOUR STATS', Font, (RESOL_W div 2), YPos, ALIGN_CENTRE, ALIGN_TOP, @WhiteColour);
 	YPos += (Font^.SpacingY + Font^.CharH) * Font^.Scale * 2;
@@ -317,6 +324,10 @@ Begin
 	end;
 	YPos += (Font^.SpacingY + Font^.CharH) * 3;
 	YStep := (Font^.SpacingY + Font^.CharH) * 9 div 4;
+
+	PrintText('DISTANCE TRAVELLED: ', Font, OffCenter, YPos, ALIGN_RIGHT, ALIGN_TOP, @WhiteColour);
+	PrintText(PlaSta^.Distance, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);
+	YPos += YStep;
 
 	PrintText('HITS TAKEN: ', Font, OffCenter, YPos, ALIGN_RIGHT, ALIGN_TOP, @WhiteColour);
 	PrintText(PlaSta^.HitsTaken, Font, OffCenter, YPos, ALIGN_LEFT, ALIGN_TOP, NIL);

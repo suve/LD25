@@ -91,6 +91,7 @@ Var
 	Idx: uInt;
 	Path: AnsiString;
 	Value: uInt;
+	FloatValue: Double;
 Begin
 	If (Not CheckConfPath()) then Exit(False);
 	
@@ -137,6 +138,7 @@ Begin
 	If Stats.KillsMade.Get(@Value) then Writeln(F, 'KillsMade=', Value);
 	If Stats.ShotsFired.Get(@Value) then Writeln(F, 'ShotsFired=', Value);
 	If Stats.ShotsHit.Get(@Value) then Writeln(F, 'ShotsHit=', Value);
+	If Stats.DistanceTravelled.Get(@FloatValue) then Writeln(F, 'DistanceTravelled=', FloatValue:0:3);
 	Writeln(F);
 
 	Writeln(F,'[Switches]');
@@ -155,6 +157,18 @@ Begin
 		NumValue := SysUtils.
 			{$IFDEF CPU64} StrToQWord {$ELSE} StrToDWord {$ENDIF}
 			(StrValue);
+		Ref^.SetTo(NumValue)
+	Except
+		On EConvertError do Ref^.Unset()
+	End
+End;
+
+Procedure ReadStatsEntryFloat(Ref: POptionalFloat; StrValue: AnsiString);
+Var
+	NumValue: Double;
+Begin
+	Try
+		NumValue := SysUtils.StrToFloat(StrValue);
 		Ref^.SetTo(NumValue)
 	Except
 		On EConvertError do Ref^.Unset()
@@ -199,6 +213,7 @@ Begin
 	ReadStatsEntry(@Stats.KillsMade, Str.Values['KillsMade']);
 	ReadStatsEntry(@Stats.ShotsFired, Str.Values['ShotsFired']);
 	ReadStatsEntry(@Stats.ShotsHit, Str.Values['ShotsHit']);
+	ReadStatsEntryFloat(@Stats.DistanceTravelled, Str.Values['DistanceTravelled']);
 
 	Ini.ReadSectionValues('Switches',Str);
 	For C:=Low(Switch) to High(Switch) do Switch[C]:=StrToBoolDef(Str.Values[Shared.IntToStr(C,2)],False);
