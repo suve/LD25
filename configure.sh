@@ -252,11 +252,13 @@ PAS_PREFIX="$(pascal_string "${PREFIX}")"
 # Calculate Makefile variables from arguments
 
 BUILD_FLAGS="-vewnh -dLD25_ASSETS_${ASSETS}"
+GFX_FILTER=""
 
 if [ "${ANDROID}" = "true" ]; then
 	EXE_PREFIX="lib"
 	EXE_SUFFIX=".so"
 	BUILD_FLAGS="-Tandroid ${BUILD_FLAGS}"
+	GFX_FILTER="gfx/toasts.png ${GFX_FILTER}"
 else
 	EXE_PREFIX=""
 	EXE_SUFFIX=""
@@ -279,11 +281,10 @@ fi
 
 if [ "${PLATFORM}" = "mobile" ]; then
 	BUILD_FLAGS="${BUILD_FLAGS} -dLD25_MOBILE"
-	GFX_FILTER=""
 	PLATFORM_GOOD="mobile"
 	PLATFORM_BAD="desktop"
 else
-	GFX_FILTER="gfx/touch-controls.png"
+	GFX_FILTER="gfx/touch-controls.png ${GFX_FILTER}"
 	PLATFORM_GOOD="desktop"
 	PLATFORM_BAD="mobile"
 fi
