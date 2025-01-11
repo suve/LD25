@@ -10,7 +10,7 @@
 # creating a fairly universal package.
 #
 
-VERSION="2.1"
+VERSION="2.2"
 
 # -- Set up error handling and paths
 

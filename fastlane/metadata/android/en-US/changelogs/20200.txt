@@ -1,0 +1,7 @@
+- The game can now be played using controllers/gamepads. Note that this is currently supported only inside the game proper; menus are still limited to touch navigation.
+
+- During the intro & outro, the game now has an extra pair of touch controls for switching to the previous/next slide.
+
+- The game will now keep track of the order in which colours are retrieved, and use that order when displaying the outro slides.
+
+- Added a "distance travelled" stat to the end screen.

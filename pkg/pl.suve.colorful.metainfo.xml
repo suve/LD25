@@ -4,7 +4,9 @@
 <id>pl.suve.colorful</id>
 	<name>Colorful</name>
 	<project_license>GPL-3.0-only</project_license>
-	<developer_name>suve</developer_name>
+	<developer id="pl.suve">
+		<name>suve</name>
+	</developer>
 
 	<summary>Side-view shooter game</summary>
 	<summary xml:lang="pl">Strzelanka 2D</summary>
@@ -12,7 +14,7 @@
 	<description>
 		<p>
 			Colorful is a simple side-view shooter game, where the protagonist
-			travels a maze of caves and corridors in order to collect color artifacts.
+			travels a maze of caves and corridors in order to collect color artefacts.
 		</p>
 		<p xml:lang="pl">
 			Colorful jest prostą strzelanką z widokiem z boku, w której bohater
@@ -32,6 +34,9 @@
 	<recommends>
 		<control>keyboard</control>
 	</recommends>
+	<supports>
+		<control>gamepad</control>
+	</supports>
 
 	<content_rating type="oars-1.1">
 		<content_attribute id="violence-cartoon">moderate</content_attribute>
@@ -76,6 +81,30 @@
 	<url type="vcs-browser">https://github.com/suve/LD25/</url>
 
 	<releases>
+		<release version="2.2" date="2025-01-11">
+			<description>
+				<p>Version 2.2 brings some new features to the game.</p>
+				<ul>
+					<li>
+						The game can now be played using controllers/gamepads. Note that this is currently
+						supported only inside the game proper; menus are still limited to keyboard &amp; touch.
+					</li>
+					<li>
+						The game will now keep track of the order in which colours are retrieved,
+						and use that order when displaying the outro slides. The slides themselves
+						have been reworked from the hero holding a generic &quot;star&quot; item
+						(which does not even appear in the game) to holding the actual in-game artefacts.
+					</li>
+					<li>
+						Added &quot;distance travelled&quot; to the list of stats shown after beating the game.
+					</li>
+					<li>
+						On Android, during the intro &amp; outro, the game now has an extra pair of touch controls
+						for switching to the previous/next slide.
+					</li>
+				</ul>
+			</description>
+		</release>
 		<release version="2.1" date="2024-07-01">
 			<description>
 				<p>Version 2.1 brings a slew of new features and quality-of-live improvements to the game.</p>

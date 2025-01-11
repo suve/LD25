@@ -29,7 +29,7 @@ Uses
 // A shitload of constants - but hey, this is the 'shared' unit, isn't it?
 const 
 	GAMENAME = 'Colorful'; GAMEAUTH = 'suve';
-	MAJORNUM = '2'; MINORNUM = '1'; GAMEVERS = MAJORNUM+'.'+MINORNUM;
+	MAJORNUM = '2'; MINORNUM = '2'; GAMEVERS = MAJORNUM+'.'+MINORNUM;
 
 	TILE_W = 16; TILE_H = 16; TILE_S = ((TILE_W + TILE_H) div 2);
 	ROOM_W = 20; ROOM_H = 20;
