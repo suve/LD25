@@ -13,6 +13,7 @@ SCRIPT_NAME="$(basename "$0")"
 ARCHES=""
 CLEAN=""
 DEBUG=""
+SIGN=""
 
 while [[ "$#" -gt 0 ]]; do
 	if [[ "$1" == "--arch" ]]; then
@@ -33,6 +34,18 @@ while [[ "$#" -gt 0 ]]; do
 	elif [[ "$1" == "--debug" ]]; then
 		DEBUG="--debug"
 		shift 1
+	elif [[ "$1" == "--sign" ]]; then
+		if [[ "$#" -eq 1 ]]; then
+			echo "${SCRIPT_NAME}: Error! The --sign option requires an argument." >&2
+			exit 1
+		fi
+
+		SIGN="--sign ${2}"
+		if [[ ! -f "${2}" ]]; then
+			echo "${SCRIPT_NAME}: Error! Keystore file '${2}' does not exist." >&2
+		fi
+
+		shift 2
 	else
 		echo "${SCRIPT_NAME}: Error! Unknown option \"${1}\"." >&2
 		exit 1
@@ -62,4 +75,4 @@ cd "${SCRIPT_DIR}"
 ./build-SDL2.sh ${ARCHES} ${CLEAN} ${DEBUG}
 ./build-colorful.sh ${ARCHES} ${CLEAN} ${DEBUG}
 ./build-assets.sh ${CLEAN} ${DEBUG}
-./build-apk.sh ${CLEAN} ${DEBUG}
+./build-apk.sh ${CLEAN} ${DEBUG} ${SIGN}
