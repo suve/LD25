@@ -16,6 +16,7 @@ ARCH_X86=""
 ARCH_X86_64=""
 
 CLEAN=0
+FPC="$(command -v fpc)"
 DEBUG="false"
 
 while [[ "$#" -gt 0 ]]; do
@@ -43,6 +44,14 @@ while [[ "$#" -gt 0 ]]; do
 	elif [[ "$1" == "--debug" ]]; then
 		DEBUG="true"
 		shift 1
+	elif [[ "$1" == "--fpc" ]]; then
+		if [[ "$#" -eq 1 ]]; then
+			echo "${SCRIPT_NAME}: Error! The --fpc option requires an argument." >&2
+			exit 1
+		fi
+
+		FPC="${2}"
+		shift 2
 	else
 		echo "${SCRIPT_NAME}: Error! Unknown option \"${1}\"." >&2
 		exit 1
@@ -92,6 +101,7 @@ function fpcbuild() {
 	mkdir -p "${BUILD_DIR}/obj/local/${NDK_ARCH}/objs/colorful/"
 
 	./configure.sh \
+		--fpc="${FPC}" \
 		--flags="-P${FPC_ARCH}" \
 		--flags="-Fl${BUILD_DIR}/lib/${NDK_ARCH}" \
 		--flags="-FE${BUILD_DIR}/lib/${NDK_ARCH}" \

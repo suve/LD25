@@ -13,6 +13,7 @@ SCRIPT_NAME="$(basename "$0")"
 ARCHES=""
 CLEAN=""
 DEBUG=""
+FPC=""
 SIGN=""
 
 while [[ "$#" -gt 0 ]]; do
@@ -34,6 +35,14 @@ while [[ "$#" -gt 0 ]]; do
 	elif [[ "$1" == "--debug" ]]; then
 		DEBUG="--debug"
 		shift 1
+	elif [[ "$1" == "--fpc" ]]; then
+		if [[ "$#" -eq 1 ]]; then
+			echo "${SCRIPT_NAME}: Error! The --fpc option requires an argument." >&2
+			exit 1
+		fi
+
+		FPC="--fpc ${2}"
+		shift 2
 	elif [[ "$1" == "--sign" ]]; then
 		if [[ "$#" -eq 1 ]]; then
 			echo "${SCRIPT_NAME}: Error! The --sign option requires an argument." >&2
@@ -73,6 +82,6 @@ fi
 
 cd "${SCRIPT_DIR}"
 ./build-SDL2.sh ${ARCHES} ${CLEAN} ${DEBUG}
-./build-colorful.sh ${ARCHES} ${CLEAN} ${DEBUG}
+./build-colorful.sh ${ARCHES} ${CLEAN} ${DEBUG} ${FPC}
 ./build-assets.sh ${CLEAN} ${DEBUG}
 ./build-apk.sh ${CLEAN} ${DEBUG} ${SIGN}
