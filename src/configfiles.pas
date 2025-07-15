@@ -494,33 +494,52 @@ Begin
 End;
 
 {$IFDEF LD25_COMPAT_V1}
-Procedure CopyFile(OldPath, NewPath: AnsiString);
+Function CopyFile(OldPath, NewPath: AnsiString): Boolean;
 Const
 	BufferSize = 4096;
 	ErroneousHandle = THandle(-1);
 Var
 	Buffer: Array[0 .. (BufferSize - 1)] of Char;
 	ReadHandle, WriteHandle: THandle;
-	Count: sInt;
-Begin
-	ReadHandle := FileOpen(OldPath, fmOpenRead);
-	If ReadHandle = ErroneousHandle then Exit();
+	ReadCount, WriteCount: sInt;
 
-	// FPC does not have a "create file if it does not exist yet" function,
-	// so let's just do this and try to live with the TOCTTOU issue.
-	If FileExists(NewPath) then Exit();
-	WriteHandle := FileCreate(NewPath, fmOpenWrite, &660);
-	If WriteHandle = ErroneousHandle then Exit();
+	function DoIt(): Boolean;
+	begin
+		ReadHandle := FileOpen(OldPath, fmOpenRead);
+		If ReadHandle = ErroneousHandle then Exit(False);
 
-	While True do begin
-		Count := FileRead(ReadHandle, Buffer, BufferSize);
-		If Count <= 0 then Break;
+		(*
+		 * FPC does not have a "create file if it does not exist yet" function,
+		 * so let's just do this and try to live with the TOCTTOU issue.
+		 *)
+		If FileExists(NewPath) then Exit(False);
 
-		FileWrite(WriteHandle, Buffer, Count)
+		WriteHandle := FileCreate(NewPath, fmOpenWrite, &660);
+		If WriteHandle = ErroneousHandle then Exit(False);
+
+		While True do begin
+			ReadCount := FileRead(ReadHandle, Buffer, BufferSize);
+			If ReadCount > 0 then begin
+				WriteCount := FileWrite(WriteHandle, Buffer, ReadCount);
+				If WriteCount < ReadCount then Exit(False)
+			end else
+			If ReadCount < 0 then
+				Exit(False)
+			else
+				Break
+		end;
+
+		Result := True
 	end;
 
-	FileClose(WriteHandle);
-	FileClose(ReadHandle)
+Begin
+	ReadHandle := ErroneousHandle;
+	WriteHandle := ErroneousHandle;
+
+	Result := DoIt();
+
+	If WriteHandle <> ErroneousHandle then FileClose(WriteHandle);
+	if ReadHandle <> ErroneousHandle then FileClose(ReadHandle)
 End;
 
 Procedure CopyOldSavegames();
