@@ -212,7 +212,7 @@ pascal_string() {
 
 	output_str="''"
 	open_apos=0
-	while [ "${#input_str}" -gt 0 ]; do
+	while [ -n "${input_str}" ]; do
 		letter="$(echo "${input_str}" | cut -b1)"
 		input_str="$(echo "${input_str}" | cut -b2-)"
 
