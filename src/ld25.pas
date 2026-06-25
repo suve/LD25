@@ -243,6 +243,13 @@ Begin
 		SDL_Log('Failed to initialize SDL2 audio - skipping SDL2_mixer init.', []);
 
 	(*
+	 * By default, on desktop platforms, initializing the video subsystem causes SDL2 to implicitly call SDL_StartTextInput().
+	 * On KDE Plasma 6.7.0, this makes the program receive only TEXTEDITING and TEXTINPUT events, without any KEYUP/KEYDOWN events.
+	 * KDE agreed that it's a bug on their side... but telling the library to stop text input fixes this, so why not.
+	 *)
+	SDL_StopTextInput();
+
+	(*
 	 * Do not show controller toasts while loading.
 	 * On desktop, this will save us from a segfault due to missing font.
 	 * On Android, this will prevent us from showing the "found device" toast
